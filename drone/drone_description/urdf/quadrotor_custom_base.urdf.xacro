@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find drone_description)/sensors/lightware_sf11_120m.urdf.xacro" />
+
+  <!-- Main quadrotor link -->
+  <xacro:macro name="quadrotor_base_macro">
+    <link name="base_link">
+      <inertial>
+        <mass value="1.477" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="0.01152" ixy="0.0" ixz="0.0" iyy="0.01152" iyz="0.0" izz="0.0218" />
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://drone_description/meshes/quadrotor/quadrotor_base.dae"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://drone_description/meshes/quadrotor/quadrotor_base.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- LightWare SF11 (120 meter) height sensor -->
+    <xacro:lightware_sf11_120m name="height_sensor" parent="base_link" ros_topic="lidar/height/scan" update_rate="20" ray_count="5" min_angle="-95" max_angle="-85" >
+      <origin xyz="0.0 0.0 -0.065" rpy="0.0 0 0"/>
+    </xacro:lightware_sf11_120m>
+
+  </xacro:macro>
+</robot>

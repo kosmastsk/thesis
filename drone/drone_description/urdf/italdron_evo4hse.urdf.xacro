@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<robot name="quadrotor" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:property name="M_PI" value="3.1415926535897931" />
+
+    <!-- Included URDF Files -->
+    <!-- The base includes a hokuyo lidar used for height estimation -->
+    <xacro:include filename="$(find drone_description)/urdf/quadrotor_custom_base.urdf.xacro" />
+
+    <!-- Instantiate quadrotor_base_macro once (has no parameters atm) -->
+    <xacro:quadrotor_base_macro />
+
+    <!-- Terrarange Tower -->
+    <xacro:include filename="$(find teraranger_description)/urdf/teraranger_tower.urdf.xacro"/>
+    <teraranger_tower multi_hub="false" hub_id="0" parent="base_link" x="0.000" y="0.000" z="0.050" roll="0.0" pitch="0.0" yaw="0.0" />
+
+    <!-- Forward facing camera (FPV) -->
+    <xacro:include filename="$(find drone_description)/sensors/generic_camera.urdf.xacro" />
+    <xacro:generic_camera name="front_cam" parent="base_link" ros_topic="camera/image" cam_info_topic="camera/camera_info" update_rate="10" res_x="640" res_y="480" image_format="R8G8B8" hfov="90">
+    <origin xyz="0.125 0 -0.17" rpy="0 0 0"/>
+    </xacro:generic_camera>
+
+</robot>
