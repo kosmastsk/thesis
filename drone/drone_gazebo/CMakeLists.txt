@@ -25,7 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
   LIBRARIES drone_gazebo
-  CATKIN_DEPENDS roscpp geometry_msgs actionlib hector_quadrotor_interface hector_uav_msgs tf2 tf2_geometry_msgs urdf
+  CATKIN_DEPENDS roscpp geometry_msgs actionlib hector_quadrotor_interface hector_uav_msgs tf2 tf2_geometry_msgs urdf teleop_twist_keyboard
 #  DEPENDS system_lib
 )
 

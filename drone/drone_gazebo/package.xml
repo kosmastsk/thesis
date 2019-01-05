@@ -40,6 +40,7 @@
   <depend>hector_quadrotor_controllers</depend>
   <depend>hector_quadrotor_pose_estimation</depend>
   <depend>drone_description</depend>
+  <depend>teleop_twist_keyboard</depend>
 
 
 </package>
