@@ -39,6 +39,8 @@
   <depend>hector_quadrotor_model</depend>
   <depend>hector_quadrotor_controllers</depend>
   <depend>hector_quadrotor_pose_estimation</depend>
+  <depend>hector_quadrotor_actions</depend>
+  <depend>hector_quadrotor_controller_gazebo</depend>
   <depend>drone_description</depend>
   <depend>teleop_twist_keyboard</depend>
 
