@@ -6,14 +6,14 @@
   <!-- Make the world name a parameter to load from terminal -->
   <arg name="world" default="grannie"/>
   <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch">
-    <arg name="world_file" value="$(find amcl_2d)/worlds/$(arg world).world"/>
+    <arg name="world_file" value="$(find amcl_2d_turtlebot)/worlds/$(arg world).world"/>
   </include>
 
   <!-- Load a map in rviz -->
-  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find amcl_2d)/maps/$(arg world).yaml"/>
+  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find amcl_2d_turtlebot)/maps/$(arg world).yaml"/>
 
   <!-- Run 2D AMCL node -->
-  <include file="$(find amcl_2d)/launch/amcl.launch"/>
+  <include file="$(find amcl_2d_turtlebot)/launch/amcl.launch"/>
 
   <!-- Move base -->
   <include file="$(find custom_navigation)/launch/includes/move_base.launch.xml"/>
