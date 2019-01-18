@@ -7,7 +7,7 @@ Estimator::Estimator()
 {
   height_.data = 0.0;
 
-  pub_ = nh_.advertise<std_msgs::Float64>("/height",1000);
+  pub_ = nh_.advertise<std_msgs::Float64>("/height",10);
 
   sub_ = nh_.subscribe("/lidar/height/scan", 1000, &Estimator::laserCallback, this);
 }
