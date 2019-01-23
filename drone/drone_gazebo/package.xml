@@ -43,6 +43,7 @@
   <depend>hector_quadrotor_controller_gazebo</depend>
   <depend>drone_description</depend>
   <depend>teleop_twist_keyboard</depend>
+  <depend>dynamic_reconfigure</depend>
 
 
 </package>

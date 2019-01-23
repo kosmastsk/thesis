@@ -35,7 +35,7 @@
   <node pkg="teraranger_array_converter" type="teraranger_array_converter.py" name="teraranger_array_converter" output="screen"/>
 
   <!-- Teleoperate the drone using the keyboard -->
-  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />
+  <!--<node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />-->
 
   <!-- Run 2D AMCL node -->
   <include file="$(find drone_gazebo)/launch/amcl.launch"/>
@@ -44,5 +44,5 @@
   <include file="$(find custom_navigation)/launch/includes/move_base.launch.xml"/>
 
   <!-- Launch Rviz with pre loaded configuration-->
-  <node name="rviz" type="rviz" pkg="rviz" args="-d $(find drone_gazebo)/rviz_cfg/config.rviz" />
+  <node name="rviz" type="rviz" pkg="rviz" args="-d $(find custom_navigation)/navigation.rviz" />
 </launch>
