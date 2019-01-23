@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
 
+  <param name="use_sim_time" value="false"/>
+
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
   <arg name="world" default="indoors_with_distance_features"/>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <param name="use_sim_time" value="true"/>
     <arg name="world_name" value="$(find drone_gazebo)/worlds/$(arg world).world"/>
   </include>
 
   <!-- Load a map in rviz -->
-  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find drone_gazebo)/maps/$(arg world).yaml"/>
+  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find drone_gazebo)/maps/$(arg world).yaml">
+    <param name="frame_id" value="map" />
+  </node>
 
     <!-- Spawn simulated quadrotor uav -->
   <include file="$(find drone_gazebo)/launch/spawn_quadrotor.launch" >
@@ -22,13 +25,24 @@
         "/>
   </include>
 
+  <!-- Height estimation node -->
+  <node name="estimator" type="estimator" pkg="height_estimation" />
+
+  <!-- Convert the teraranger tower ranges from 8 topics to 1 -->
+  <node pkg="teraranger_array_converter" type="gazebo_to_range_array.py" name="gazebo_to_range_array" output="screen" />
+
+  <!-- Convert from /ranges to /scan, in LaserScan message type, to be easily handled by amcl -->
+  <node pkg="teraranger_array_converter" type="teraranger_array_converter.py" name="teraranger_array_converter" output="screen"/>
+
   <!-- Teleoperate the drone using the keyboard -->
   <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />
 
+  <!-- Run 2D AMCL node -->
+  <include file="$(find drone_gazebo)/launch/amcl.launch"/>
+
   <!-- Move base -->
-<!--  <include file="$(find custom_navigation)/launch/includes/move_base.launch.xml"/>-->
+  <include file="$(find custom_navigation)/launch/includes/move_base.launch.xml"/>
 
   <!-- Launch Rviz with pre loaded configuration-->
   <node name="rviz" type="rviz" pkg="rviz" args="-d $(find drone_gazebo)/rviz_cfg/config.rviz" />
 </launch>
-

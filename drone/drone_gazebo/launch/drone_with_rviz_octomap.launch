@@ -12,7 +12,7 @@
 
   <!-- Load a map in RViz with octomap server -->
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server_node" output="screen" args="$(find drone_gazebo)/maps/$(arg world).ot">
-    <param name="frame_if" value="map"/>
+    <param name="frame_id" value="map"/>
   </node>
 
 

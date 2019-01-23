@@ -7,7 +7,7 @@
   <!-- Make the world name a parameter to load from terminal -->
   <arg name="world" default="grannie"/>
   <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch">
-	  <arg name="world_file" value="/home/kosmastsk/catkin_ws/src/thesis/amcl_2d_turtlebot/worlds/$(arg world).world"/>
+	  <arg name="world_file" value="/home/kosmastsk/catkin_ws/src/thesis/drone/drone_gazebo/worlds/$(arg world).world"/>
   </include>
 
   <!-- Launch the SLAM node, RTAB MAP ros package needed -->

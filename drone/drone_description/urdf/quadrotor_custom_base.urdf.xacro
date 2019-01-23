@@ -29,7 +29,7 @@
     </link>
 
     <!-- LightWare SF11 (120 meter) height sensor -->
-    <xacro:lightware_sf11_120m name="height_sensor" parent="base_link" ros_topic="lidar/height/scan" update_rate="20" ray_count="1" min_angle="-90" max_angle="-90" >
+    <xacro:lightware_sf11_120m name="height_sensor" parent="base_link" ros_topic="lidar/height/scan" update_rate="20" ray_count="5" min_angle="-87" max_angle="-93" >
       <origin xyz="0.0 0.0 -0.065" rpy="0.0 0 0"/>
     </xacro:lightware_sf11_120m>
 

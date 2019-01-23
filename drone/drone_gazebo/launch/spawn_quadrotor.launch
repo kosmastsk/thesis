@@ -2,7 +2,7 @@
 
 <launch>
   <arg name="name" default="quadrotor"/>
-  <arg name="model" default="$(find drone_description)/urdf/quadrotor.gazebo.xacro"/>
+  <arg name="model" default="$(find drone_description)/urdf/italdron_evo4hse.gazebo.xacro"/>
   <arg name="controllers" default="
     controller/position
     controller/velocity
@@ -10,16 +10,16 @@
     "/>
   <arg name="tf_prefix" default="$(optenv ROS_NAMESPACE)"/>
 
-  <arg name="x" default="1.0"/>
+  <arg name="x" default="1.0"/> <!--1.0 0.0 0.3 -->
   <arg name="y" default="0.0"/>
-  <arg name="z" default="0.3"/>
+  <arg name="z" default="0.0"/>
 
   <arg name="use_ground_truth_for_tf" default="true" />
   <arg name="use_ground_truth_for_control" default="true" />
   <arg name="use_pose_estimation" if="$(arg use_ground_truth_for_control)" default="false"/>
   <arg name="use_pose_estimation" unless="$(arg use_ground_truth_for_control)" default="true"/>
 
-  <arg name="world_frame" default="map"/> <!-- This should actually be "/world". See https://github.com/ros-simulation/gazebo_ros_pkgs/pull/324 -->
+  <arg name="world_frame" default="world"/> <!-- This should actually be "/world". See https://github.com/ros-simulation/gazebo_ros_pkgs/pull/324 -->
   <arg name="base_link_frame" default="$(arg tf_prefix)/base_link"/>
 
   <!-- send the robot XML to param server -->
