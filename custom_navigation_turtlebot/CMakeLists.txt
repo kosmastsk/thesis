@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(amcl_2d_turtlebot)
+project(custom_navigation_turtlebot)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,10 +8,12 @@ project(amcl_2d_turtlebot)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  amcl
+  map_server
+  move_base
   roscpp
-  rospy
-  std_msgs
-  custom_navigation_turtlebot
+  sensor_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -71,7 +73,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   sensor_msgs
 # )
 
 ################################################
@@ -105,8 +107,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES amcl_2d_turtlebot
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  LIBRARIES custom_navigation_turtlebot
+#  CATKIN_DEPENDS amcl map_server move_base roscpp sensor_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -123,7 +125,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/amcl_2d_turtlebot.cpp
+#   src/${PROJECT_NAME}/custom_navigation_turtlebot.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -134,7 +136,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/amcl_2d_turtlebot_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/custom_navigation_turtlebot_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -191,7 +193,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_amcl_2d_turtlebot.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_custom_navigation_turtlebot.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

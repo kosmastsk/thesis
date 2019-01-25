@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   drone_description
   hector_quadrotor_actions
   hector_quadrotor_controller_gazebo
-  custom_navigation
+  custom_navigation_drone
 )
 
 
