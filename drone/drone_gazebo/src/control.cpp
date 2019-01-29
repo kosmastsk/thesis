@@ -52,20 +52,16 @@ void Controller::callback(const std_msgs::Float64::ConstPtr& msg)
   _cmdvelPublisher.publish(velMsg);
 
   float z;  // distance to cover
-  if (currentHeight != getDesiredHeight())
+  // A small difference from the desired height can be accepted, we do not need to send cmd_vel commands constantly
+  if (currentHeight < getDesiredHeight() * 0.95 || currentHeight > getDesiredHeight() * 1.05)
   {
     // z = v * t; // t: sec, z: m, v = m/s
     z = getDesiredHeight() - currentHeight;
-    z = roundf(z * 1000) / 1000;  // round to nearest
+    z = roundf(z * 100) / 100;  // round to nearest
     ROS_INFO("Height to cover: %f\n", z);
     velMsg.linear.z = z * 100 / 30;  // Convert z to cm and divide with time
     ROS_INFO("Velocity to publish: %f\n", velMsg.linear.z);
     _cmdvelPublisher.publish(velMsg);
-  }
-  else
-  {
-    velMsg.linear.z = 0;
-    ROS_INFO("Hover mode\n");
   }
 }
 

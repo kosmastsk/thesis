@@ -4,7 +4,7 @@
 
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
-  <arg name="world" default="two_level_labyrinth.world"/>
+  <arg name="world" default="warehouse.world"/>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <param name="use_sim_time" value="true"/>
     <arg name="world_name" value="$(find drone_gazebo)/worlds/$(arg world)"/>
