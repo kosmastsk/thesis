@@ -19,7 +19,7 @@
 TebLocalPlannerROS:
 
   odom_topic: ground_truth/state
-  map_frame: map
+  map_frame: /map
 
 
 ## Trajectory ##################################################################
@@ -95,7 +95,7 @@ TebLocalPlannerROS:
 ## Robot #######################################################################
 
 # Maximum translational velocity of the robot
-  max_vel_x: 0.5
+  max_vel_x: 1 #0.5
 
 # Maximum translational velocity of the robot for driving backwards
   max_vel_x_backwards: 0.11
@@ -105,10 +105,10 @@ TebLocalPlannerROS:
 
 # Maximum strafing velocity of the robot (should be zero for non-holonomic
 # robots!)
-  max_vel_y: 0.0
+  max_vel_y: 1.0 #0.0
 
 # Maximum translational acceleration of the robot
-  acc_lim_x: 0.5
+  acc_lim_x: 0.8 #0.5
 
 # Maximum strafing acceleration of the robot
   acc_lim_y: 0.0
@@ -141,7 +141,7 @@ TebLocalPlannerROS:
   footprint_model:
 # types: "point", "circular", "two_circles", "line", "polygon"
     type: "circular"
-    radius: 0.2
+    radius: 0.80
 
 
 ## GoalTolerance ###############################################################
@@ -229,7 +229,7 @@ TebLocalPlannerROS:
   optimization_activate: True
 
 # Print verbose information
-  optimization_verbose: False
+  optimization_verbose: True # False
 
 # Add a small safety margin to penalty functions for hard-constraint
 # approximations

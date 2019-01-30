@@ -32,7 +32,12 @@
   <node pkg="teraranger_array_converter" type="gazebo_to_range_array.py" name="gazebo_to_range_array" output="screen" />
 
   <!-- Convert from /ranges to /scan, in LaserScan message type, to be easily handled by amcl -->
-  <node pkg="teraranger_array_converter" type="teraranger_array_converter.py" name="teraranger_array_converter" output="screen"/>
+  <node pkg="teraranger_array_converter" type="teraranger_array_converter.py" name="teraranger_array_converter" output="screen">
+    <param name="converter_mode" value="laser_scan"/>
+    <param name="sensor_mask" value="[true,true,true,true,true,true,true,true]"/>
+    <!--<param name="conversion_frame" value="base"/>-->
+    <param name="force_tf_refresh" value="False"/>
+  </node>
 
   <!-- Teleoperate the drone using the keyboard -->
   <!--<node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />-->
