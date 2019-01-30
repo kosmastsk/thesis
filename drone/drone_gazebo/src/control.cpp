@@ -1,4 +1,10 @@
-/* Implementation of the Controller methods */
+/* control.cpp
+* These methods contain:
+* one subscriber to the height estimation node that calculates the current height and the velocity needed to reach a
+* specific height
+* one subscriber to the move base node that receives the move base velocity commands to reach a goal
+* a publisher that sends the total velocity to the drone cmd_vel topic
+*/
 
 #include "drone_gazebo/control.h"
 
@@ -25,7 +31,10 @@ Controller::Controller(char* argv[])
   ros::Rate loop_rate(10);
 
   // Initialize the Subscriber
-  _heightListener = _nh.subscribe("/height", 1, &Controller::callback, this);
+  _heightListener = _nh.subscribe("/height", 1, &Controller::heightCallback, this);
+
+  // Initialize the Subscriber
+  _moveBaseListener = _nh.subscribe("/cmd_vel/move_base", 1, &Controller::moveBaseCallback, this);
 
   // Initialize the Publisher
   _cmdvelPublisher = _nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
@@ -41,28 +50,43 @@ Controller::~Controller()
 }
 
 /******************************/
-/*         Callback           */
+/*       heightCallback       */
 /******************************/
 
-void Controller::callback(const std_msgs::Float64::ConstPtr& msg)
+void Controller::heightCallback(const std_msgs::Float64::ConstPtr& msg)
 {
   float currentHeight = msg->data;
-  geometry_msgs::Twist velMsg;
-
-  _cmdvelPublisher.publish(velMsg);
 
   float z;  // distance to cover
-  // A small difference from the desired height can be accepted, we do not need to send cmd_vel commands constantly
-  if (currentHeight < getDesiredHeight() * 0.95 || currentHeight > getDesiredHeight() * 1.05)
-  {
-    // z = v * t; // t: sec, z: m, v = m/s
-    z = getDesiredHeight() - currentHeight;
-    z = roundf(z * 100) / 100;  // round to nearest
-    ROS_INFO("Height to cover: %f\n", z);
-    velMsg.linear.z = z * 100 / 30;  // Convert z to cm and divide with time
-    ROS_INFO("Velocity to publish: %f\n", velMsg.linear.z);
-    _cmdvelPublisher.publish(velMsg);
-  }
+
+  // z = v * t; // t: sec, z: m, v = m/s
+  z = getDesiredHeight() - currentHeight;
+  z = roundf(z * 100) / 100;  // round to nearest
+
+  // z becomes velocity now
+  z = z * 100 / 90;  // Convert z to cm and divide with time
+
+  setZLinear(z);
+}
+
+/******************************/
+/*      moveBaseCallback      */
+/******************************/
+
+void Controller::moveBaseCallback(const geometry_msgs::Twist::ConstPtr& msg)
+{
+  // Create the Twist message that will be published with all the velocities
+  geometry_msgs::Twist velMsg;
+
+  velMsg.linear.x = msg->linear.x;
+  velMsg.linear.y = msg->linear.y;
+  velMsg.linear.z = getZLinear();
+
+  velMsg.angular.x = msg->angular.x;
+  velMsg.angular.y = msg->angular.y;
+  velMsg.angular.z = msg->angular.z;
+
+  _cmdvelPublisher.publish(velMsg);
 }
 
 }  // namespace control`

@@ -20,25 +20,37 @@ private:
   // Variables
   ros::NodeHandle _nh;
   ros::Subscriber _heightListener;
+  ros::Subscriber _moveBaseListener;
   ros::Publisher _cmdvelPublisher;
   float _desiredHeight;
+  float _zLinear;
 
-  void setHeight(int height);
-  void callback(const std_msgs::Float64::ConstPtr& msg);
+  // Callbacks
+  void heightCallback(const std_msgs::Float64::ConstPtr& msg);
+  void moveBaseCallback(const geometry_msgs::Twist::ConstPtr& msg);
 
 public:
   Controller();
   Controller(char* argv[]);
   ~Controller();
 
-  inline int getDesiredHeight()
+  float getDesiredHeight()
   {
     return _desiredHeight;
-  };
-  inline void setDesiredHeight(int value)
+  }
+  void setDesiredHeight(float value)
   {
     _desiredHeight = value;
-  };
+  }
+
+  void setZLinear(float value)
+  {
+    _zLinear = value;
+  }
+  float getZLinear()
+  {
+    return _zLinear;
+  }
 };
 }  // namespace control
 

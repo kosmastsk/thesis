@@ -29,6 +29,7 @@
     <!--<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>-->
     <remap from="odom" to="$(arg odom_topic)"/>
     <remap from="scan" to="$(arg laser_topic)"/>
+    <remap from="cmd_vel" to="cmd_vel/move_base"/>
   </node>
 
 </launch>
