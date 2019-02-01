@@ -12,7 +12,7 @@
             <frameId>$(arg base_link_frame)</frameId>
             <topicName>raw_imu</topicName>
             <rpyOffset>0 0 0</rpyOffset>
-            <gaussianNoise>0</gaussianNoise>  
+            <gaussianNoise>0</gaussianNoise>
             <accelDrift>0.1 0.1 0.1</accelDrift>
             <accelGaussianNoise>0.35 0.35 0.3</accelGaussianNoise>
             <rateDrift>0.1 0.1 0.1</rateDrift>
@@ -53,13 +53,24 @@
             <velocityDrift>0 0 0</velocityDrift>
             <velocityGaussianNoise>0.05 0.05 0.05</velocityGaussianNoise>
           </plugin>
--->
+
           <plugin name="quadrotor_groundtruth_sim" filename="libgazebo_ros_p3d.so">
             <updateRate>100.0</updateRate>
             <bodyName>base_link</bodyName>
             <topicName>ground_truth/state</topicName>
             <gaussianNoise>0.0</gaussianNoise>
             <frameName>$(arg world_frame)</frameName>
+          </plugin>
+-->
+          <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>100.0</updateRate>
+            <bodyName>base_link</bodyName>
+            <topicName>ground_truth/state</topicName>
+            <gaussianNoise>0.0</gaussianNoise>
+            <frameName>map</frameName>
+            <xyzOffsets>0 0 0</xyzOffsets>
+            <rpyOffsets>0 0 0</rpyOffsets>
           </plugin>
 
         </gazebo>

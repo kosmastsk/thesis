@@ -1,4 +1,4 @@
-image: indoors_with_distance_features.pgm
+image: home.pgm
 resolution: 0.050000
 origin: [-50.000000, -50.000000, 0.000000]
 negate: 0
