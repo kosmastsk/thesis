@@ -7,7 +7,13 @@
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
   <arg name="world" default="warehouse"/>
+  <arg name="gui" value="false"/>
+  <arg name="verbose" value="true"/>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="use_sim_time" value="true"/>
+    <arg name="debug" value="false"/>
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="verbose" value="$(arg verbose)" />
     <arg name="world_name" value="$(find drone_gazebo)/worlds/$(arg world).world"/>
   </include>
 
@@ -28,6 +34,9 @@
 
   <!-- Height estimation node -->
   <node name="estimator" type="estimator" pkg="height_estimation" />
+
+  <!-- Provide odometry from cmd_vel topic -->
+  <node name="vel_to_odom" type="vel_to_odom" pkg="drone_gazebo" output="screen"/>
 
   <!-- Convert the teraranger tower ranges from 8 topics to 1 -->
   <node pkg="teraranger_array_converter" type="gazebo_to_range_array.py" name="gazebo_to_range_array" output="screen" />

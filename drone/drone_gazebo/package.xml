@@ -44,6 +44,8 @@
   <depend>drone_description</depend>
   <depend>teleop_twist_keyboard</depend>
   <depend>dynamic_reconfigure</depend>
+  <depend>nav_msgs</depend>
+  <depend>hector_sensors_description</depend>
 
 
 </package>

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(drone_gazebo)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -29,7 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
   LIBRARIES drone_gazebo
-  CATKIN_DEPENDS roscpp geometry_msgs actionlib hector_quadrotor_interface hector_uav_msgs tf2 tf2_geometry_msgs urdf teleop_twist_keyboard
+  CATKIN_DEPENDS 
 #  DEPENDS system_lib
 )
 
@@ -49,3 +49,8 @@ add_executable(control
   src/control.cpp)
 target_link_libraries(control ${catkin_LIBRARIES})
 add_dependencies(control ${catkin_EXPORTED_TARGETS})
+
+add_executable(vel_to_odom
+  src/velocity_to_odom.cpp)
+target_link_libraries(vel_to_odom ${catkin_LIBRARIES})
+add_dependencies(vel_to_odom ${catkin_EXPORTED_TARGETS})

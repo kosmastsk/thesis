@@ -28,7 +28,7 @@ Controller::Controller(char* argv[])
   // Make the desired height a parameter
   setDesiredHeight(atoi(argv[1]));
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(100);
 
   // Initialize the Subscriber
   _heightListener = _nh.subscribe("/height", 1, &Controller::heightCallback, this);
