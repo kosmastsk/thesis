@@ -30,7 +30,6 @@
 
   <depend>roscpp</depend>
   <depend>geometry_msgs</depend>
-  <depend>actionlib</depend>
   <depend>hector_quadrotor_interface</depend>
   <depend>hector_uav_msgs</depend>
   <depend>tf2</depend>
@@ -42,10 +41,13 @@
   <depend>hector_quadrotor_actions</depend>
   <depend>hector_quadrotor_controller_gazebo</depend>
   <depend>drone_description</depend>
-  <depend>teleop_twist_keyboard</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>nav_msgs</depend>
   <depend>hector_sensors_description</depend>
+  <depend>custom_navigation_drone</depend>
+  <depend>height_estimation</depend>
+  <depend>teraranger_array_converter</depend>
+  <depend>message_to_tf</depend>
 
 
 </package>

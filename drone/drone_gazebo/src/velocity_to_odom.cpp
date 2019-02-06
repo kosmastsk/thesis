@@ -21,19 +21,27 @@ Converter::Converter()
 Converter::Converter(char* argv[])
 {
   // Initialize with zeros the message
-  _odomMsg.header.frame_id = "map";
-  _odomMsg.child_frame_id = "base_link";
-  _odomMsg.pose.pose.position = {};
-  _odomMsg.pose.pose.orientation = {};
-  _odomMsg.pose.covariance = {};
-  _odomMsg.twist.twist.linear = {};
-  _odomMsg.twist.twist.angular = {};
-  _odomMsg.twist.covariance = {};
+  _previousOdom.header.frame_id = "world";
+  _previousOdom.child_frame_id = "base_link";
+
+  _previousOdom.pose.pose.position.x = 0;
+  _previousOdom.pose.pose.position.y = 0;
+  _previousOdom.pose.pose.position.z = 0.2;
+
+  _previousOdom.pose.pose.orientation.x = 0;
+  _previousOdom.pose.pose.orientation.y = 0;
+  _previousOdom.pose.pose.orientation.z = 0;
+  _previousOdom.pose.pose.orientation.w = 1;
+
+  _previousOdom.pose.covariance = {};
+  _previousOdom.twist.twist.linear = {};
+  _previousOdom.twist.twist.angular = {};
+  _previousOdom.twist.covariance = {};
 
   // Initialize the Subscriber
   _cmdVelListener = _nh.subscribe("/cmd_vel", 50, &Converter::cmdVelCallback, this);
 
-  ros::Rate rate(5);  // 5hz
+  ros::Rate rate(50);  // hz
 
   // Initialize the Publisher
   _odomPublisher = _nh.advertise<nav_msgs::Odometry>("/odom", 50);
@@ -54,6 +62,11 @@ Converter::~Converter()
 
 void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
+  // Create the odometry nav_msgs
+  nav_msgs::Odometry odom_msg;
+  odom_msg.header.frame_id = "world";
+  odom_msg.child_frame_id = "base_link";
+
   // If this is the first time the callback is called, we do not want the whole interval that the node is running, so we
   // can use manually 0.5 seconds and then every time use the real time that passed between the calls using the
   // _lastTime variable
@@ -61,52 +74,55 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   {
     _lastTime = ros::Time::now();
     ros::Duration(0.1).sleep();
-  }
-  else
     firstCallFlag = 0;
+  }
 
   // Calculate the interval between the two calls
   ros::Duration delta_t = ros::Time::now() - _lastTime;
-
   float time_passed = delta_t.sec + delta_t.nsec * pow(10, -9);
 
   // Fill in the message
-  _odomMsg.header.stamp = ros::Time::now();
+  odom_msg.header.stamp = ros::Time::now();
 
   // Position
-  _odomMsg.pose.pose.position.x += msg->linear.x * time_passed;
-  _odomMsg.pose.pose.position.y += msg->linear.y * time_passed;
-  _odomMsg.pose.pose.position.z += msg->linear.z * time_passed;
+  // Why this works is in the following links
+  // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePath.htm
+  // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePathWithCalc.htm
+  double theta = tf::getYaw(getPreviousOdom().pose.pose.orientation);
+  double s = msg->linear.x;
+  double w = msg->angular.z;
 
-  // Orientation is a quaternion. angular velocity is rad/sec, multiply by sec and the input is in proper mode
-  // Convert tf quaternion to std_msgs::quaternion to be accepted in the odom msg
-  // geometry_msgs::Quaternion q;
-  // quaternionTFToMsg(tf::createQuaternionFromRPY(msg->angular.x * time_passed, msg->angular.y * time_passed,
-  // msg->angular.z * time_passed),
-  // q);
+  odom_msg.pose.pose.position.x =
+      getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * time_passed + theta);
+  odom_msg.pose.pose.position.y =
+      getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * time_passed + theta);
+  odom_msg.pose.pose.position.z = getPreviousOdom().pose.pose.position.z + msg->linear.z * time_passed;
 
-  tf::Quaternion q;
-  q = tf::createQuaternionFromRPY(0, 0, msg->angular.z);
-  quaternionTFToMsg(q, _odomMsg.pose.pose.orientation);
-  ROS_INFO_STREAM(q);
-  // quaternionMsgToTF(_odomMsg.pose.pose.orientation, q);
+  // Orientation
+  // Orientation is a quaternion. angular velocity is rad/sec
+  // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
+  tf::Quaternion previous_orientation, new_orientation, rotation_quat;
+  tf::quaternionMsgToTF(getPreviousOdom().pose.pose.orientation, previous_orientation);
+  rotation_quat =
+      tf::createQuaternionFromRPY(0, 0, msg->angular.z * time_passed);  // multiply with time to make it rads
 
-  // tf::Quaternion q(0, 0, -1, msg->angular.z);
-  // quaternionTFToMsg(q, _odomMsg.pose.pose.orientation);
-  /*
-    _odomMsg.pose.pose.orientation.x += msg->angular.x;
-    _odomMsg.pose.pose.orientation.y += msg->angular.y;
-    _odomMsg.pose.pose.orientation.z += msg->angular.z;
-    _odomMsg.pose.pose.orientation.w = 1;
-  */
+  new_orientation = rotation_quat * previous_orientation;  // Apply the rotation
+  new_orientation.normalize();
+
+  // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
+  tf::quaternionTFToMsg(new_orientation, odom_msg.pose.pose.orientation);
+
   // Velocity
   // https://answers.ros.org/question/141871/why-is-there-a-twist-in-odometry-message/
   // TODO : Is there a way to calculate the measured one and not the desired????
-  _odomMsg.twist.twist.linear = msg->linear;
-  _odomMsg.twist.twist.angular = msg->angular;
+  odom_msg.twist.twist.linear = msg->linear;
+  odom_msg.twist.twist.angular = msg->angular;
 
   // Publish
-  _odomPublisher.publish(_odomMsg);
+  _odomPublisher.publish(odom_msg);
+
+  // Update the values for the next call
+  setPreviousOdom(odom_msg);
 
   // Update time variable for next call
   _lastTime = ros::Time::now();

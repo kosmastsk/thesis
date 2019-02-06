@@ -24,7 +24,7 @@ private:
   ros::Subscriber _cmdVelListener;
   ros::Publisher _odomPublisher;
 
-  nav_msgs::Odometry _odomMsg;
+  nav_msgs::Odometry _previousOdom;
 
   ros::Time _lastTime;
 
@@ -35,6 +35,15 @@ public:
   Converter();
   Converter(char* argv[]);
   ~Converter();
+
+  nav_msgs::Odometry getPreviousOdom()
+  {
+    return _previousOdom;
+  }
+  void setPreviousOdom(nav_msgs::Odometry odometry)
+  {
+    _previousOdom = odometry;
+  }
 };
 }  // namespace vel_to_odom
 

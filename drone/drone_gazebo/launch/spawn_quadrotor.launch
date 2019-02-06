@@ -68,7 +68,7 @@
   </include>
 
   <!-- load actions -->
-  <include file="$(find hector_quadrotor_actions)/launch/actions.launch" />
+  <!--<include file="$(find hector_quadrotor_actions)/launch/actions.launch" />-->
 
   <!-- load aerodynamic and motor parameters -->
   <arg name="motors" default="robbe_2827-34_epp1045" />
