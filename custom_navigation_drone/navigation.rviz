@@ -237,7 +237,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 100
       Name: Odometry
       Position Tolerance: 0.100000001
@@ -253,7 +253,7 @@ Visualization Manager:
         Value: Arrow
       Topic: /odom
       Unreliable: false
-      Value: true
+      Value: false
     - Angle Tolerance: 0.100000001
       Class: rviz/Odometry
       Covariance:
@@ -271,7 +271,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 100
       Name: Odometry
       Position Tolerance: 0.100000001
@@ -287,7 +287,7 @@ Visualization Manager:
         Value: Arrow
       Topic: /ground_truth/state
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -313,25 +313,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.3574219
+      Distance: 54.1385498
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.43113315
-        Y: 1.20575583
-        Z: -0.789468706
+        X: 18.6360378
+        Y: 5.91938353
+        Z: -10.6919985
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.904796302
+      Pitch: 0.719797015
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.560397685
+      Yaw: 0.0553973205
     Saved: ~
 Window Geometry:
   Displays:

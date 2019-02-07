@@ -1,7 +1,7 @@
 <launch>
   <arg name="use_map_topic"   default="true"/>
   <arg name="scan_topic"      default="scan"/>
-  <arg name="initial_pose_x"  default="0.0"/>
+  <arg name="initial_pose_x"  default="1.0"/>
   <arg name="initial_pose_y"  default="0.0"/>
   <arg name="initial_pose_a"  default="0.0"/> <!-- yaw -->
   <arg name="odom_frame_id"   default="world"/> <!-- odom -->
