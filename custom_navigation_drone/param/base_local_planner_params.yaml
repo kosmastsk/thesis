@@ -18,7 +18,7 @@
 ##
 TebLocalPlannerROS:
 
-  odom_topic: ground_truth/state
+  odom_topic: odom
   map_frame: /map
 
 
@@ -141,7 +141,7 @@ TebLocalPlannerROS:
   footprint_model:
 # types: "point", "circular", "two_circles", "line", "polygon"
     type: "circular"
-    radius: 0.80
+    radius: 0.40
 
 
 ## GoalTolerance ###############################################################

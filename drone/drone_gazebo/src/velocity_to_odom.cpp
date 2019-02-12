@@ -98,6 +98,17 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
       getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * time_passed + theta);
   odom_msg.pose.pose.position.z = getPreviousOdom().pose.pose.position.z + msg->linear.z * time_passed;
 
+  // Special case when the robot is reaching is goal and not receiveing any more goals, the result is nan.
+
+  if (std::isnan(odom_msg.pose.pose.position.x))
+  {
+    odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x;
+  }
+  if (std::isnan(odom_msg.pose.pose.position.y))
+  {
+    odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y;
+  }
+
   // Orientation
   // Orientation is a quaternion. angular velocity is rad/sec
   // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation

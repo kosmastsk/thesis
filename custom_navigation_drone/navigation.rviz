@@ -7,7 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Odometry1/Shape1
-        - /Odometry2/Shape1
+        - /Ground Truth odometry1/Shape1
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -138,6 +138,14 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 255; 255; 255
+      Enabled: true
+      Name: Footprint
+      Topic: /move_base/global_costmap/footprint
+      Unreliable: false
+      Value: true
     - Alpha: 0.699999988
       Class: rviz/Map
       Color Scheme: map
@@ -153,7 +161,7 @@ Visualization Manager:
       Color Scheme: costmap
       Draw Behind: false
       Enabled: true
-      Name: Map
+      Name: Costmap
       Topic: /move_base/global_costmap/costmap
       Unreliable: false
       Use Timestamp: false
@@ -168,7 +176,7 @@ Visualization Manager:
       Length: 0.300000012
       Line Style: Lines
       Line Width: 0.0299999993
-      Name: Path
+      Name: Global plan
       Offset:
         X: 0
         Y: 0
@@ -191,7 +199,7 @@ Visualization Manager:
       Length: 0.300000012
       Line Style: Lines
       Line Width: 0.0299999993
-      Name: Path
+      Name: Local plan
       Offset:
         X: 0
         Y: 0
@@ -213,7 +221,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.0700000003
       Head Radius: 0.0299999993
-      Name: PoseArray
+      Name: AMCL particles
       Shaft Length: 0.230000004
       Shaft Radius: 0.00999999978
       Shape: Arrow (Flat)
@@ -273,7 +281,7 @@ Visualization Manager:
         Value: true
       Enabled: false
       Keep: 100
-      Name: Odometry
+      Name: Ground Truth odometry
       Position Tolerance: 0.100000001
       Shape:
         Alpha: 1
@@ -288,6 +296,21 @@ Visualization Manager:
       Topic: /ground_truth/state
       Unreliable: false
       Value: false
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.100000001
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.300000012
+      Head Radius: 0.100000001
+      Name: 2D Nav Goal
+      Shaft Length: 1
+      Shaft Radius: 0.0500000007
+      Shape: Arrow
+      Topic: /move_base/current_goal
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -313,25 +336,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 54.1385498
+      Distance: 27.3240452
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 18.6360378
-        Y: 5.91938353
-        Z: -10.6919985
+        X: 2.63119769
+        Y: -1.78899086
+        Z: 3.3673346
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.719797015
+      Pitch: 1.08479667
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.0553973205
+      Yaw: 5.47857046
     Saved: ~
 Window Geometry:
   Displays:
