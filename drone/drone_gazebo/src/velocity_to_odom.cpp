@@ -24,7 +24,7 @@ Converter::Converter(char* argv[])
   _previousOdom.header.frame_id = "world";
   _previousOdom.child_frame_id = "base_link";
 
-  _previousOdom.pose.pose.position.x = 0;
+  _previousOdom.pose.pose.position.x = 1.0;
   _previousOdom.pose.pose.position.y = 0;
   _previousOdom.pose.pose.position.z = 0.2;
 
@@ -40,6 +40,9 @@ Converter::Converter(char* argv[])
 
   // Initialize the Subscriber
   _cmdVelListener = _nh.subscribe("/cmd_vel", 50, &Converter::cmdVelCallback, this);
+
+  // Initialize the Subscriber
+  _heightListener = _nh.subscribe("/height", 50, &Converter::heightCallback, this);
 
   ros::Rate rate(50);  // hz
 
@@ -96,7 +99,7 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
       getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * time_passed + theta);
   odom_msg.pose.pose.position.y =
       getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * time_passed + theta);
-  odom_msg.pose.pose.position.z = getPreviousOdom().pose.pose.position.z + msg->linear.z * time_passed;
+  odom_msg.pose.pose.position.z = getHeight();
 
   // Special case when the robot is reaching is goal and not receiveing any more goals, the result is nan.
 
@@ -137,6 +140,16 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
 
   // Update time variable for next call
   _lastTime = ros::Time::now();
+}
+
+/******************************/
+/*       heightCallback       */
+/******************************/
+
+void Converter::heightCallback(const std_msgs::Float64::ConstPtr& msg)
+{
+  // Provide the current height to the odometry topic
+  setHeight(msg->data);
 }
 
 }  // namespace vel_to_odom
