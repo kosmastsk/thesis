@@ -16,7 +16,7 @@
   <include file="$(find amcl_2d_turtlebot)/launch/amcl.launch"/>
 
   <!-- Move base -->
-  <include file="$(find custom_navigation_turtlebot)/launch/includes/move_base.launch.xml"/>
+  <include file="$(find amcl_2d_turtlebot)/launch/includes/move_base.launch.xml"/>
 
   <!-- Launch Rviz with pre loaded configuration-->
   <node name="rviz" type="rviz" pkg="rviz" args="-d /home/kosmastsk/.rviz/navigation.rviz" />

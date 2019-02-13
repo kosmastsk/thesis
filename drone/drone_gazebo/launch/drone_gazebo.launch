@@ -29,7 +29,7 @@
 
   <!-- Height estimation node -->
   <!-- Use this to estimate the current height of the UAV -->
-  <node name="estimator" type="estimator" pkg="height_estimation" />
+  <node name="estimator" type="estimator" pkg="drone_gazebo" />
 
   <!-- Teleoperate the drone using the keyboard -->
   <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />

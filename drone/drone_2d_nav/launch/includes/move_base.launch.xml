@@ -2,8 +2,8 @@
     ROS navigation stack with velocity smoother and safety (reactive) controller
 -->
 <launch>
-  <include file="$(find custom_navigation_drone)/launch/includes/velocity_smoother.launch.xml"/>
-  <include file="$(find custom_navigation_drone)/launch/includes/safety_controller.launch.xml"/>
+  <include file="$(find drone_2d_nav)/launch/includes/velocity_smoother.launch.xml"/>
+  <include file="$(find drone_2d_nav)/launch/includes/safety_controller.launch.xml"/>
 
   <arg name="odom_frame_id"   default="world"/>
   <arg name="base_frame_id"   default="base_link"/> <!-- base_footprint-->
@@ -12,12 +12,12 @@
   <arg name="laser_topic" default="scan" />
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="$(find custom_navigation_drone)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
-    <rosparam file="$(find custom_navigation_drone)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
-    <rosparam file="$(find custom_navigation_drone)/param/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find custom_navigation_drone)/param/global_costmap_params.yaml" command="load" />
-    <rosparam file="$(find custom_navigation_drone)/param/move_base_params.yaml" command="load" />
-    <rosparam file="$(find custom_navigation_drone)/param/global_planner_params.yaml" command="load" />
+    <rosparam file="$(find drone_2d_nav)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find drone_2d_nav)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find drone_2d_nav)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find drone_2d_nav)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find drone_2d_nav)/param/move_base_params.yaml" command="load" />
+    <rosparam file="$(find drone_2d_nav)/param/global_planner_params.yaml" command="load" />
 
     <!-- reset frame_id parameters using user input data -->
     <param name="global_costmap/global_frame" value="$(arg global_frame_id)"/>

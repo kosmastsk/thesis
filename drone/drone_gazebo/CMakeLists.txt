@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   drone_description
   hector_quadrotor_actions
   hector_quadrotor_controller_gazebo
-  custom_navigation_drone
+  drone_2d_nav
 )
 
 
@@ -29,7 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
   LIBRARIES drone_gazebo
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS
 #  DEPENDS system_lib
 )
 
@@ -54,3 +54,11 @@ add_executable(vel_to_odom
   src/velocity_to_odom.cpp)
 target_link_libraries(vel_to_odom ${catkin_LIBRARIES})
 add_dependencies(vel_to_odom ${catkin_EXPORTED_TARGETS})
+
+add_executable(estimator
+  src/height_estimation_node.cpp
+  src/height_estimation.cpp)
+target_link_libraries(estimator
+  ${catkin_LIBRARIES})
+add_dependencies(estimator
+  ${catkin_EXPORTED_TARGETS})
