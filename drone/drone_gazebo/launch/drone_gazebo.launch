@@ -4,22 +4,22 @@
 
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
-  <arg name="world" default="warehouse.world"/>
-
+  <arg name="world" default="$(find drone_gazebo)/worlds/warehouse.world"/>
   <arg name="gui" value="true"/>
   <arg name="verbose" value="true"/>
   <arg name="paused" value="true"/>
+
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="$(arg gui)" />
     <arg name="verbose" value="$(arg verbose)" />
     <arg name="paused" value="$(arg paused)" />
-    <arg name="world_name" value="$(find drone_gazebo)/worlds/$(arg world)"/>
+    <arg name="world_name" value="$(arg world)"/>
   </include>
 
   <!-- Spawn simulated quadrotor uav -->
   <include file="$(find drone_gazebo)/launch/spawn_quadrotor.launch" >
-    <arg name="model" value="$(find drone_description)/urdf/italdron_evo4hse.gazebo.xacro"/>
+    <arg name="model" value="$(find drone_description)/urdf/italdron_evo4hse.urdf"/>
     <arg name="controllers" value="
         controller/attitude
         controller/velocity

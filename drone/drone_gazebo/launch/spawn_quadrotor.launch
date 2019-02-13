@@ -2,7 +2,7 @@
 
 <launch>
   <arg name="name" default="quadrotor"/>
-  <arg name="model" default="$(find drone_description)/urdf/italdron_evo4hse.gazebo.xacro"/>
+  <arg name="model" default="$(find drone_description)/urdf/italdron_evo4hse.urdf.xacro"/>
   <arg name="controllers" default="
     controller/position
     controller/velocity
@@ -10,14 +10,12 @@
     "/>
   <arg name="tf_prefix" default="$(optenv ROS_NAMESPACE)"/>
 
-  <arg name="x" default="1.0"/> <!--1.0 0.0 0.3 -->
+  <arg name="x" default="1.0"/>
   <arg name="y" default="0.0"/>
-  <arg name="z" default="0.0"/>
-
-  <arg name="use_ground_truth_for_tf" default="true" />
-  <arg name="use_ground_truth_for_control" default="true" />
-  <arg name="use_pose_estimation" if="$(arg use_ground_truth_for_control)" default="false"/>
-  <arg name="use_pose_estimation" unless="$(arg use_ground_truth_for_control)" default="true"/>
+  <arg name="z" default="0.2"/>
+  <arg name="roll"  default="0" />
+  <arg name="pitch" default="0" />
+  <arg name="yaw"   default="0" />
 
   <arg name="world_frame" default="world"/> <!-- This should actually be "/world". See https://github.com/ros-simulation/gazebo_ros_pkgs/pull/324 -->
   <arg name="base_link_frame" default="$(arg tf_prefix)/base_link"/>
@@ -36,39 +34,18 @@
   </node>
 
   <!-- publish state and tf -->
+  <arg name="use_ground_truth_for_tf" default="true" />
   <node name="ground_truth_to_tf" pkg="message_to_tf" type="message_to_tf" output="screen">
     <param name="odometry_topic" value="ground_truth/state" />
     <param name="frame_id" value="$(arg world_frame)" />
     <param name="tf_prefix" value="$(arg tf_prefix)" if="$(arg use_ground_truth_for_tf)" />
     <param name="tf_prefix" value="$(arg tf_prefix)/ground_truth" unless="$(arg use_ground_truth_for_tf)" />
   </node>
-  <group if="$(arg use_pose_estimation)">
-    <node name="pose_estimation" pkg="hector_quadrotor_pose_estimation" type="hector_quadrotor_pose_estimation" output="screen">
-      <rosparam file="$(find hector_quadrotor_pose_estimation)/params/simulation.yaml" />
-      <param name="nav_frame" value="$(arg tf_prefix)/nav" />
-      <param name="publish_world_nav_transform" value="true" />
-      <param name="tf_prefix" value="$(arg tf_prefix)" unless="$(arg use_ground_truth_for_tf)" />
-      <param name="tf_prefix" value="$(arg tf_prefix)/pose_estimation" if="$(arg use_ground_truth_for_tf)" />
-    </node>
-  </group>
-
-  <group if="$(arg use_ground_truth_for_control)">
-    <param name="state_topic" value="" />
-    <param name="imu_topic" value="" />
-  </group>
-  <group unless="$(arg use_ground_truth_for_control)">
-    <param name="state_topic" value="state" />
-    <param name="imu_topic" value="imu" />
-  </group>
-  <remap from="pose" to="ground_truth_to_tf/pose"  if="$(arg use_ground_truth_for_control)" />
 
   <!-- load controllers -->
   <include file="$(find hector_quadrotor_controllers)/launch/controller.launch">
     <arg name="controllers" value="$(arg controllers)"/>
   </include>
-
-  <!-- load actions -->
-  <!--<include file="$(find hector_quadrotor_actions)/launch/actions.launch" />-->
 
   <!-- load aerodynamic and motor parameters -->
   <arg name="motors" default="robbe_2827-34_epp1045" />
@@ -82,6 +59,9 @@
            -x $(arg x)
            -y $(arg y)
            -z $(arg z)
+           -R $(arg roll)
+           -P $(arg pitch)
+           -Y $(arg yaw)
            -model $(arg name)"
         respawn="false" output="screen"/>
 

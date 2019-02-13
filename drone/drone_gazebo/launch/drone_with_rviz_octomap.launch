@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+  <!-- NOT UPDATED -->
   <param name="use_sim_time" value="true"/>
 
   <!-- Launch the gazebo simulator -->

@@ -6,17 +6,18 @@
 
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
-  <arg name="world" default="warehouse"/>
-  <arg name="gui" value="false"/>
-  <arg name="verbose" value="true"/>
-  <arg name="paused" value="false"/>
+  <arg name="world" default="$(find drone_gazebo)/worlds/warehouse.world"/>
+  <arg name="gui" default="false"/>
+  <arg name="verbose" default="true"/>
+  <arg name="paused" default="false"/>
+
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="use_sim_time" value="true"/>
     <arg name="debug" value="false"/>
     <arg name="gui" value="$(arg gui)" />
     <arg name="verbose" value="$(arg verbose)" />
     <arg name="paused" value="$(arg paused)" />
-    <arg name="world_name" value="$(find drone_gazebo)/worlds/$(arg world).world"/>
+    <arg name="world_name" value="$(arg world)"/>
   </include>
 
   <!-- Load a map in rviz -->
@@ -24,9 +25,9 @@
     <param name="frame_id" value="map" />
   </node>
 
-    <!-- Spawn simulated quadrotor uav -->
+  <!-- Spawn simulated quadrotor uav -->
   <include file="$(find drone_gazebo)/launch/spawn_quadrotor.launch" >
-    <arg name="model" value="$(find drone_description)/urdf/italdron_evo4hse.gazebo.xacro"/>
+    <arg name="model" value="$(find drone_description)/urdf/italdron_evo4hse.urdf"/>
     <arg name="controllers" value="
         controller/attitude
         controller/velocity
@@ -34,12 +35,7 @@
         "/>
   </include>
 
-  <!-- Height estimation node -->
-  <node name="estimator" type="estimator" pkg="drone_gazebo" />
-
-  <!-- Provide odometry from cmd_vel topic -->
-  <node name="vel_to_odom" type="vel_to_odom" pkg="drone_gazebo" output="screen"/>
-
+  <!-- SENSORS -->
   <!-- Convert the teraranger tower ranges from 8 topics to 1 -->
   <node pkg="teraranger_array_converter" type="gazebo_to_range_array.py" name="gazebo_to_range_array" output="screen" />
 
@@ -51,18 +47,27 @@
     <param name="force_tf_refresh" value="False"/>
   </node>
 
+  <!-- MOVE -->
   <!-- Teleoperate the drone using the keyboard -->
   <!--<node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />-->
 
   <!-- Run 2D AMCL node -->
-  <include file="$(find drone_gazebo)/launch/amcl.launch"/>
+  <include file="$(find drone_2d_nav)/launch/amcl.launch"/>
 
   <!-- Move base -->
   <include file="$(find drone_2d_nav)/launch/includes/move_base.launch.xml"/>
 
+  <!-- NODES -->
   <!-- Control drone -->
   <node pkg="drone_gazebo" type="control" name="control" args="$(arg height)"/>
 
+  <!-- Height estimation node -->
+  <node name="estimator" type="estimator" pkg="drone_gazebo" />
+
+  <!-- Provide odometry from cmd_vel topic -->
+  <node name="vel_to_odom" type="vel_to_odom" pkg="drone_gazebo" output="screen"/>
+
+  <!-- VISUALIZATION -->
   <!-- Launch Rviz with pre loaded configuration-->
   <node name="rviz" type="rviz" pkg="rviz" args="-d $(find drone_2d_nav)/navigation.rviz" />
 </launch>

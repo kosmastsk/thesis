@@ -33,6 +33,9 @@
       <origin xyz="0.0 0.0 -0.065" rpy="0.0 0 0"/>
     </xacro:lightware_sf11_120m>
 
+    <!-- Gazebo Plugins -->
+    <xacro:quadrotor_plugins/>
+
   </xacro:macro>
 
 </robot>

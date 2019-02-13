@@ -11,10 +11,12 @@
   <xacro:include filename="$(find drone_gazebo)/urdf/quadrotor_aerodynamics.gazebo.xacro" />
 
   <!-- Quadrotor Gazebo Plugins -->
-  <xacro:quadrotor_sensors />
-  <xacro:quadrotor_controller />
-  <xacro:quadrotor_propulsion />
-  <xacro:quadrotor_aerodynamics />
-
+  <xacro:macro name="quadrotor_plugins">
+    <canonicalBody>base_link</canonicalBody>
+    <xacro:quadrotor_sensors/>
+    <xacro:quadrotor_controller />
+    <xacro:quadrotor_propulsion />
+    <xacro:quadrotor_aerodynamics />
+  </xacro:macro>
 
 </robot>
