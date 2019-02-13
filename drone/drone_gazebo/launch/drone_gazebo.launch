@@ -32,6 +32,6 @@
   <node name="estimator" type="estimator" pkg="drone_gazebo" />
 
   <!-- Teleoperate the drone using the keyboard -->
-  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />
+  <node pkg="drone_gazebo" type="teleop" name="teleop" output="screen" />
 
 </launch>

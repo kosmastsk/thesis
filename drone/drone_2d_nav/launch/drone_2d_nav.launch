@@ -49,7 +49,7 @@
 
   <!-- MOVE -->
   <!-- Teleoperate the drone using the keyboard -->
-  <!--<node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen" />-->
+  <!--<node pkg="drone_gazebo" type="teleop" name="teleop" output="screen" /> -->
 
   <!-- Run 2D AMCL node -->
   <include file="$(find drone_2d_nav)/launch/amcl.launch"/>

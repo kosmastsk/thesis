@@ -1,4 +1,4 @@
-# Drone 
+# Drone
 
 Drone contains the necessary packages to simulate a drone in Gazebo. Is is based on the [hector_quadrotor](http://wiki.ros.org/hector_quadrotor) package.
 
@@ -13,9 +13,9 @@ $ catkin build drone_gazebo
 $ roslaunch drone_gazebo italdron.launch
 ```
 
-In order to use the *teleop_twist_keyboard*, you have to run the following:
+In order to move the drone, you have to run the following:
 ```sh
-$ rosservice call /enable_motors "enable: true" 
+$ rosservice call /enable_motors "enable: true"
 ```
 
 > ROS Kinetic, Ubuntu 16.04

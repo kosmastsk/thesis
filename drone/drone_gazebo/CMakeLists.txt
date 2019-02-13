@@ -62,3 +62,6 @@ target_link_libraries(estimator
   ${catkin_LIBRARIES})
 add_dependencies(estimator
   ${catkin_EXPORTED_TARGETS})
+
+add_executable(teleop src/teleop_pr2_keyboard_modificato.cpp)
+target_link_libraries(teleop ${catkin_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
