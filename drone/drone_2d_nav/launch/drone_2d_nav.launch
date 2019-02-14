@@ -21,7 +21,8 @@
   </include>
 
   <!-- Load a map in rviz -->
-  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find drone_gazebo)/maps/$(arg world).yaml">
+  <arg name="map" default="$(find drone_gazebo)/maps/warehouse.yaml"/>
+  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(arg map)">
     <param name="frame_id" value="map" />
   </node>
 

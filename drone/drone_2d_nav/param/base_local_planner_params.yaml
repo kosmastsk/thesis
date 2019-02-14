@@ -43,7 +43,7 @@ TebLocalPlannerROS:
 # If true, the underlying trajectories might be initialized with backwards
 # motions in case the goal is behind the start within the local costmap
 # (this is only recommended if the robot is equipped with rear sensors)
-  allow_init_with_backwards_motion: False
+  allow_init_with_backwards_motion: True
 
 # Specify maximum length (cumulative Euclidean distances) of the subset of the
 # global plan taken into account for optimization [if 0 or negative: disabled;
@@ -71,7 +71,7 @@ TebLocalPlannerROS:
 # If this value is bigger than 0, the trajectory and obstacles are visualized
 # in 3d using the time as the z-axis scaled by this value.
 # Most useful for dynamic obstacles.
-  visualize_with_time_as_z_axis_scale: 0
+  visualize_with_time_as_z_axis_scale: 1
 
 
 ## ViaPoints ###################################################################
@@ -98,10 +98,10 @@ TebLocalPlannerROS:
   max_vel_x: 1 #0.5
 
 # Maximum translational velocity of the robot for driving backwards
-  max_vel_x_backwards: 0.11
+  max_vel_x_backwards: 1 # 0.11
 
 # Maximum angular velocity of the robot
-  max_vel_theta: 1.5
+  max_vel_theta: 2.5
 
 # Maximum strafing velocity of the robot (should be zero for non-holonomic
 # robots!)
@@ -125,7 +125,7 @@ TebLocalPlannerROS:
 # The distance between the drive shaft and steering axle (only required for a
 # carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be
 # negative for back-wheeled robots!
-  wheelbase: 1.0
+  wheelbase: 0.0
 
 # Substitute the rotational velocity in the commanded velocity message by the
 # corresponding steering angle (check 'axles_distance')
@@ -154,7 +154,7 @@ TebLocalPlannerROS:
 
 # Allow the robot's velocity to be nonzero for planning purposes
 # (the robot can arrive at the goal with max speed)
-  free_goal_vel: False
+  free_goal_vel: True
 
 
 ## Obstacles ###################################################################
@@ -229,7 +229,7 @@ TebLocalPlannerROS:
   optimization_activate: True
 
 # Print verbose information
-  optimization_verbose: True # False
+  optimization_verbose: False # True
 
 # Add a small safety margin to penalty functions for hard-constraint
 # approximations
@@ -261,7 +261,7 @@ TebLocalPlannerROS:
 
 # Optimization weight for forcing the robot to choose only forward directions
 # (positive transl. velocities, only diffdrive robot)
-  weight_kinematics_forward_drive: 1
+  weight_kinematics_forward_drive: -1
 
 # Optimization weight for enforcing a minimum turning radius (carlike robots)
   weight_kinematics_turning_radius: 1
