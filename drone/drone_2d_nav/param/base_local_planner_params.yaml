@@ -261,7 +261,7 @@ TebLocalPlannerROS:
 
 # Optimization weight for forcing the robot to choose only forward directions
 # (positive transl. velocities, only diffdrive robot)
-  weight_kinematics_forward_drive: -1
+  weight_kinematics_forward_drive: 0
 
 # Optimization weight for enforcing a minimum turning radius (carlike robots)
   weight_kinematics_turning_radius: 1
