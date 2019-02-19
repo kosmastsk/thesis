@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>drone_3d_nav</name>
+  <version>0.0.0</version>
+  <description>The drone_3d_nav package</description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <maintainer email="kosmastsk@todo.todo">kosmastsk</maintainer>
+
+  <license>BSD</license>
+
+
+  <!-- The *depend tags are used to specify dependencies -->
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>drone_gazebo</depend>
+  <depend>drone_description</depend>
+
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

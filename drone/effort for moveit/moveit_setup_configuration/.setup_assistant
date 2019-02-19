@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: drone_description
+    relative_path: urdf/italdron_evo4hse.urdf
+    xacro_args: "--inorder "
+  SRDF:
+    relative_path: config/quadrotor.srdf
+  CONFIG:
+    author_name: Kosmas Tsiakas
+    author_email: kosmastsk@gmail.com
+    generated_timestamp: 1550527497

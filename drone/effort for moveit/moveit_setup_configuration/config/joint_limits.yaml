@@ -1,0 +1,12 @@
+# joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed
+# Specific joint properties can be changed with the keys [max_position, min_position, max_velocity, max_acceleration]
+# Joint limits can be turned off with [has_velocity_limits, has_acceleration_limits]
+# This not only makes the generated trajectories physically realistic, but also speeds up the planning process by eliminating the set of possible trajectories
+joint_limits:
+  virtual_joint:
+    has_velocity_limits: true
+    max_velocity: 0.2
+    has_acceleration_limits: true
+    max_acceleration: 0.04
+#joint_limits:
+#  {}
