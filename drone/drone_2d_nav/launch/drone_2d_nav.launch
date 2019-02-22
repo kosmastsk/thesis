@@ -49,8 +49,8 @@
   </node>
 
   <!-- MOVE -->
-  <!-- Teleoperate the drone using the keyboard -->
-  <!--<node pkg="drone_gazebo" type="teleop" name="teleop" output="screen" /> -->
+  <!-- Teleoperate the drone using the keyboard, used in case it is stuck -->
+  <node pkg="drone_gazebo" type="teleop" name="teleop" output="screen" />
 
   <!-- Run 2D AMCL node -->
   <include file="$(find drone_2d_nav)/launch/amcl.launch"/>

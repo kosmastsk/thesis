@@ -160,11 +160,11 @@ TebLocalPlannerROS:
 ## Obstacles ###################################################################
 
 # Minimum desired separation from obstacles
-  min_obstacle_dist: 0.1
+  min_obstacle_dist: 0.04
 
 # Buffer zone around obstacles with non-zero penalty costs (should be larger
 # than min_obstacle_dist in order to take effect)
-  inflation_dist: 0.2
+  inflation_dist: 0.0 # 0.2
 
 # Buffer zone around predicted locations of dynamic obstacles with non-zero
 # penalty costs (should be larger than min_obstacle_dist in order to take effect)
