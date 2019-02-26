@@ -4,13 +4,14 @@
 
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
-  <arg name="world" default="$(find drone_gazebo)/worlds/grannie.world "/>
+  <arg name="world" default="$(find drone_gazebo)/worlds/home.world "/>
+  <arg name="map" default="$(find drone_gazebo)/maps/home.yaml "/>
   <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch">
     <arg name="world_file" value="$(arg world)"/>
   </include>
 
   <!-- Load a map in rviz -->
-  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(find amcl_2d_turtlebot)/maps/$(arg world).yaml"/>
+  <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(arg map)"/>
 
   <!-- Run 2D AMCL node -->
   <include file="$(find amcl_2d_turtlebot)/launch/amcl.launch"/>

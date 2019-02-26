@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <rosparam command="load" file="$(find particle_filter)/params/config.yaml" />
+
+  <node name="particle_filter_node" type="particle_filter" pkg="particle_filter" output="screen"/>
+
+</launch>

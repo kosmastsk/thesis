@@ -1,0 +1,195 @@
+#include <libPF/CRandomNumberGenerator.h>
+#include "particle_filter/DroneMovementModel.h"
+
+using namespace std;
+
+DroneMovementModel::DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfBuffer, const std::string& worldFrameID,
+                                       const std::string& baseFrameID)
+  : libPF::MovementModel<DroneState>()
+  , _tfBuffer(tfBuffer)
+  , _tfListener(new tf2_ros::TransformListener(*_tfBuffer))
+  , _worldFrameID(worldFrameID)
+  , _baseLinkFrameID(baseFrameID)
+  , _odometryReceived(false)
+{
+  m_RNG = new libPF::CRandomNumberGenerator();
+  nh->param<double>("/movement/x_std_dev", _XStdDev, 0);
+  nh->param<double>("/movement/y_std_dev", _YStdDev, 0);
+  nh->param<double>("/movement/z_std_dev", _ZStdDev, 0);
+  nh->param<double>("/movement/roll_std_dev", _RollStdDev, 0);
+  nh->param<double>("/movement/pitch_std_dev", _PitchStdDev, 0);
+  nh->param<double>("/movement/yaw_std_dev", _YawStdDev, 0);
+}
+
+DroneMovementModel::~DroneMovementModel()
+{
+  delete m_RNG;
+}
+
+void DroneMovementModel::drift(DroneState& state, double dt) const
+{
+  /*  double speed = state.getSpeed();
+    double orientation = state.getTheta();
+    state.setXPos(state.getXPos() + cos(orientation) * dt * speed);
+    state.setYPos(state.getYPos() + sin(orientation) * dt * speed);
+    state.setZPos(state.getZPos() + sin(orientation) * dt * speed);
+    state.setTheta(state.getTheta() + dt * state.getRotationSpeed());*/
+}
+
+void DroneMovementModel::diffuse(DroneState& state, double dt) const
+{
+  /*state.setXPos(state.getXPos() + m_RNG->getGaussian(m_XStdDev) * dt);
+  state.setYPos(state.getYPos() + m_RNG->getGaussian(m_YStdDev) * dt);
+  state.setSpeed(state.getSpeed() + m_RNG->getGaussian(m_SpeedStdDev) * dt);
+  state.setTheta(state.getTheta() + m_RNG->getGaussian(m_ThetaStdDev) * dt);
+  state.setRotationSpeed(state.getRotationSpeed() + m_RNG->getGaussian(m_RotSpeedStdDev) * dt);*/
+}
+
+void DroneMovementModel::setXStdDev(double d)
+{
+  _XStdDev = d;
+}
+
+double DroneMovementModel::getXStdDev() const
+{
+  return _XStdDev;
+}
+
+void DroneMovementModel::setYStdDev(double d)
+{
+  _YStdDev = d;
+}
+
+double DroneMovementModel::getYStdDev() const
+{
+  return _YStdDev;
+}
+
+void DroneMovementModel::setZStdDev(double d)
+{
+  _ZStdDev = d;
+}
+
+double DroneMovementModel::getZStdDev() const
+{
+  return _ZStdDev;
+}
+
+void DroneMovementModel::setRollStdDev(double d)
+{
+  _RollStdDev = d;
+}
+
+double DroneMovementModel::getRollStdDev() const
+{
+  return _RollStdDev;
+}
+
+void DroneMovementModel::setPitchStdDev(double d)
+{
+  _PitchStdDev = d;
+}
+
+double DroneMovementModel::getPitchStdDev() const
+{
+  return _PitchStdDev;
+}
+
+void DroneMovementModel::setYawStdDev(double d)
+{
+  _YawStdDev = d;
+}
+
+double DroneMovementModel::getYawStdDev() const
+{
+  return _YawStdDev;
+}
+
+void DroneMovementModel::setLastOdomPose(geometry_msgs::PoseStamped& odomPose)
+{
+  _odometryReceived = 1;
+  _lastOdomPose = odomPose;
+}
+
+bool DroneMovementModel::getLastOdomPose(geometry_msgs::PoseStamped& lastOdomPose) const
+{
+  if (_odometryReceived)
+  {
+    lastOdomPose = _lastOdomPose;
+    return 1;
+  }
+  else
+    return 0;
+}
+
+geometry_msgs::TransformStamped DroneMovementModel::computeOdomTransform(geometry_msgs::PoseStamped& currentPose) const
+{
+  tf2::Transform lastOdom;
+  tf2::fromMsg(_lastOdomPose.pose, lastOdom);
+
+  tf2::Transform curPose;
+  tf2::fromMsg(currentPose.pose, curPose);
+
+  geometry_msgs::TransformStamped output;
+
+  if (_odometryReceived)
+  {
+    tf2::convert(lastOdom.inverseTimes(curPose), output.transform);
+    return output;
+  }
+  else
+  {
+    tf2::convert(tf2::Transform::getIdentity(), output.transform);
+    return output;
+  }
+}
+
+void DroneMovementModel::applyOdomTransform(geometry_msgs::TransformStamped& odomTransform,
+                                            geometry_msgs::Pose& statePose) const
+{
+  tf2::Transform odomTF;
+  tf2::fromMsg(odomTransform.transform, odomTF);
+
+  tf2::Transform pose;
+  tf2::fromMsg(statePose, pose);
+
+  tf2::Transform output;
+  output = pose * odomTF;
+
+  tf2::toMsg(output, statePose);
+}
+
+bool DroneMovementModel::lookupOdomPose(const ros::Time& t, geometry_msgs::PoseStamped& odomPose) const
+{
+  geometry_msgs::PoseStamped identity;
+  identity.header.frame_id = _baseLinkFrameID;
+  identity.header.stamp = t;
+
+  tf2::toMsg(tf2::Transform::getIdentity(), identity.pose);
+  try
+  {
+    _tfBuffer->transform(identity, odomPose, _worldFrameID, ros::Duration(0.1));
+  }
+  catch (tf2::TransformException& e)
+  {
+    ROS_WARN("Failed to compute odom pose, skipping scan (%s)", e.what());
+    return false;
+  }
+}
+
+bool DroneMovementModel::lookupOdomTransform(const ros::Time& t, geometry_msgs::TransformStamped& odomTransform) const
+{
+  geometry_msgs::PoseStamped odomPose;
+
+  if (t <= _lastOdomPose.header.stamp)
+  {
+    ROS_WARN("Looking up OdomTransform that is %f ms older than the lastOdomPose!",
+             (_lastOdomPose.header.stamp - t).toSec() / 1000.0);
+  }
+
+  if (!lookupOdomPose(t, odomPose))
+    return false;
+
+  odomTransform = computeOdomTransform(odomPose);
+  return true;
+}

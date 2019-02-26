@@ -1,0 +1,23 @@
+# Initial States #
+
+# Position
+x_pos: 0
+y_pos: 0
+z_pos: 0
+
+# Orientation
+roll: 0
+pitch: 0
+yaw: 0
+
+# Number of particles
+particles: 500
+
+# Standard deviations for movement model
+/movement/x_std_dev: 0.2
+/movement/y_std_dev: 0.2
+/movement/z_std_dev: 0.2
+
+/movement/roll_std_dev: 0.2
+/movement/pitch_std_dev: 0.2
+/movement/yaw_std_dev: 0.2
