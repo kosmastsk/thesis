@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
   tf2_ros
   octomap_ros
   octomap_msgs
+  pcl_ros
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -21,6 +22,11 @@ add_subdirectory(include/libPF)
 find_package(OCTOMAP REQUIRED)
 include_directories(${OCTOMAP_INCLUDE_DIRS})
 link_libraries(${OCTOMAP_LIBRARIES})
+
+find_package(PCL REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ###################################
 ## catkin specific configuration ##
@@ -58,5 +64,5 @@ add_executable(particle_filter
   src/DroneObservationModel.cpp
   src/DroneStateDistribution.cpp
   src/MapModel.cpp)
-target_link_libraries(particle_filter ${catkin_LIBRARIES} PF)
+target_link_libraries(particle_filter ${catkin_LIBRARIES} PF ${PCL_LIBRARIES})
 add_dependencies(particle_filter ${catkin_EXPORTED_TARGETS})

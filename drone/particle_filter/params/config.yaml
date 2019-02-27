@@ -27,3 +27,13 @@ worldFrame: "world"
 baseFootprintFrame: "base_footprint"
 baseStabilizedFrameID: "base_stabilized"
 baseLinkFrameID: "base_link"
+
+# Observation parameters / Raycasting
+laser_z_hit: 0.5
+laser_z_short: 0.05
+laser_z_rand: 0.5
+laser_z_max: 0.05
+laser_sigma_hit: 0.2
+laser_lambda_short: 0.1
+min_range: 0.01
+max_range: 14

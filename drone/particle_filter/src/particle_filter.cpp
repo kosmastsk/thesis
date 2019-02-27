@@ -9,24 +9,16 @@ namespace pf
 /******************************/
 
 Particles::Particles()
-  : _pf(500, &_om, &_mm)
-  , _worldFrameID("world")
-  , _baseFootprintFrameID("base_footprint")
-  , _baseStabilizedFrameID("base_stabilized")
-  , _baseLinkFrameID("base_link")
-  , _tfListener(_tfBuffer, _nh, 1)
-  , _mm(&_nh, &_tfBuffer, "world", "base_link")
-  , _mapModel(&_nh)
 {
   // Initialize the Subscribers
   _scanListener = _nh.subscribe("/scan", 10, &Particles::scanCallback, this);
   _odomListener = _nh.subscribe("/odom", 10, &Particles::odomCallback, this);
-
+  ROS_INFO("HEY\n");
   // Initialize the Publishers
   _particlePublisher = _nh.advertise<geometry_msgs::PoseArray>("/particlecloud", 50);
   _posePublisher = _nh.advertise<geometry_msgs::Pose>("/amcl/pose", 50);
-
-  ROS_INFO("Particle filter created with %d particles\n", _pf.numParticles());
+  // Crashes here, since pf in not initialized yet
+  ROS_INFO("Particle filter created with %d particles\n", _pf->numParticles());
 
   /*
     * After that you can use the particle filter this way:
@@ -166,7 +158,7 @@ void Particles::initState()
   _ds.setYaw(yaw);
 
   // Initialize particle filter's state
-  _pf.setPriorState(_ds);
+  _pf->setPriorState(_ds);
 }
 
 /******************************/
