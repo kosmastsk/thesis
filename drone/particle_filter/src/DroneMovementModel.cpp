@@ -7,18 +7,20 @@ DroneMovementModel::DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfB
                                        const std::string& baseFrameID)
   : libPF::MovementModel<DroneState>()
   , _tfBuffer(tfBuffer)
-  , _tfListener(new tf2_ros::TransformListener(*_tfBuffer))
+  , _tfListener(new tf2_ros::TransformListener(*tfBuffer))
   , _worldFrameID(worldFrameID)
   , _baseLinkFrameID(baseFrameID)
   , _odometryReceived(false)
 {
   m_RNG = new libPF::CRandomNumberGenerator();
-  nh->param<double>("/movement/x_std_dev", _XStdDev, 0);
-  nh->param<double>("/movement/y_std_dev", _YStdDev, 0);
-  nh->param<double>("/movement/z_std_dev", _ZStdDev, 0);
-  nh->param<double>("/movement/roll_std_dev", _RollStdDev, 0);
-  nh->param<double>("/movement/pitch_std_dev", _PitchStdDev, 0);
-  nh->param<double>("/movement/yaw_std_dev", _YawStdDev, 0);
+  nh->param<double>("/movement/x_std_dev", _XStdDev, 0.2);
+  nh->param<double>("/movement/y_std_dev", _YStdDev, 0.2);
+  nh->param<double>("/movement/z_std_dev", _ZStdDev, 0.2);
+  nh->param<double>("/movement/roll_std_dev", _RollStdDev, 0.2);
+  nh->param<double>("/movement/pitch_std_dev", _PitchStdDev, 0.2);
+  nh->param<double>("/movement/yaw_std_dev", _YawStdDev, 0.2);
+
+  ROS_INFO("Drone movement model has been initialized!\n");
 }
 
 DroneMovementModel::~DroneMovementModel()
@@ -28,21 +30,53 @@ DroneMovementModel::~DroneMovementModel()
 
 void DroneMovementModel::drift(DroneState& state, double dt) const
 {
-  /*  double speed = state.getSpeed();
-    double orientation = state.getTheta();
-    state.setXPos(state.getXPos() + cos(orientation) * dt * speed);
-    state.setYPos(state.getYPos() + sin(orientation) * dt * speed);
-    state.setZPos(state.getZPos() + sin(orientation) * dt * speed);
-    state.setTheta(state.getTheta() + dt * state.getRotationSpeed());*/
+  geometry_msgs::Pose currentPose;
+  currentPose.position.x = state.getXPos();
+  currentPose.position.y = state.getYPos();
+  currentPose.position.z = state.getZPos();
+
+  // Convert RPY to quaternion, to apply the odom transform, then roll back
+  tf::Quaternion currentOrientation;
+  currentOrientation = tf::createQuaternionFromRPY(state.getRoll(), state.getPitch(), state.getPitch());
+  currentOrientation.normalize();
+  // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
+  tf::quaternionTFToMsg(currentOrientation, currentPose.orientation);
+
+  geometry_msgs::TransformStamped odomTransform;
+
+  if (!(lookupOdomTransform(_lastOdomPose.header.stamp + ros::Duration(dt), odomTransform)))
+  {
+    ROS_WARN("Transform not found! \n");
+  }
+
+  applyOdomTransform(odomTransform, currentPose);
+
+  // Set the positions
+  state.setXPos(currentPose.position.x);
+  state.setYPos(currentPose.position.y);
+  state.setZPos(currentPose.position.z);
+
+  // Set the orientation. Pose has quaternion but we need RPY, convert!
+  tf::Quaternion newOrientation;
+  tf::quaternionMsgToTF(currentPose.orientation, newOrientation);
+
+  double roll, pitch, yaw;
+  tf::Matrix3x3(newOrientation).getRPY(roll, pitch, yaw);
+
+  state.setRoll(roll);
+  state.setPitch(pitch);
+  state.setYaw(yaw);
 }
 
 void DroneMovementModel::diffuse(DroneState& state, double dt) const
 {
-  /*state.setXPos(state.getXPos() + m_RNG->getGaussian(m_XStdDev) * dt);
-  state.setYPos(state.getYPos() + m_RNG->getGaussian(m_YStdDev) * dt);
-  state.setSpeed(state.getSpeed() + m_RNG->getGaussian(m_SpeedStdDev) * dt);
-  state.setTheta(state.getTheta() + m_RNG->getGaussian(m_ThetaStdDev) * dt);
-  state.setRotationSpeed(state.getRotationSpeed() + m_RNG->getGaussian(m_RotSpeedStdDev) * dt);*/
+  state.setXPos(state.getXPos() + m_RNG->getGaussian(_XStdDev) * dt);
+  state.setYPos(state.getYPos() + m_RNG->getGaussian(_YStdDev) * dt);
+  state.setZPos(state.getZPos() + m_RNG->getGaussian(_ZStdDev) * dt);
+
+  state.setRoll(state.getRoll() + m_RNG->getGaussian(_RollStdDev) * dt);
+  state.setPitch(state.getPitch() + m_RNG->getGaussian(_PitchStdDev) * dt);
+  state.setYaw(state.getYaw() + m_RNG->getGaussian(_YawStdDev) * dt);
 }
 
 void DroneMovementModel::setXStdDev(double d)

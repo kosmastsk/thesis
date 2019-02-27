@@ -23,6 +23,7 @@
 #include "particle_filter/DroneObservationModel.h"
 #include "particle_filter/DroneMovementModel.h"
 #include "particle_filter/DroneStateDistribution.h"
+#include "particle_filter/MapModel.h"
 
 namespace pf
 {
@@ -33,8 +34,10 @@ protected:
   ros::NodeHandle _nh;
   DroneObservationModel _om;
   DroneMovementModel _mm;
+  MapModel _mapModel;
   libPF::ParticleFilter<DroneState> _pf;
   DroneState _ds;
+  int _particles;
 
   // Pub - Sub
   ros::Subscriber _scanListener;

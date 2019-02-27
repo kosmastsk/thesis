@@ -6,10 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /LaserScan1
         - /LaserScan1/Autocompute Value Bounds1
         - /Camera1/Visibility1
-        - /PoseArray1
       Splitter Ratio: 0.5
     Tree Height: 404
   - Class: rviz/Selection
@@ -30,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Camera
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -62,78 +60,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_hub:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_4:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_5:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_6:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_range_7:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        front_cam_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        front_cam_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        height_sensor_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        hub_gyro_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        inertial_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -194,7 +120,7 @@ Visualization Manager:
       Marker Topic: /occupied_cells_vis_array
       Name: MarkerArray
       Namespaces:
-        {}
+        map: true
       Queue Size: 100
       Value: true
     - Alpha: 0.699999988
@@ -248,25 +174,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 47.9905014
+      Distance: 24.573595
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -4.10112286
-        Y: -3.02907825
-        Z: -23.5794106
+        X: -1.25622118
+        Y: 7.20570278
+        Z: -0.268777519
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.52979624
+      Pitch: 0.882568002
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.47183752
+      Yaw: 2.10520196
     Saved: ~
 Window Geometry:
   Camera:

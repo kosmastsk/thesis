@@ -15,7 +15,8 @@ Particles::Particles()
   , _baseStabilizedFrameID("base_stabilized")
   , _baseLinkFrameID("base_link")
   , _tfListener(_tfBuffer, _nh, 1)
-  , _mm(&_nh, &_tfBuffer, _worldFrameID, _baseLinkFrameID)
+  , _mm(&_nh, &_tfBuffer, "world", "base_link")
+  , _mapModel(&_nh)
 {
   // Initialize the Subscribers
   _scanListener = _nh.subscribe("/scan", 10, &Particles::scanCallback, this);

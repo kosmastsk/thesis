@@ -10,10 +10,17 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED
   roscpp
   tf2_ros
+  octomap_ros
+  octomap_msgs
 )
+
+find_package(Boost REQUIRED COMPONENTS system)
 
 add_subdirectory(include/libPF)
 
+find_package(OCTOMAP REQUIRED)
+include_directories(${OCTOMAP_INCLUDE_DIRS})
+link_libraries(${OCTOMAP_LIBRARIES})
 
 ###################################
 ## catkin specific configuration ##

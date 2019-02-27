@@ -21,3 +21,9 @@ particles: 500
 /movement/roll_std_dev: 0.2
 /movement/pitch_std_dev: 0.2
 /movement/yaw_std_dev: 0.2
+
+# Frames
+worldFrame: "world"
+baseFootprintFrame: "base_footprint"
+baseStabilizedFrameID: "base_stabilized"
+baseLinkFrameID: "base_link"

@@ -15,6 +15,7 @@
 
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
+#include <tf/LinearMath/Matrix3x3.h>
 
 class RandomNumberGenerator;
 
@@ -34,7 +35,7 @@ public:
   /**
    * Constructor
    */
-  DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfBuffer, const std::string& odomFrameID,
+  DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfBuffer, const std::string& worldFrameID,
                      const std::string& baseFrameID);
 
   /**
