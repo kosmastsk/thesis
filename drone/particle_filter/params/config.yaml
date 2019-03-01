@@ -25,8 +25,8 @@ particles: 500
 # Frames
 worldFrame: "world"
 baseFootprintFrame: "base_footprint"
-baseStabilizedFrameID: "base_stabilized"
-baseLinkFrameID: "base_link"
+baseStabilizedFrame: "base_stabilized"
+baseLinkFrame: "base_link"
 
 # Observation parameters / Raycasting
 laser_z_hit: 0.5

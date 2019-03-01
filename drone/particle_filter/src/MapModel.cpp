@@ -10,7 +10,7 @@ MapModel::MapModel(ros::NodeHandle* nh)
 
   while (nh->ok() && !ros::service::call(mapService, req, res))
   {
-    ROS_INFO("Service call to %s failed. Trying again...\n", nh->resolveName(mapService).c_str());
+    ROS_WARN("Service call to %s failed. Trying again...\n", nh->resolveName(mapService).c_str());
     usleep(1000000);
   }
 

@@ -74,6 +74,8 @@ double DroneObservationModel::measure(const DroneState& state) const
     octomap::point3d end;
 
     octomap::ColorOcTreeNode* colorNode;
+    // raycast in OctoMap, we need to cast a little longer than max_range
+    // to correct for particle drifts away from obstacles
     if (_map->castRay(originP, direction, end, true, 1.5 * _maxRange))
     {
       ROS_ASSERT(_map->isNodeOccupied(_map->search(end)));

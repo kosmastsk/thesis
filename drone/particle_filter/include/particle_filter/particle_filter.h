@@ -32,16 +32,17 @@ class Particles
 protected:
   // Variables
   ros::NodeHandle _nh;
-  DroneObservationModel* _om;
+  std::shared_ptr<libPF::ObservationModel<DroneState> > _om;
   DroneMovementModel* _mm;
   std::shared_ptr<MapModel> _mapModel;
   libPF::ParticleFilter<DroneState>* _pf;
   DroneState _ds;
-  int _particles;
+  int _numParticles;
 
   // Pub - Sub
   ros::Subscriber _scanListener;
   ros::Subscriber _odomListener;
+
   ros::Publisher _particlePublisher;
   ros::Publisher _posePublisher;
 
@@ -56,6 +57,9 @@ protected:
   tf2_ros::TransformListener* _tfListener;
   tf2_ros::TransformBroadcaster* _tfBroadcaster;
   tf2::Transform _latestTransform;
+
+  // Pose
+  geometry_msgs::PoseArray _poseArray;
 
   // Functions
   void initState();
