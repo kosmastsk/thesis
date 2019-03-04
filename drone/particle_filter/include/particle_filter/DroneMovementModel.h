@@ -36,7 +36,7 @@ public:
    * Constructor
    */
   DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfBuffer, const std::string& worldFrameID,
-                     const std::string& baseFrameID);
+                     const std::string& baseFootprintID);
 
   /**
    * Destructor
@@ -95,9 +95,12 @@ public:
   // param odom new odometry pose
   void setLastOdomPose(geometry_msgs::PoseStamped& odomPose);
 
+  // Reset movement model
+  void reset();
+
   /// get the last stored odomPose
   /// returns false when there is no valid previous pose stored
-  bool getLastOdomPose(geometry_msgs::PoseStamped& lastOdomPose) const;
+  geometry_msgs::PoseStamped getLastOdomPose() const;
 
   // param currentPose, the current pose that the transform will be applied
   geometry_msgs::TransformStamped computeOdomTransform(geometry_msgs::PoseStamped& currentPose) const;
@@ -111,6 +114,10 @@ public:
   /// looks up the odometry pose at time t and then calls computeOdomTransform()
   bool lookupOdomTransform(const ros::Time& t, geometry_msgs::TransformStamped& odomTransform) const;
 
+  //  Find the transform between base->target in TF Frame tree
+  bool lookupTargetToBaseTransform(std::string const& targetFrame, ros::Time const& t,
+                                   geometry_msgs::TransformStamped& localTransform) const;
+
 protected:
 private:
   /// Stores the random number generator
@@ -119,7 +126,7 @@ private:
   bool _odometryReceived;
 
   std::string _worldFrameID;
-  std::string _baseLinkFrameID;
+  std::string _baseFootprintFrameID;
 
   tf2_ros::Buffer* _tfBuffer;
   tf2_ros::TransformListener* _tfListener;

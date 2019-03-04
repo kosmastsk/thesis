@@ -4,12 +4,12 @@
 using namespace std;
 
 DroneMovementModel::DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfBuffer, const std::string& worldFrameID,
-                                       const std::string& baseFrameID)
+                                       const std::string& baseFootprintID)
   : libPF::MovementModel<DroneState>()
   , _tfBuffer(tfBuffer)
   , _tfListener(new tf2_ros::TransformListener(*tfBuffer))
   , _worldFrameID(worldFrameID)
-  , _baseLinkFrameID(baseFrameID)
+  , _baseFootprintFrameID(baseFootprintID)
   , _odometryReceived(false)
 {
   m_RNG = new libPF::CRandomNumberGenerator();
@@ -145,15 +145,14 @@ void DroneMovementModel::setLastOdomPose(geometry_msgs::PoseStamped& odomPose)
   _lastOdomPose = odomPose;
 }
 
-bool DroneMovementModel::getLastOdomPose(geometry_msgs::PoseStamped& lastOdomPose) const
+void DroneMovementModel::reset()
 {
-  if (_odometryReceived)
-  {
-    lastOdomPose = _lastOdomPose;
-    return 1;
-  }
-  else
-    return 0;
+  _odometryReceived = false;
+}
+
+geometry_msgs::PoseStamped DroneMovementModel::getLastOdomPose() const
+{
+  return _lastOdomPose;
 }
 
 geometry_msgs::TransformStamped DroneMovementModel::computeOdomTransform(geometry_msgs::PoseStamped& currentPose) const
@@ -196,7 +195,7 @@ void DroneMovementModel::applyOdomTransform(geometry_msgs::TransformStamped& odo
 bool DroneMovementModel::lookupOdomPose(const ros::Time& t, geometry_msgs::PoseStamped& odomPose) const
 {
   geometry_msgs::PoseStamped identity;
-  identity.header.frame_id = _baseLinkFrameID;
+  identity.header.frame_id = _baseFootprintFrameID;
   identity.header.stamp = t;
 
   tf2::toMsg(tf2::Transform::getIdentity(), identity.pose);
@@ -225,5 +224,20 @@ bool DroneMovementModel::lookupOdomTransform(const ros::Time& t, geometry_msgs::
     return false;
 
   odomTransform = computeOdomTransform(odomPose);
+  return true;
+}
+
+bool DroneMovementModel::lookupTargetToBaseTransform(std::string const& targetFrame, ros::Time const& t,
+                                                     geometry_msgs::TransformStamped& localTransform) const
+{
+  try
+  {
+    localTransform = _tfBuffer->lookupTransform(targetFrame, _baseFootprintFrameID, t);
+  }
+  catch (tf2::TransformException& e)
+  {
+    ROS_WARN("Failed to lookup local transform %s ", e.what());
+    return false;
+  }
   return true;
 }

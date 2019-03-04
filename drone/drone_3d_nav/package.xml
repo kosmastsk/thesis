@@ -16,6 +16,11 @@
 
   <depend>drone_gazebo</depend>
   <depend>drone_description</depend>
+  <depend>particle_filter</depend>
+  <depend>octomap_server</depend>
+  <depend>roscpp</depend>
+  <depend>tf</depend>
+  <depend>sensor_msgs</depend>
 
 
 

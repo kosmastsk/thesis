@@ -23,10 +23,13 @@ particles: 500
 /movement/yaw_std_dev: 0.2
 
 # Frames
+mapFrame: "map"
 worldFrame: "world"
 baseFootprintFrame: "base_footprint"
 baseStabilizedFrame: "base_stabilized"
 baseLinkFrame: "base_link"
+
+transform_tolerance_time: 1.0
 
 # Observation parameters / Raycasting
 laser_z_hit: 0.5
@@ -37,3 +40,6 @@ laser_sigma_hit: 0.2
 laser_lambda_short: 0.1
 min_range: 0.01
 max_range: 14
+observation_threshold_trans: 0.3
+observation_threshold_rot: 0.4
+sensor_sample_distance: 0.2

@@ -32,7 +32,7 @@ double DroneObservationModel::measure(const DroneState& state) const
   particlePose_g.translation.z = state.getZPos();
 
   tf::Quaternion particlePoseOrientation;
-  particlePoseOrientation = tf::createQuaternionFromRPY(state.getRoll(), state.getPitch(), state.getPitch());
+  particlePoseOrientation = tf::createQuaternionFromRPY(state.getRoll(), state.getPitch(), state.getYaw());
   particlePoseOrientation.normalize();
   // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
   tf::quaternionTFToMsg(particlePoseOrientation, particlePose_g.rotation);
@@ -119,8 +119,8 @@ void DroneObservationModel::setBaseToSensorTransform(const tf2::Transform& baseT
   _baseToSensorTransform = baseToSensorTF;
 }
 
-void DroneObservationModel::setObservedRanges(const pcl::PointCloud<pcl::PointXYZ>& observed,
-                                              const std::vector<float>& ranges)
+void DroneObservationModel::setObservedMeasurements(pcl::PointCloud<pcl::PointXYZ> const& observed,
+                                                    std::vector<float> const& ranges)
 {
   _observedMeasurement = observed;
   _observedRanges = ranges;

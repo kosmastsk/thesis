@@ -52,7 +52,7 @@ public:
 
   void setBaseToSensorTransform(const tf2::Transform& baseToSensorTF);
 
-  void setObservedRanges(const pcl::PointCloud<pcl::PointXYZ>& observed, const std::vector<float>& ranges);
+  void setObservedMeasurements(pcl::PointCloud<pcl::PointXYZ> const& observed, std::vector<float> const& ranges);
 
 protected:
 private:
