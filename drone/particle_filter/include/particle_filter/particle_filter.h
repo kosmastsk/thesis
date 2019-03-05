@@ -4,6 +4,11 @@
 // System headers
 #include <iostream>
 #include <iomanip>
+#include <vector>
+#include <string>
+#include <memory>
+
+#include <boost/bind.hpp>
 
 // ROS headers
 #include <ros/ros.h>
@@ -12,15 +17,20 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_ros/message_filter.h>
 #include <tf2/utils.h>
+#include <std_srvs/Empty.h>
+#include <ros/time.h>
+#include <ros/timer.h>
+#include <ros/duration.h>
 
 // Message Filters
 #include <message_filters/subscriber.h>
 
 // ROS messages
 #include <sensor_msgs/LaserScan.h>
-#include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/Pose.h>
 
 // libPF headers
 #include <libPF/ParticleFilter.h>
@@ -47,14 +57,13 @@ protected:
   DroneMovementModel* _mm;
   std::shared_ptr<MapModel> _mapModel;
   libPF::ParticleFilter<DroneState>* _pf;
-  DroneState _ds;
   int _numParticles;
 
   // Pub - Sub
   message_filters::Subscriber<sensor_msgs::LaserScan>* _scanListener;
   tf2_ros::MessageFilter<sensor_msgs::LaserScan>* _scanFilter;
 
-  ros::Subscriber _odomListener;
+  // ros::Subscriber _odomListener;
 
   message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>* _initialPoseListener;
   tf2_ros::MessageFilter<geometry_msgs::PoseWithCovarianceStamped>* _initialPoseFilter;
@@ -63,6 +72,8 @@ protected:
   ros::Publisher _posePublisher;
   ros::Publisher _poseArrayPublisher;
   ros::Publisher _filteredPointCloudPublisher;
+
+  ros::ServiceServer _globalLocalizationService;
 
   // Frames
   std::string _mapFrameID;
@@ -102,7 +113,7 @@ protected:
   ros::Timer _latestTransformTimer;
 
   // Functions
-  void initState();
+  void reset();
 
   void publishPoseEstimate(const ros::Time& t);
   void prepareLaserPointCloud(const sensor_msgs::LaserScanConstPtr& scan, pcl::PointCloud<pcl::PointXYZ>& pc,
@@ -112,9 +123,10 @@ protected:
 
   // Callbacks
   void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
-  void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+  // void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
   void latestTransformTimerCallback(const ros::TimerEvent& timer_event);
   void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
+  bool globalLocalizationCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
 
 public:
   Particles();

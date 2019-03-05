@@ -11,7 +11,7 @@ pitch: 0
 yaw: 0
 
 # Number of particles
-particles: 500
+particles: 2000
 
 # Standard deviations for movement model
 /movement/x_std_dev: 0.2

@@ -8,19 +8,20 @@ namespace pf
 /*        Constructor         */
 /******************************/
 
-Particles::Particles()
+Particles::Particles() : _tfBuffer(ros::Duration(10), false)
 {
   _initialized = 0;  // System has not been initialized yet
+  _receivedSensorData = 0;
   _firstRun = 1;
 
   // Get the parameters from Parameter Server
   _nh.param<int>("/particles", _numParticles, 500);
 
-  _nh.param<std::string>("/mapFrame", _mapFrameID, "/map");
-  _nh.param<std::string>("/worldFrame", _worldFrameID, "/world");
-  _nh.param<std::string>("/baseFootprintFrame", _baseFootprintFrameID, "/base_footprint");
-  _nh.param<std::string>("/baseStabilizedFrame", _baseStabilizedFrameID, "/base_stabilized");
-  _nh.param<std::string>("/baseLinkFrame", _baseLinkFrameID, "/base_link");
+  _nh.param<std::string>("/mapFrame", _mapFrameID, "map");
+  _nh.param<std::string>("/worldFrame", _worldFrameID, "world");
+  _nh.param<std::string>("/baseFootprintFrame", _baseFootprintFrameID, "base_footprint");
+  _nh.param<std::string>("/baseStabilizedFrame", _baseStabilizedFrameID, "base_stabilized");
+  _nh.param<std::string>("/baseLinkFrame", _baseLinkFrameID, "base_link");
 
   _nh.param<double>("/max_range", _filterMaxRange, 14);
   _nh.param<double>("/min_range", _filterMinRange, 0.05);
@@ -38,46 +39,58 @@ Particles::Particles()
   _nh.param<double>("/movement/pitch_std_dev", _PitchStdDev, 0.2);
   _nh.param<double>("/movement/yaw_std_dev", _YawStdDev, 0.2);
 
-  // Initialize TF Listener/Broadcaster
+  // TF listener / Broadcaster
+  // tf2_ros::Buffer _tfBuffer(ros::Duration(10), false);
   _tfBuffer.clear();
   _tfListener = new tf2_ros::TransformListener(_tfBuffer);
-  _tfBroadcaster = new tf2_ros::TransformBroadcaster;
+  _tfBroadcaster = new tf2_ros::TransformBroadcaster();
+
+  // set to identity the map to world transform
+  _latestTransform.setIdentity();
 
   // Initialize Models
+  // Movement model
+  _mm = new DroneMovementModel(&_nh, &_tfBuffer, _worldFrameID, _baseFootprintFrameID);
+
   _mapModel = std::shared_ptr<MapModel>(new MapModel(&_nh));
   // octomap_server must have already provided the map to proceed
 
-  _mm = new DroneMovementModel(&_nh, &_tfBuffer, _worldFrameID, _baseFootprintFrameID);
   _om = std::shared_ptr<libPF::ObservationModel<DroneState> >(new DroneObservationModel(&_nh, _mapModel));
 
   _pf = new libPF::ParticleFilter<DroneState>(_numParticles, _om.get(), _mm);
 
-  // Initialize the Publishers
-  _posePublisher = _nh.advertise<geometry_msgs::Pose>("/amcl/pose", 50);
+  // Init PoseArray
+  _poseArray.header.frame_id = _mapFrameID;
+  _poseArray.poses.resize(_numParticles);
+
+  // publishers can be advertised first, before needed:
+  _posePublisher = _nh.advertise<geometry_msgs::PoseStamped>("/amcl/pose", 50);
   _poseArrayPublisher = _nh.advertise<geometry_msgs::PoseArray>("/amcl/particlecloud", 50);
   _filteredPointCloudPublisher = _nh.advertise<sensor_msgs::PointCloud2>("amcl/filtered_cloud", 5);
 
-  // Initialize the Subscribers
-  _scanListener = new message_filters::Subscriber<sensor_msgs::LaserScan>(_nh, "/scan", 100);
-  // QUESTION do i need it? \/
-  _odomListener = _nh.subscribe("/odom", 10, &Particles::odomCallback, this);
+  // Propagate particles independent of sensor callback
+  reset();
 
-  // set to identity the map to world transform
-  _latestTransform.setIdentity();
+  // ROS subscriptions last:
+  _globalLocalizationService =
+      _nh.advertiseService("/global_localization", &Particles::globalLocalizationCallback, this);
+
   // Timer for sending the latest transform
   _latestTransformTimer =
       _nh.createTimer(ros::Duration(_transformTolerance), &Particles::latestTransformTimerCallback, this);
 
-  // Init PoseArray
-  _poseArray.header.frame_id = _mapFrameID;
-  _poseArray.poses.resize(_numParticles);
+  // subscription on laser, tf message filter
+  _scanListener = new message_filters::Subscriber<sensor_msgs::LaserScan>(_nh, "/scan", 100);
 
   // Use tf2_ros::MessageFilter to take a subscription to LaserScan msg and cache it until it is possible to transform
   // it into the target frame.
   _scanFilter = new tf2_ros::MessageFilter<sensor_msgs::LaserScan>(*_scanListener, _tfBuffer, _worldFrameID, 100, _nh);
   _scanFilter->registerCallback(boost::bind(&Particles::scanCallback, this, _1));
 
-  // Initial pose subscriber and callback
+  // subscription on point cloud, tf message filter
+  // TODO
+
+  // subscription on init pose, tf message filter
   _initialPoseListener =
       new message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>(_nh, "/amcl/initial_pose", 5);
 
@@ -86,7 +99,11 @@ Particles::Particles()
 
   _initialPoseFilter->registerCallback(boost::bind(&Particles::initialPoseCallback, this, _1));
 
+  // QUESTION do i need it? \/
+  // _odomListener = _nh.subscribe("/odom", 10, &Particles::odomCallback, this);
+
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
+
   ROS_INFO("Particle filter created with %d particles!\n", _pf->numParticles());
 }
 
@@ -96,14 +113,18 @@ Particles::Particles()
 
 Particles::~Particles()
 {
+  delete _scanFilter;
+  delete _scanListener;
+  delete _initialPoseFilter;
+  delete _initialPoseListener;
   ROS_INFO("Particles object destroyed");
 }
 
 /******************************/
-/*         initState          */
+/*           reset            */
 /******************************/
 
-void Particles::initState()
+void Particles::reset()
 {
   double x_pos, y_pos, z_pos, roll, pitch, yaw;
 
@@ -117,17 +138,18 @@ void Particles::initState()
   _nh.param<double>("/pitch", pitch, 0);
   _nh.param<double>("/yaw", yaw, 0);
 
-  // Initialize state variables
-  _ds.setXPos(x_pos);
-  _ds.setYPos(y_pos);
-  _ds.setZPos(z_pos);
+  geometry_msgs::PoseWithCovarianceStampedPtr posePtr(new geometry_msgs::PoseWithCovarianceStamped());
 
-  _ds.setRoll(roll);
-  _ds.setRoll(pitch);
-  _ds.setYaw(yaw);
+  posePtr->header.frame_id = _mapFrameID;
 
-  // Initialize particle filter's state
-  _pf->setPriorState(_ds);
+  posePtr->pose.pose.position.x = x_pos;
+  posePtr->pose.pose.position.y = y_pos;
+  posePtr->pose.pose.position.z = z_pos;
+  tf::Quaternion quat;
+  quat.setRPY(roll, pitch, yaw);
+  tf::quaternionTFToMsg(quat.normalize(), posePtr->pose.pose.orientation);
+
+  this->initialPoseCallback(posePtr);
 }
 
 /******************************/
@@ -243,7 +265,7 @@ void Particles::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamp
 
   if (msg->header.frame_id != _mapFrameID)
   {
-    ROS_WARN("Frame ID of \"initialpose\" (%s) is different from the global frame %s", msg->header.frame_id.c_str(),
+    ROS_WARN("Frame ID of amcl/initialpose (%s) is different from the global frame %s", msg->header.frame_id.c_str(),
              _mapFrameID.c_str());
   }
 
@@ -272,16 +294,44 @@ void Particles::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamp
   _pf->resetTimer();
   _mm->reset();
 
+  _initialized = true;
+  _receivedSensorData = true;
+  _firstRun = true;
+
   publishPoseEstimate(msg->header.stamp);
+}
+
+/******************************/
+/* globalLocalizationCallback */
+/******************************/
+
+bool Particles::globalLocalizationCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+{
+  ROS_INFO("Initialize Global Localization with Uniform Distribution");
+
+  DroneStateDistribution distribution(_mapModel);
+  distribution.setUniform(true);
+  _pf->drawAllFromDistribution(distribution);
+  _pf->setResamplingMode(libPF::RESAMPLE_NEFF);
+  _pf->resetTimer();
+  _mm->reset();
+
+  // Do not integrate measurements until moved(??)
+  _receivedSensorData = true;
+  _initialized = true;
+  _firstRun = true;
+  publishPoseEstimate(ros::Time::now());
+
+  return true;
 }
 
 /******************************/
 /*       odomCallback         */
 /******************************/
 
-void Particles::odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
-{
-}
+// void Particles::odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
+// {
+// }
 
 /******************************/
 /*       publishPoses         */
@@ -296,9 +346,9 @@ void Particles::publishPoseEstimate(const ros::Time& t)
   }
 
   // Fill in the pose array
-  // CAN BE PARALLELIZED
+  // CAN BE PARALLELIZED from here ***
   tf::Quaternion temp_pose_orien;  // declare it only once and use it later
-
+#pragma omp parallel for
   for (unsigned i = 0; i < _pf->numParticles(); i++)
   {
     // Create a Pose object, fill it with x,y,z,r,p,y and then pass it on
@@ -315,6 +365,8 @@ void Particles::publishPoseEstimate(const ros::Time& t)
 
     _poseArray.poses[i] = temp_pose;
   }
+  // **** up to here
+
   // Publish
   _poseArrayPublisher.publish(_poseArray);
 
@@ -361,7 +413,6 @@ void Particles::publishPoseEstimate(const ros::Time& t)
     temp_poseStamped.header.frame_id = _baseFootprintFrameID;
     temp_poseStamped.header.stamp = t;
     tf2::toMsg(temp_tf2Transform.inverse(), temp_poseStamped.pose);
-
     _tfBuffer.transform(temp_poseStamped, worldToMap, _worldFrameID);
   }
   catch (const tf2::TransformException& e)
@@ -373,7 +424,6 @@ void Particles::publishPoseEstimate(const ros::Time& t)
   tf2::convert(worldToMap.pose, _latestTransform);
 
   // We want to send a transform that is good up until a tolerance time so that odom can be used
-
   ros::Time transform_expiration = (t + ros::Duration(_transformTolerance));
   geometry_msgs::TransformStamped tmp_tf_stamped;
   tmp_tf_stamped.header.frame_id = _mapFrameID;

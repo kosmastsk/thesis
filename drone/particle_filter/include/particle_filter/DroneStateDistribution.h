@@ -10,6 +10,7 @@
 #include <libPF/CRandomNumberGenerator.h>
 
 #include "particle_filter/DroneState.h"
+#include "particle_filter/MapModel.h"
 
 namespace libPF
 {
@@ -20,25 +21,27 @@ class DroneStateDistribution : public libPF::StateDistribution<DroneState>
 {
 public:
   // Uniform distribution
-  DroneStateDistribution(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax, float rollmin,
-                         float rollmax, float pitchmin, float pitchmax, float yawmin, float yawmax);
+  DroneStateDistribution(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax, double rollmin,
+                         double rollmax, double pitchmin, double pitchmax, double yawmin, double yawmax);
   // Gaussian Distribution
-  DroneStateDistribution(float xInit, float yInit, float zInit, float rollInit, float pitchInit, float yawInit);
+  DroneStateDistribution(double xInit, double yInit, double zInit, double rollInit, double pitchInit, double yawInit);
 
-  // TODO add constructor for global localization with map shared ptr
+  // Global localization
+  DroneStateDistribution(std::shared_ptr<MapModel> map);
 
   ~DroneStateDistribution();
 
   void setUniform(bool uniform);
 
-  void setStdDev(float x, float y, float z, float r, float p, float yaw);
+  void setStdDev(double x, double y, double z, double r, double p, double yaw);
 
   const DroneState draw() const;
 
 private:
-  float _XMin, _XMax, _YMin, _YMax, _ZMin, _ZMax, _RollMin, _RollMax, _PitchMin, _PitchMax, _YawMin, _YawMax;
-  float _XStdDev, _YStdDev, _ZStdDev, _RollStdDev, _PitchStdDev, _YawStdDev;
+  double _XMin, _XMax, _YMin, _YMax, _ZMin, _ZMax, _RollMin, _RollMax, _PitchMin, _PitchMax, _YawMin, _YawMax;
+  double _XStdDev, _YStdDev, _ZStdDev, _RollStdDev, _PitchStdDev, _YawStdDev;
   bool _uniform;
+  std::shared_ptr<octomap::ColorOcTree> _map;
 
   libPF::RandomNumberGenerationStrategy* m_RNG;
 };
