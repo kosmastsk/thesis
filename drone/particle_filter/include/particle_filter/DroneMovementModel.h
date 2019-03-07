@@ -7,15 +7,20 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <nav_msgs/Odometry.h>
 
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/message_filter.h>
 
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <tf/LinearMath/Matrix3x3.h>
+
+// Message Filters
+#include <message_filters/subscriber.h>
 
 class RandomNumberGenerator;
 
@@ -117,6 +122,7 @@ public:
   //  Find the transform between base->target in TF Frame tree
   bool lookupTargetToBaseTransform(std::string const& targetFrame, ros::Time const& t,
                                    geometry_msgs::TransformStamped& localTransform) const;
+  void odomCallback(const nav_msgs::OdometryConstPtr& msg);
 
 protected:
 private:
@@ -132,6 +138,9 @@ private:
   tf2_ros::TransformListener* _tfListener;
 
   geometry_msgs::PoseStamped _lastOdomPose;
+
+  message_filters::Subscriber<nav_msgs::Odometry>* _odomListener;
+  tf2_ros::MessageFilter<nav_msgs::Odometry>* _odomFilter;
 
   /// Store the standard deviations of the model
   double _XStdDev;

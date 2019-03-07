@@ -1,9 +1,9 @@
 # Initial States #
 
 # Position
-x_pos: 0
+x_pos: 1
 y_pos: 0
-z_pos: 0
+z_pos: 0.2
 
 # Orientation
 roll: 0
@@ -11,7 +11,7 @@ pitch: 0
 yaw: 0
 
 # Number of particles
-particles: 2000
+particles: 500
 
 # Standard deviations for movement model
 /movement/x_std_dev: 0.2
@@ -21,6 +21,7 @@ particles: 2000
 /movement/roll_std_dev: 0.2
 /movement/pitch_std_dev: 0.2
 /movement/yaw_std_dev: 0.2
+
 
 # Frames
 mapFrame: "map"

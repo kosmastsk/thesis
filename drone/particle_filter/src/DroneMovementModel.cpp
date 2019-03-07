@@ -20,12 +20,26 @@ DroneMovementModel::DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfB
   nh->param<double>("/movement/pitch_std_dev", _PitchStdDev, 0.2);
   nh->param<double>("/movement/yaw_std_dev", _YawStdDev, 0.2);
 
+  _odomListener = new message_filters::Subscriber<nav_msgs::Odometry>(*nh, "/odom", 100);
+  _odomFilter = new tf2_ros::MessageFilter<nav_msgs::Odometry>(*_odomListener, *_tfBuffer, _worldFrameID, 100, *nh);
+
+  _odomFilter->registerCallback(boost::bind(&DroneMovementModel::odomCallback, this, _1));
+
   ROS_INFO("Drone movement model has been initialized!\n");
 }
 
 DroneMovementModel::~DroneMovementModel()
 {
   delete m_RNG;
+}
+
+void DroneMovementModel::odomCallback(const nav_msgs::OdometryConstPtr& msg)
+{
+  // Create geometry_msgs::PoseStamped message from Odometry
+  geometry_msgs::PoseStamped odomPose;
+  odomPose.header.stamp = msg->header.stamp;
+  odomPose.pose = msg->pose.pose;
+  setLastOdomPose(odomPose);
 }
 
 void DroneMovementModel::drift(DroneState& state, double dt) const
@@ -141,8 +155,15 @@ double DroneMovementModel::getYawStdDev() const
 
 void DroneMovementModel::setLastOdomPose(geometry_msgs::PoseStamped& odomPose)
 {
-  _odometryReceived = 1;
-  _lastOdomPose = odomPose;
+  _odometryReceived = true;
+  if (odomPose.header.stamp < _lastOdomPose.header.stamp)
+  {
+    ROS_WARN("Trying to store an OdomPose that is older than the current in the MotionModel, ignoring!");
+  }
+  else
+  {
+    _lastOdomPose = odomPose;
+  }
 }
 
 void DroneMovementModel::reset()

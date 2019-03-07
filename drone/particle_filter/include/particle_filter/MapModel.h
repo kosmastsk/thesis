@@ -8,6 +8,9 @@
 #include <octomap_msgs/GetOctomap.h>
 #include <octomap_msgs/conversions.h>
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
 class MapModel
 {
 public:
@@ -25,8 +28,18 @@ public:
 
 protected:
   std::shared_ptr<octomap::ColorOcTree> _map;
+  double _motionObstacleDist;
+};
 
-private:
+class OccupancyMap : public MapModel
+{
+public:
+  OccupancyMap(ros::NodeHandle* nh);
+  virtual ~OccupancyMap();
+
+  bool isOccupied(octomap::OcTreeNode* node) const;
+
+  pcl::PointCloud<pcl::PointXYZRGBA> toPCL();
 };
 
 #endif

@@ -15,8 +15,12 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/message_filter.h>
 #include <tf2/utils.h>
+#include <tf2/transform_datatypes.h>
 #include <std_srvs/Empty.h>
 #include <ros/time.h>
 #include <ros/timer.h>
@@ -31,6 +35,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Vector3.h>
 
 // libPF headers
 #include <libPF/ParticleFilter.h>
@@ -63,8 +68,6 @@ protected:
   message_filters::Subscriber<sensor_msgs::LaserScan>* _scanListener;
   tf2_ros::MessageFilter<sensor_msgs::LaserScan>* _scanFilter;
 
-  // ros::Subscriber _odomListener;
-
   message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>* _initialPoseListener;
   tf2_ros::MessageFilter<geometry_msgs::PoseWithCovarianceStamped>* _initialPoseFilter;
 
@@ -74,6 +77,7 @@ protected:
   ros::Publisher _filteredPointCloudPublisher;
 
   ros::ServiceServer _globalLocalizationService;
+  ros::ServiceServer _initPoseService;
 
   // Frames
   std::string _mapFrameID;
@@ -113,7 +117,6 @@ protected:
   ros::Timer _latestTransformTimer;
 
   // Functions
-  void reset();
 
   void publishPoseEstimate(const ros::Time& t);
   void prepareLaserPointCloud(const sensor_msgs::LaserScanConstPtr& scan, pcl::PointCloud<pcl::PointXYZ>& pc,
@@ -123,10 +126,10 @@ protected:
 
   // Callbacks
   void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
-  // void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
   void latestTransformTimerCallback(const ros::TimerEvent& timer_event);
   void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
   bool globalLocalizationCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
+  bool initialPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
 
 public:
   Particles();
