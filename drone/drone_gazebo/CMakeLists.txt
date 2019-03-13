@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   hector_quadrotor_actions
   hector_quadrotor_controller_gazebo
   drone_2d_nav
+  tf2_ros
 )
 
 

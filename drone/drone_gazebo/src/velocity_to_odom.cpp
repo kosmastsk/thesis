@@ -20,10 +20,14 @@ Converter::Converter()
 
 Converter::Converter(char* argv[])
 {
-  // Initialize with zeros the message
-  _previousOdom.header.frame_id = "world";
-  _previousOdom.child_frame_id = "base_link";
+  _outputFrame = std::string("map");
+  _baseFrame = std::string("base_link");
 
+  // Initialize with zeros the message
+  _previousOdom.header.frame_id = _outputFrame;
+  _previousOdom.child_frame_id = _baseFrame;
+
+  // TODO parameter server
   _previousOdom.pose.pose.position.x = 1.0;
   _previousOdom.pose.pose.position.y = 0;
   _previousOdom.pose.pose.position.z = 0.2;
@@ -44,10 +48,12 @@ Converter::Converter(char* argv[])
   // Initialize the Subscriber
   _heightListener = _nh.subscribe("/height", 50, &Converter::heightCallback, this);
 
+  _odomListener = _nh.subscribe("odom", 10, &Converter::odomCallback, this);
+
   ros::Rate rate(50);  // hz
 
   // Initialize the Publisher
-  _odomPublisher = _nh.advertise<nav_msgs::Odometry>("/odom", 50);
+  _odomPublisher = _nh.advertise<nav_msgs::Odometry>("/odom", 10);
 }
 
 /******************************/
@@ -67,8 +73,8 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
   // Create the odometry nav_msgs
   nav_msgs::Odometry odom_msg;
-  odom_msg.header.frame_id = "world";
-  odom_msg.child_frame_id = "base_link";
+  odom_msg.header.frame_id = _outputFrame;
+  odom_msg.child_frame_id = _baseFrame;
 
   // If this is the first time the callback is called, we do not want the whole interval that the node is running, so we
   // can use manually 0.5 seconds and then every time use the real time that passed between the calls using the
@@ -81,8 +87,7 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   }
 
   // Calculate the interval between the two calls
-  ros::Duration delta_t = ros::Time::now() - _lastTime;
-  float time_passed = delta_t.sec + delta_t.nsec * pow(10, -9);
+  double delta_t = ros::Time::now().toSec() - _lastTime.toSec();
 
   // Fill in the message
   odom_msg.header.stamp = ros::Time::now();
@@ -91,14 +96,16 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   // Why this works is in the following links
   // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePath.htm
   // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePathWithCalc.htm
-  double theta = tf::getYaw(getPreviousOdom().pose.pose.orientation);
+  tf2::Quaternion temp_quat;
+  tf2::fromMsg(getPreviousOdom().pose.pose.orientation, temp_quat);
+  double theta = tf2::impl::getYaw(temp_quat);
   double s = msg->linear.x;
   double w = msg->angular.z;
 
   odom_msg.pose.pose.position.x =
-      getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * time_passed + theta);
+      getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * delta_t + theta);
   odom_msg.pose.pose.position.y =
-      getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * time_passed + theta);
+      getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * delta_t + theta);
   odom_msg.pose.pose.position.z = getHeight();
 
   // Special case when the robot is reaching is goal and not receiveing any more goals, the result is nan.
@@ -115,16 +122,16 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   // Orientation
   // Orientation is a quaternion. angular velocity is rad/sec
   // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
-  tf::Quaternion previous_orientation, new_orientation, rotation_quat;
-  tf::quaternionMsgToTF(getPreviousOdom().pose.pose.orientation, previous_orientation);
-  rotation_quat =
-      tf::createQuaternionFromRPY(0, 0, msg->angular.z * time_passed);  // multiply with time to make it rads
+  tf2::Quaternion previous_orientation, rotation_quat;
+  tf2::fromMsg(getPreviousOdom().pose.pose.orientation, previous_orientation);
+  rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
+                       msg->angular.z * delta_t);  // multiply with time to make it rads
 
-  new_orientation = rotation_quat * previous_orientation;  // Apply the rotation
-  new_orientation.normalize();
-
-  // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
-  tf::quaternionTFToMsg(new_orientation, odom_msg.pose.pose.orientation);
+  // Apply the rotation, normalize it and then convert tf2::quaternion to std_msgs::quaternion to be accepted in the
+  // odom msg
+  // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
+  // TODO multiply with 0.5 SOMEHOW
+  odom_msg.pose.pose.orientation = tf2::toMsg((rotation_quat * previous_orientation).normalize());
 
   // Velocity
   // https://answers.ros.org/question/141871/why-is-there-a-twist-in-odometry-message/
@@ -139,7 +146,7 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   setPreviousOdom(odom_msg);
 
   // Update time variable for next call
-  _lastTime = ros::Time::now();
+  _lastTime = odom_msg.header.stamp;  // ros::Time::now();
 }
 
 /******************************/
@@ -151,6 +158,29 @@ void Converter::heightCallback(const std_msgs::Float64::ConstPtr& msg)
   // Provide the current height to the odometry topic
   setHeight(msg->data);
 }
+
+/******************************/
+/*        odomCallback        */
+/******************************/
+
+void Converter::odomCallback(const nav_msgs::OdometryConstPtr& msg)
+{
+/*  ROS_INFO("Odom callback at time %f ", ros::Time::now().toSec());
+
+  geometry_msgs::TransformStamped tf;
+
+  tf.header.stamp = msg->header.stamp;
+  tf.header.frame_id = _outputFrame;
+  tf.child_frame_id = _baseFrame;
+
+  tf.transform.rotation = msg->pose.pose.orientation;
+
+  tf.transform.translation.x = msg->pose.pose.position.x;
+  tf.transform.translation.y = msg->pose.pose.position.y;
+  tf.transform.translation.z = msg->pose.pose.position.z;
+
+  _tfBroadcaster.sendTransform(tf);
+*/}
 
 }  // namespace vel_to_odom
 
