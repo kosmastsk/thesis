@@ -140,21 +140,6 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   // Publish
   _odomPublisher.publish(odom_msg);
 
-  // Publish the frame transform
-  /*  geometry_msgs::TransformStamped temp_tf;
-
-    temp_tf.header.stamp = odom_msg.header.stamp;
-    temp_tf.header.frame_id = _outputFrame;
-    temp_tf.child_frame_id = _baseFrame;
-
-    temp_tf.transform.rotation = odom_msg.pose.pose.orientation;
-
-    temp_tf.transform.translation.x = odom_msg.pose.pose.position.x;
-    temp_tf.transform.translation.y = odom_msg.pose.pose.position.y;
-    temp_tf.transform.translation.z = odom_msg.pose.pose.position.z;
-
-    _tfBroadcaster.sendTransform(temp_tf);
-  */
   // Update the values for the next call
   setPreviousOdom(odom_msg);
 

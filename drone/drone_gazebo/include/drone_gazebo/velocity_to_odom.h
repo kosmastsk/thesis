@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 
-// ROS heas
+// ROS headers
 #include <ros/ros.h>
 
 #include "geometry_msgs/Twist.h"
@@ -40,8 +40,6 @@ private:
   float _height;
 
   nav_msgs::Odometry _previousOdom;
-
-  // tf2_ros::TransformBroadcaster _tfBroadcaster;
 
   ros::Time _lastTime;
 
