@@ -4,12 +4,13 @@
 using namespace std;
 
 DroneMovementModel::DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfBuffer, const std::string& worldFrameID,
-                                       const std::string& baseFootprintID)
+                                       const std::string& baseFootprintFrameID, const std::string& baseLinkID)
   : libPF::MovementModel<DroneState>()
   , _tfBuffer(tfBuffer)
   , _tfListener(new tf2_ros::TransformListener(*tfBuffer))
   , _worldFrameID(worldFrameID)
-  , _baseFootprintFrameID(baseFootprintID)
+  , _baseFootprintFrameID(baseFootprintFrameID)
+  , _baseLinkFrameID(baseLinkID)
   , _odometryReceived(false)
 {
   m_RNG = new libPF::CRandomNumberGenerator();
@@ -20,26 +21,12 @@ DroneMovementModel::DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfB
   nh->param<double>("/movement/pitch_std_dev", _PitchStdDev, 0.2);
   nh->param<double>("/movement/yaw_std_dev", _YawStdDev, 0.2);
 
-  _odomListener = new message_filters::Subscriber<nav_msgs::Odometry>(*nh, "/odom", 100);
-  _odomFilter = new tf2_ros::MessageFilter<nav_msgs::Odometry>(*_odomListener, *_tfBuffer, _worldFrameID, 100, *nh);
-
-  _odomFilter->registerCallback(boost::bind(&DroneMovementModel::odomCallback, this, _1));
-
   ROS_INFO("Drone movement model has been initialized!\n");
 }
 
 DroneMovementModel::~DroneMovementModel()
 {
   delete m_RNG;
-}
-
-void DroneMovementModel::odomCallback(const nav_msgs::OdometryConstPtr& msg)
-{
-  // Create geometry_msgs::PoseStamped message from Odometry
-  geometry_msgs::PoseStamped odomPose;
-  odomPose.header.stamp = msg->header.stamp;
-  odomPose.pose = msg->pose.pose;
-  setLastOdomPose(odomPose);
 }
 
 void DroneMovementModel::drift(DroneState& state, double dt) const
@@ -213,7 +200,7 @@ void DroneMovementModel::applyOdomTransform(geometry_msgs::TransformStamped& odo
   tf2::toMsg(output, statePose);
 }
 
-bool DroneMovementModel::lookupOdomPose(const ros::Time& t, geometry_msgs::PoseStamped& odomPose) const
+bool DroneMovementModel::lookupOdomPose(ros::Time const& t, geometry_msgs::PoseStamped& odomPose) const
 {
   geometry_msgs::PoseStamped identity;
   identity.header.frame_id = _baseFootprintFrameID;
@@ -229,6 +216,7 @@ bool DroneMovementModel::lookupOdomPose(const ros::Time& t, geometry_msgs::PoseS
     ROS_WARN("Failed to compute odom pose, skipping scan (%s)", e.what());
     return false;
   }
+  return true;
 }
 
 bool DroneMovementModel::lookupOdomTransform(const ros::Time& t, geometry_msgs::TransformStamped& odomTransform) const
@@ -253,7 +241,7 @@ bool DroneMovementModel::lookupTargetToBaseTransform(std::string const& targetFr
 {
   try
   {
-    localTransform = _tfBuffer->lookupTransform(targetFrame, _baseFootprintFrameID, t);
+    localTransform = _tfBuffer->lookupTransform(targetFrame, _baseLinkFrameID, t);
   }
   catch (tf2::TransformException& e)
   {

@@ -27,8 +27,8 @@ particles: 500
 mapFrame: "map"
 worldFrame: "world"
 baseFootprintFrame: "base_footprint"
-baseStabilizedFrame: "base_stabilized"
 baseLinkFrame: "base_link"
+
 
 transform_tolerance_time: 1.0
 

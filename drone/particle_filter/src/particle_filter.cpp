@@ -20,7 +20,6 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   _nh.param<std::string>("/mapFrame", _mapFrameID, "map");
   _nh.param<std::string>("/worldFrame", _worldFrameID, "world");
   _nh.param<std::string>("/baseFootprintFrame", _baseFootprintFrameID, "base_footprint");
-  _nh.param<std::string>("/baseStabilizedFrame", _baseStabilizedFrameID, "base_stabilized");
   _nh.param<std::string>("/baseLinkFrame", _baseLinkFrameID, "base_link");
 
   _nh.param<double>("/max_range", _filterMaxRange, 14);
@@ -41,7 +40,7 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
 
   // Initialize Models
   // Movement model
-  _mm = new DroneMovementModel(&_nh, &_tfBuffer, _worldFrameID, _baseFootprintFrameID);
+  _mm = new DroneMovementModel(&_nh, &_tfBuffer, _worldFrameID, _baseFootprintFrameID, _baseLinkFrameID);
 
   _mapModel = std::shared_ptr<MapModel>(new OccupancyMap(&_nh));
   // octomap_server must have already provided the map to proceed
@@ -66,7 +65,8 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   // publishers can be advertised first, before needed:
   _posePublisher = _nh.advertise<geometry_msgs::PoseStamped>("/amcl/pose", 50);
   _poseArrayPublisher = _nh.advertise<geometry_msgs::PoseArray>("/amcl/particlecloud", 50);
-  _filteredPointCloudPublisher = _nh.advertise<sensor_msgs::PointCloud2>("amcl/filtered_cloud", 5);
+  _filteredPointCloudPublisher = _nh.advertise<sensor_msgs::PointCloud2>("/amcl/filtered_cloud", 5);
+  _init_pose_pub = _nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/amcl/initial_pose", 10);
 
   // ROS subscriptions last:
   _globalLocalizationService =
@@ -122,12 +122,12 @@ Particles::~Particles()
 
 void Particles::scanCallback(const sensor_msgs::LaserScanConstPtr& msg)
 {
-  ROS_DEBUG(" Laser received(time : % f) ", msg->header.stamp.toSec());
+  ROS_DEBUG("Laser received(time : % f) ", msg->header.stamp.toSec());
 
   if (!_initialized)
   {
-    ROS_WARN("Localization not initialized yet, skipping laser callback.");
-    ROS_INFO("Call /initialize_pose service to initialize it.");
+    ROS_WARN_ONCE("Localization not initialized yet, skipping laser callback.");
+    ROS_INFO_ONCE("Call /initialize_pose service to initialize it.");
     return;
   }
 
@@ -140,9 +140,10 @@ void Particles::scanCallback(const sensor_msgs::LaserScanConstPtr& msg)
 
   geometry_msgs::PoseStamped odomPose;
   // check if odometry available, skip scan if not.
+  // FIXME it returns in here, as there is no odometty published
   if (!_mm->lookupOdomPose(msg->header.stamp, odomPose))
   {
-    ROS_WARN_ONCE("Odometry not available, skipping scan. (This warning will be printed only once)\n");
+    ROS_WARN("Odometry not available, skipping scan.\n");
     return;
   }
 
@@ -237,7 +238,7 @@ void Particles::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamp
   ROS_INFO("Set pose position around (x : %f, y : %f, z : %f) ", transform.getOrigin().getX(),
            transform.getOrigin().getY(), transform.getOrigin().getZ());
   double roll, pitch, yaw;
-  tf2::getEulerYPR(transform.getRotation().normalize(), roll, pitch, yaw);
+  tf2::getEulerYPR(transform.getRotation().normalize(), yaw, pitch, roll);
   ROS_INFO("Set pose orientation around (roll : %f, pitch : %f, yaw : %f) ", roll, pitch, yaw);
 
   // Create Gaussian distribution for particles
@@ -272,7 +273,7 @@ void Particles::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamp
 
 bool Particles::globalLocalizationCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
 {
-  ROS_INFO("Initialize Global Localization with Uniform Distribution");
+  ROS_INFO("Global Localization with Uniform Distribution");
 
   DroneStateDistribution distribution(_mapModel);
   distribution.setUniform(true);
@@ -296,7 +297,7 @@ bool Particles::globalLocalizationCallback(std_srvs::Empty::Request& req, std_sr
 
 bool Particles::initialPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
 {
-  ROS_INFO("Initialize position using position parameters!");
+  ROS_INFO("Initializing position....");
 
   double x_pos, y_pos, z_pos, roll, pitch, yaw;
 
@@ -308,41 +309,19 @@ bool Particles::initialPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::
   _nh.param<double>("/pitch", pitch, 0);
   _nh.param<double>("/yaw", yaw, 0);
 
-  tf2::Quaternion quat;
-  quat.setRPY(roll, pitch, yaw);
+  geometry_msgs::PoseWithCovarianceStamped init_pose;
+  init_pose.header.stamp = ros::Time::now();
+  init_pose.header.frame_id = _mapFrameID;
 
-  tf2::Transform transform(quat.normalize(), tf2::Vector3(x_pos, y_pos, z_pos));
+  init_pose.pose.pose.position.x = x_pos;
+  init_pose.pose.pose.position.y = y_pos;
+  init_pose.pose.pose.position.z = z_pos;
 
-  ROS_INFO("Set pose position around (x : %f, y : %f, z : %f) ", transform.getOrigin().getX(),
-           transform.getOrigin().getY(), transform.getOrigin().getZ());
+  tf2::Quaternion tf2_quat;
+  tf2_quat.setRPY(roll, pitch, yaw);
+  init_pose.pose.pose.orientation = tf2::toMsg(tf2_quat);
 
-  tf2::getEulerYPR(transform.getRotation().normalize(), roll, pitch, yaw);
-  ROS_INFO("Set pose orientation around (roll : %f, pitch : %f, yaw : %f) ", roll, pitch, yaw);
-
-  // Create Gaussian distribution for particles
-  DroneStateDistribution distribution(transform.getOrigin().getX(), transform.getOrigin().getY(),
-                                      transform.getOrigin().getZ(), roll, pitch, yaw);
-  distribution.setUniform(false);
-  distribution.setStdDev(_XStdDev, _YStdDev, _ZStdDev, _RollStdDev, _PitchStdDev, _YawStdDev);
-  _pf->drawAllFromDistribution(distribution);
-  /*
-  * The ParticleFilter has the following resampling modes:
-  * @li RESAMPLE_NEVER skip resampling,
-  * @li RESAMPLE_ALWAYS does a resampling in every filter step whenever
-  *     filter() is called,
-  * @li RESAMPLE_NEFF does a resampling in filter() only if the number of
-  *     effective particles falls below the half of the total number of
-  *     particles (see getNumEffectiveParticles() for details).
-  */
-  _pf->setResamplingMode(libPF::RESAMPLE_NEFF);
-  _pf->resetTimer();
-  _mm->reset();
-
-  _initialized = true;
-  _receivedSensorData = true;
-  _firstRun = true;
-
-  publishPoseEstimate(ros::Time::now());
+  _init_pose_pub.publish(init_pose);
 
   return true;
 }
@@ -359,9 +338,7 @@ void Particles::publishPoseEstimate(const ros::Time& t)
     _poseArray.poses.resize(_pf->numParticles());
   }
 
-  // Fill in the pose array
-  // CAN BE PARALLELIZED from here ***
-  tf::Quaternion temp_pose_orien;  // declare it only once and use it later
+// Fill in the pose array
 #pragma omp parallel for
   for (unsigned i = 0; i < _pf->numParticles(); i++)
   {
@@ -371,14 +348,13 @@ void Particles::publishPoseEstimate(const ros::Time& t)
     temp_pose.position.y = _pf->getState(i).getYPos();
     temp_pose.position.z = _pf->getState(i).getZPos();
 
-    temp_pose_orien =
+    tf::Quaternion temp_pose_orien =
         tf::createQuaternionFromRPY(_pf->getState(i).getRoll(), _pf->getState(i).getPitch(), _pf->getState(i).getYaw());
     // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
     tf::quaternionTFToMsg(temp_pose_orien.normalize(), temp_pose.orientation);
 
     _poseArray.poses[i] = temp_pose;
   }
-  // **** up to here
 
   // Publish
   _poseArrayPublisher.publish(_poseArray);
@@ -393,7 +369,7 @@ void Particles::publishPoseEstimate(const ros::Time& t)
   bestPose.pose.position.y = _pf->getState(0).getYPos();
   bestPose.pose.position.z = _pf->getState(0).getZPos();
 
-  temp_pose_orien =
+  tf::Quaternion temp_pose_orien =
       tf::createQuaternionFromRPY(_pf->getState(0).getRoll(), _pf->getState(0).getPitch(), _pf->getState(0).getYaw());
   temp_pose_orien.normalize();
   // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg

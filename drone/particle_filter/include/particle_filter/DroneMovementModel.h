@@ -41,7 +41,7 @@ public:
    * Constructor
    */
   DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfBuffer, const std::string& worldFrameID,
-                     const std::string& baseFootprintID);
+                     const std::string& baseFootprintID, const std::string& baseLinkID);
 
   /**
    * Destructor
@@ -114,7 +114,7 @@ public:
   void applyOdomTransform(geometry_msgs::TransformStamped& odomTransform, geometry_msgs::Pose& statePose) const;
 
   /// look up the odom pose at a certain time through tf
-  bool lookupOdomPose(const ros::Time& t, geometry_msgs::PoseStamped& pose) const;
+  bool lookupOdomPose(ros::Time const& t, geometry_msgs::PoseStamped& pose) const;
 
   /// looks up the odometry pose at time t and then calls computeOdomTransform()
   bool lookupOdomTransform(const ros::Time& t, geometry_msgs::TransformStamped& odomTransform) const;
@@ -122,7 +122,6 @@ public:
   //  Find the transform between base->target in TF Frame tree
   bool lookupTargetToBaseTransform(std::string const& targetFrame, ros::Time const& t,
                                    geometry_msgs::TransformStamped& localTransform) const;
-  void odomCallback(const nav_msgs::OdometryConstPtr& msg);
 
 protected:
 private:
@@ -133,14 +132,12 @@ private:
 
   std::string _worldFrameID;
   std::string _baseFootprintFrameID;
+  std::string _baseLinkFrameID;
 
   tf2_ros::Buffer* _tfBuffer;
   tf2_ros::TransformListener* _tfListener;
 
   geometry_msgs::PoseStamped _lastOdomPose;
-
-  message_filters::Subscriber<nav_msgs::Odometry>* _odomListener;
-  tf2_ros::MessageFilter<nav_msgs::Odometry>* _odomFilter;
 
   /// Store the standard deviations of the model
   double _XStdDev;

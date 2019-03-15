@@ -20,8 +20,8 @@ Converter::Converter()
 
 Converter::Converter(char* argv[])
 {
-  _outputFrame = std::string("map");
-  _baseFrame = std::string("base_link");
+  _outputFrame = std::string("world");
+  _baseFrame = std::string("base_footprint");
 
   // Initialize with zeros the message
   _previousOdom.header.frame_id = _outputFrame;
@@ -47,8 +47,6 @@ Converter::Converter(char* argv[])
 
   // Initialize the Subscriber
   _heightListener = _nh.subscribe("/height", 50, &Converter::heightCallback, this);
-
-  _odomListener = _nh.subscribe("odom", 10, &Converter::odomCallback, this);
 
   ros::Rate rate(50);  // hz
 
@@ -142,6 +140,21 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   // Publish
   _odomPublisher.publish(odom_msg);
 
+  // Publish the frame transform
+  /*  geometry_msgs::TransformStamped temp_tf;
+
+    temp_tf.header.stamp = odom_msg.header.stamp;
+    temp_tf.header.frame_id = _outputFrame;
+    temp_tf.child_frame_id = _baseFrame;
+
+    temp_tf.transform.rotation = odom_msg.pose.pose.orientation;
+
+    temp_tf.transform.translation.x = odom_msg.pose.pose.position.x;
+    temp_tf.transform.translation.y = odom_msg.pose.pose.position.y;
+    temp_tf.transform.translation.z = odom_msg.pose.pose.position.z;
+
+    _tfBroadcaster.sendTransform(temp_tf);
+  */
   // Update the values for the next call
   setPreviousOdom(odom_msg);
 
@@ -158,29 +171,6 @@ void Converter::heightCallback(const std_msgs::Float64::ConstPtr& msg)
   // Provide the current height to the odometry topic
   setHeight(msg->data);
 }
-
-/******************************/
-/*        odomCallback        */
-/******************************/
-
-void Converter::odomCallback(const nav_msgs::OdometryConstPtr& msg)
-{
-/*  ROS_INFO("Odom callback at time %f ", ros::Time::now().toSec());
-
-  geometry_msgs::TransformStamped tf;
-
-  tf.header.stamp = msg->header.stamp;
-  tf.header.frame_id = _outputFrame;
-  tf.child_frame_id = _baseFrame;
-
-  tf.transform.rotation = msg->pose.pose.orientation;
-
-  tf.transform.translation.x = msg->pose.pose.position.x;
-  tf.transform.translation.y = msg->pose.pose.position.y;
-  tf.transform.translation.z = msg->pose.pose.position.z;
-
-  _tfBroadcaster.sendTransform(tf);
-*/}
 
 }  // namespace vel_to_odom
 

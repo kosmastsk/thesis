@@ -41,3 +41,10 @@ include_directories(
 # include
  ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(navigate
+  src/navigate.cpp)
+target_link_libraries(navigate
+  ${catkin_LIBRARIES})
+add_dependencies(navigate
+  ${catkin_EXPORTED_TARGETS})

@@ -75,6 +75,7 @@ protected:
   ros::Publisher _posePublisher;
   ros::Publisher _poseArrayPublisher;
   ros::Publisher _filteredPointCloudPublisher;
+  ros::Publisher _init_pose_pub;
 
   ros::ServiceServer _globalLocalizationService;
   ros::ServiceServer _initPoseService;
@@ -83,7 +84,6 @@ protected:
   std::string _mapFrameID;
   std::string _worldFrameID;
   std::string _baseFootprintFrameID;
-  std::string _baseStabilizedFrameID;
   std::string _baseLinkFrameID;
 
   // TFs
