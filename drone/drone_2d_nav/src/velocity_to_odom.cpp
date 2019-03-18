@@ -1,6 +1,6 @@
 /* This ROS node receives velocity values and converts them to Odometry for hector quadrotor */
 
-#include "drone_gazebo/velocity_to_odom.h"
+#include "drone_2d_nav/velocity_to_odom.h"
 
 namespace vel_to_odom
 {
@@ -20,16 +20,17 @@ Converter::Converter()
 
 Converter::Converter(char* argv[])
 {
-  _outputFrame = std::string("world");
+  _outputFrame = std::string("map");
   _baseFrame = std::string("base_footprint");
 
-  // Initialize with zeros the message
+  // Initialize the message
+  _previousOdom.header.stamp = ros::Time::now();
   _previousOdom.header.frame_id = _outputFrame;
   _previousOdom.child_frame_id = _baseFrame;
 
-  // TODO parameter server
-  _previousOdom.pose.pose.position.x = 1.0;
-  _previousOdom.pose.pose.position.y = 0;
+  // If position is provided in the amcl.launch file
+  _nh.param<double>("/amcl/initial_pose_x", _previousOdom.pose.pose.position.x, 0.0);
+  _nh.param<double>("/amcl/initial_pose_y", _previousOdom.pose.pose.position.y, 0.0);
   _previousOdom.pose.pose.position.z = 0.2;
 
   _previousOdom.pose.pose.orientation.x = 0;
@@ -43,15 +44,15 @@ Converter::Converter(char* argv[])
   _previousOdom.twist.covariance = {};
 
   // Initialize the Subscriber
-  _cmdVelListener = _nh.subscribe("/cmd_vel", 50, &Converter::cmdVelCallback, this);
-
-  // Initialize the Subscriber
   _heightListener = _nh.subscribe("/height", 50, &Converter::heightCallback, this);
-
-  ros::Rate rate(50);  // hz
+  // Initialize the Subscriber
+  _cmdVelListener = _nh.subscribe("/cmd_vel", 50, &Converter::cmdVelCallback, this);
 
   // Initialize the Publisher
   _odomPublisher = _nh.advertise<nav_msgs::Odometry>("/odom", 10);
+
+  // If there are no cmd_vel commands, the odometry needs to be published, even if it is unchanged
+  publishOdometry();
 }
 
 /******************************/
@@ -122,13 +123,30 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
   tf2::Quaternion previous_orientation, rotation_quat;
   tf2::fromMsg(getPreviousOdom().pose.pose.orientation, previous_orientation);
-  rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
-                       msg->angular.z * delta_t);  // multiply with time to make it rads
+
+  // Fill in the rotation Quaternion
+  // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
+  // https://stackoverflow.com/questions/24197182/efficient-quaternion-angular-velocity
+  tf2::Vector3 ha =
+      tf2::Vector3(msg->angular.x, msg->angular.y, msg->angular.z) * delta_t * 0.5;  // vector of half angle
+
+  double l = ha.length();  // magnitude
+
+  if (l > 0)
+  {
+    double ss = sin(l) / l;
+    rotation_quat = tf2::Quaternion(ha.x() * ss, ha.y() * ss, ha.z() * ss, cos(l));
+  }
+  else
+  {
+    rotation_quat = tf2::Quaternion(ha.x(), ha.y(), ha.z(), 1);
+  }
+
+  // rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
+  // msg->angular.z * delta_t);  // multiply with time to make it rads
 
   // Apply the rotation, normalize it and then convert tf2::quaternion to std_msgs::quaternion to be accepted in the
   // odom msg
-  // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
-  // TODO multiply with 0.5 SOMEHOW
   odom_msg.pose.pose.orientation = tf2::toMsg((rotation_quat * previous_orientation).normalize());
 
   // Velocity
@@ -138,7 +156,7 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   odom_msg.twist.twist.angular = msg->angular;
 
   // Publish
-  _odomPublisher.publish(odom_msg);
+  // _odomPublisher.publish(odom_msg);
 
   // Update the values for the next call
   setPreviousOdom(odom_msg);
@@ -157,6 +175,24 @@ void Converter::heightCallback(const std_msgs::Float64::ConstPtr& msg)
   setHeight(msg->data);
 }
 
+/******************************/
+/*      publishOdometry       */
+/******************************/
+
+void Converter::publishOdometry()
+{
+  ros::Rate rate(100);  // hz
+
+  while (ros::ok())
+  {
+    updateOdomTime(ros::Time::now());
+    _odomPublisher.publish(getPreviousOdom());
+    ros::spinOnce();
+
+    rate.sleep();
+  }
+}
+
 }  // namespace vel_to_odom
 
 /* Main function */
@@ -165,7 +201,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "vel_to_odom");
 
   vel_to_odom::Converter converter(argv);
-  ros::spin();
+  ros::spinOnce();
 
   return 0;
 }

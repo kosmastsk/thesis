@@ -6,7 +6,7 @@
 * a publisher that sends the total velocity to the drone cmd_vel topic
 */
 
-#include "drone_gazebo/control.h"
+#include "drone_2d_nav/control.h"
 
 namespace control
 {

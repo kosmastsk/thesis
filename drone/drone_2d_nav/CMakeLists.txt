@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(drone_2d_nav)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+ add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -30,9 +30,20 @@ catkin_package(
 ## Build ##
 ###########
 include_directories(
-# include
+ include
   ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(control
+  src/control_node.cpp
+  src/control.cpp)
+target_link_libraries(control ${catkin_LIBRARIES})
+add_dependencies(control ${catkin_EXPORTED_TARGETS})
+
+add_executable(vel_to_odom
+  src/velocity_to_odom.cpp)
+target_link_libraries(vel_to_odom ${catkin_LIBRARIES})
+add_dependencies(vel_to_odom ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##

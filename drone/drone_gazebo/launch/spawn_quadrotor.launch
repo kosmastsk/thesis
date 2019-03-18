@@ -12,7 +12,7 @@
 
   <arg name="x" default="1.0"/>
   <arg name="y" default="0.0"/>
-  <arg name="z" default="0.2"/>
+  <arg name="z" default="0.0"/>
   <arg name="roll"  default="0" />
   <arg name="pitch" default="0" />
   <arg name="yaw"   default="0" />
@@ -35,10 +35,11 @@
 
   <!-- publish state and tf -->
   <node name="message_to_tf" pkg="message_to_tf" type="message_to_tf" output="screen">
-    <param name="odometry_topic" value="odom" />
+    <param name="odometry_topic" value="/odom" /> <!-- /ground_truth/state -->
+    <param name="publish_roll_pitch" value="true"/>
     <param name="frame_id" value="world" />
     <param name="footprint_frame_id" value="base_footprint" />
-    <param name="position_frame_id" value="base_footprint" />
+    <!--<param name="position_frame_id" value="" />-->
     <param name="stabilized_frame_id" value="base_stabilized" />
     <param name="child_frame_id" value="base_link" />
 

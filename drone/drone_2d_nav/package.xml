@@ -31,12 +31,14 @@
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>tf</build_depend>
+  <build_depend>drone_gazebo</build_depend>
   <build_export_depend>amcl</build_export_depend>
   <build_export_depend>map_server</build_export_depend>
   <build_export_depend>move_base</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>sensor_msgs</build_export_depend>
   <build_export_depend>tf</build_export_depend>
+  <build_export_depend>drone_gazebo</build_export_depend>
   <exec_depend>amcl</exec_depend>
   <exec_depend>map_server</exec_depend>
   <exec_depend>move_base</exec_depend>
@@ -44,6 +46,7 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>tf</exec_depend>
   <exec_depend>teb_local_planner</exec_depend>
+  <exec_depend>drone_gazebo</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

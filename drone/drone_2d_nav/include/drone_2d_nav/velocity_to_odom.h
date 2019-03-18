@@ -43,6 +43,8 @@ private:
 
   ros::Time _lastTime;
 
+  void publishOdometry();
+
   // Callback
   void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg);
   void heightCallback(const std_msgs::Float64::ConstPtr& msg);
@@ -60,6 +62,10 @@ public:
   void setPreviousOdom(nav_msgs::Odometry odometry)
   {
     _previousOdom = odometry;
+  }
+  void updateOdomTime(ros::Time t)
+  {
+    _previousOdom.header.stamp = t;
   }
 
   float getHeight()

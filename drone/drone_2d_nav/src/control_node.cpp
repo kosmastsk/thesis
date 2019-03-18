@@ -1,7 +1,7 @@
 /* This ROS node implements the control of hector quadrotor to a specific height when sending targets using move base
  */
 
-#include "drone_gazebo/control.h"
+#include "drone_2d_nav/control.h"
 
 /* Main function */
 int main(int argc, char** argv)

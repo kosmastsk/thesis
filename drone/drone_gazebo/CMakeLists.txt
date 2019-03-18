@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   drone_description
   hector_quadrotor_actions
   hector_quadrotor_controller_gazebo
-  drone_2d_nav
   tf2_ros
 )
 
@@ -44,17 +43,6 @@ include_directories(
  include
  ${catkin_INCLUDE_DIRS}
 )
-
-add_executable(control
-  src/control_node.cpp
-  src/control.cpp)
-target_link_libraries(control ${catkin_LIBRARIES})
-add_dependencies(control ${catkin_EXPORTED_TARGETS})
-
-add_executable(vel_to_odom
-  src/velocity_to_odom.cpp)
-target_link_libraries(vel_to_odom ${catkin_LIBRARIES})
-add_dependencies(vel_to_odom ${catkin_EXPORTED_TARGETS})
 
 add_executable(estimator
   src/height_estimation_node.cpp

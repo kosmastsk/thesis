@@ -60,13 +60,13 @@
 
   <!-- NODES -->
   <!-- Control drone -->
-  <node pkg="drone_gazebo" type="control" name="control" args="$(arg height)"/>
+  <node pkg="drone_2d_nav" type="control" name="control" args="$(arg height)"/>
 
   <!-- Height estimation node -->
   <node name="estimator" type="estimator" pkg="drone_gazebo" />
 
   <!-- Provide odometry from cmd_vel topic -->
-  <node name="vel_to_odom" type="vel_to_odom" pkg="drone_gazebo" output="screen"/>
+  <node name="vel_to_odom" type="vel_to_odom" pkg="drone_2d_nav" output="screen"/>
 
   <!-- VISUALIZATION -->
   <!-- Launch Rviz with pre loaded configuration-->

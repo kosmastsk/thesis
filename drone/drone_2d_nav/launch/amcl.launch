@@ -5,7 +5,7 @@
   <arg name="initial_pose_y"  default="0.0"/>
   <arg name="initial_pose_a"  default="0.0"/> <!-- yaw -->
   <arg name="odom_frame_id"   default="world"/> <!-- odom -->
-  <arg name="base_frame_id"   default="base_link"/> <!-- base_footprint -->
+  <arg name="base_frame_id"   default="base_footprint"/> 
   <arg name="global_frame_id" default="map"/>
 
   <node pkg="amcl" type="amcl" name="amcl" output="screen">
