@@ -2,7 +2,7 @@
 
 #include "particle_filter/DroneState.h"
 
-DroneState::DroneState() : x_pos(0.0), y_pos(0.0), z_pos(0.0), roll(0.0), pitch(0.0), yaw(0.0)
+DroneState::DroneState()
 {
 }
 
@@ -36,7 +36,7 @@ DroneState& DroneState::operator+=(const DroneState& other)
   return *this;
 }
 
-DroneState DroneState::operator*(float factor) const
+DroneState DroneState::operator*(double factor) const
 {
   DroneState newState;
   newState.x_pos = x_pos * factor;
@@ -50,62 +50,62 @@ DroneState DroneState::operator*(float factor) const
   return newState;
 }
 
-float DroneState::getXPos() const
+double DroneState::getXPos() const
 {
   return x_pos;
 }
 
-void DroneState::setXPos(float x)
+void DroneState::setXPos(double x)
 {
   x_pos = x;
 }
 
-float DroneState::getYPos() const
+double DroneState::getYPos() const
 {
   return y_pos;
 }
 
-void DroneState::setYPos(float y)
+void DroneState::setYPos(double y)
 {
   y_pos = y;
 }
 
-float DroneState::getZPos() const
+double DroneState::getZPos() const
 {
   return z_pos;
 }
 
-void DroneState::setZPos(float z)
+void DroneState::setZPos(double z)
 {
   z_pos = z;
 }
 
-float DroneState::getRoll() const
+double DroneState::getRoll() const
 {
   return roll;
 }
 
-void DroneState::setRoll(float r)
+void DroneState::setRoll(double r)
 {
   roll = r;
 }
 
-float DroneState::getPitch() const
+double DroneState::getPitch() const
 {
   return pitch;
 }
 
-void DroneState::setPitch(float p)
+void DroneState::setPitch(double p)
 {
   pitch = p;
 }
 
-float DroneState::getYaw() const
+double DroneState::getYaw() const
 {
   return yaw;
 }
 
-void DroneState::setYaw(float y)
+void DroneState::setYaw(double y)
 {
   yaw = y;
 }

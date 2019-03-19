@@ -15,6 +15,8 @@
  * @li <b>velocity</b> the speed with which the drone moves, linear and angular (in m/s)
  */
 
+#include <ros/ros.h>
+
 class DroneState
 {
 public:
@@ -23,33 +25,33 @@ public:
 
   DroneState& operator=(const DroneState& other);
   DroneState& operator+=(const DroneState& other);
-  DroneState operator*(float factor) const;
+  DroneState operator*(double factor) const;
 
-  float getXPos() const;
-  void setXPos(float x);
+  double getXPos() const;
+  void setXPos(double x);
 
-  float getYPos() const;
-  void setYPos(float y);
+  double getYPos() const;
+  void setYPos(double y);
 
-  float getZPos() const;
-  void setZPos(float z);
+  double getZPos() const;
+  void setZPos(double z);
 
-  float getRoll() const;
-  void setRoll(float r);
+  double getRoll() const;
+  void setRoll(double r);
 
-  float getPitch() const;
-  void setPitch(float p);
+  double getPitch() const;
+  void setPitch(double p);
 
-  float getYaw() const;
-  void setYaw(float y);
+  double getYaw() const;
+  void setYaw(double y);
 
 private:
-  float x_pos;
-  float y_pos;
-  float z_pos;
-  float roll;
-  float pitch;
-  float yaw;
+  double x_pos;
+  double y_pos;
+  double z_pos;
+  double roll;
+  double pitch;
+  double yaw;
 };
 
 #endif  // DRONESTATE_H

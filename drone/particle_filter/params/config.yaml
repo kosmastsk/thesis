@@ -1,26 +1,28 @@
 # Initial States #
+provide_initial_pose: true
+# if false, global localization will be called
 
 # Position
-x_pos: 1
-y_pos: 0
-z_pos: 0.0
+x_pos: 1.0
+y_pos: 0.0
+z_pos: 0.2
 
 # Orientation
-roll: 0
-pitch: 0
-yaw: 0
+roll: 0.0
+pitch: 0.0
+yaw: 0.0
 
 # Number of particles
-particles: 500
+particles: 100
 
 # Standard deviations for movement model
-/movement/x_std_dev: 0.2
-/movement/y_std_dev: 0.2
-/movement/z_std_dev: 0.2
+/movement/x_std_dev: 0.5
+/movement/y_std_dev: 0.5
+/movement/z_std_dev: 0.0
 
-/movement/roll_std_dev: 0.2
-/movement/pitch_std_dev: 0.2
-/movement/yaw_std_dev: 0.2
+/movement/roll_std_dev: 0.0
+/movement/pitch_std_dev: 0.0
+/movement/yaw_std_dev: 0.0
 
 
 # Frames
@@ -40,7 +42,7 @@ laser_z_max: 0.05
 laser_sigma_hit: 0.2
 laser_lambda_short: 0.1
 min_range: 0.01
-max_range: 14
+max_range: 14.0
 observation_threshold_trans: 0.3
 observation_threshold_rot: 0.4
 sensor_sample_distance: 0.2

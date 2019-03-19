@@ -140,7 +140,6 @@ void Particles::scanCallback(const sensor_msgs::LaserScanConstPtr& msg)
 
   geometry_msgs::PoseStamped odomPose;
   // check if odometry available, skip scan if not.
-  // FIXME it returns in here, as there is no odometty published
   if (!_mm->lookupOdomPose(msg->header.stamp, odomPose))
   {
     ROS_WARN("Odometry not available, skipping scan.\n");
@@ -237,16 +236,19 @@ void Particles::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamp
 
   ROS_INFO("Set pose position around (x : %f, y : %f, z : %f) ", transform.getOrigin().getX(),
            transform.getOrigin().getY(), transform.getOrigin().getZ());
+
   double roll, pitch, yaw;
-  tf2::getEulerYPR(transform.getRotation().normalize(), yaw, pitch, roll);
+  tf2::getEulerYPR(transform.getRotation(), yaw, pitch, roll);
   ROS_INFO("Set pose orientation around (roll : %f, pitch : %f, yaw : %f) ", roll, pitch, yaw);
 
   // Create Gaussian distribution for particles
-  DroneStateDistribution distribution(transform.getOrigin().getX(), transform.getOrigin().getY(),
-                                      transform.getOrigin().getZ(), roll, pitch, yaw);
-  distribution.setUniform(false);
-  distribution.setStdDev(_XStdDev, _YStdDev, _ZStdDev, _RollStdDev, _PitchStdDev, _YawStdDev);
+  // FIXME libPF returns a distribution with the center in 0. Need to make it changeable
+  DroneStateDistribution distribution(_XStdDev, _YStdDev, _ZStdDev, _RollStdDev, _PitchStdDev, _YawStdDev,
+                                      transform.getOrigin().getX(), transform.getOrigin().getY(),
+                                      transform.getOrigin().getZ(), roll, pitch, yaw, 1);
+
   _pf->drawAllFromDistribution(distribution);
+
   /*
   * The ParticleFilter has the following resampling modes:
   * @li RESAMPLE_NEVER skip resampling,
@@ -261,7 +263,7 @@ void Particles::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamp
   _mm->reset();
 
   _initialized = true;
-  _receivedSensorData = true;
+  _receivedSensorData = false;
   _firstRun = true;
 
   publishPoseEstimate(msg->header.stamp);
@@ -297,6 +299,7 @@ bool Particles::globalLocalizationCallback(std_srvs::Empty::Request& req, std_sr
 
 bool Particles::initialPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
 {
+  ROS_INFO("Calling initial Pose Service ...\n");
   ROS_INFO("Initializing position....");
 
   double x_pos, y_pos, z_pos, roll, pitch, yaw;
@@ -348,10 +351,10 @@ void Particles::publishPoseEstimate(const ros::Time& t)
     temp_pose.position.y = _pf->getState(i).getYPos();
     temp_pose.position.z = _pf->getState(i).getZPos();
 
-    tf::Quaternion temp_pose_orien =
-        tf::createQuaternionFromRPY(_pf->getState(i).getRoll(), _pf->getState(i).getPitch(), _pf->getState(i).getYaw());
-    // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
-    tf::quaternionTFToMsg(temp_pose_orien.normalize(), temp_pose.orientation);
+    tf2::Quaternion temp_pose_orien;
+    temp_pose_orien.setRPY(_pf->getState(i).getRoll(), _pf->getState(i).getPitch(), _pf->getState(i).getYaw());
+    // Convert tf2::quaternion to std_msgs::quaternion to be accepted in the odom msg
+    temp_pose.orientation = tf2::toMsg(temp_pose_orien.normalize());
 
     _poseArray.poses[i] = temp_pose;
   }
@@ -364,16 +367,14 @@ void Particles::publishPoseEstimate(const ros::Time& t)
   bestPose.header.frame_id = _mapFrameID;
   bestPose.header.stamp = t;
 
-  // QUESTION is 0 really the best particle?
   bestPose.pose.position.x = _pf->getState(0).getXPos();
   bestPose.pose.position.y = _pf->getState(0).getYPos();
   bestPose.pose.position.z = _pf->getState(0).getZPos();
 
-  tf::Quaternion temp_pose_orien =
-      tf::createQuaternionFromRPY(_pf->getState(0).getRoll(), _pf->getState(0).getPitch(), _pf->getState(0).getYaw());
-  temp_pose_orien.normalize();
-  // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
-  tf::quaternionTFToMsg(temp_pose_orien.normalize(), bestPose.pose.orientation);
+  tf2::Quaternion temp_pose_orien;
+  temp_pose_orien.setRPY(_pf->getState(0).getRoll(), _pf->getState(0).getPitch(), _pf->getState(0).getYaw());
+  // Convert tf2::quaternion to std_msgs::quaternion to be accepted in the odom msg
+  bestPose.pose.orientation = tf2::toMsg(temp_pose_orien.normalize());
 
   // Publish
   _posePublisher.publish(bestPose);
@@ -389,12 +390,10 @@ void Particles::publishPoseEstimate(const ros::Time& t)
     temp_geomTransform.translation.y = _pf->getBestState().getYPos();
     temp_geomTransform.translation.z = _pf->getBestState().getZPos();
 
-    tf::Quaternion temp_pose_orien;
+    tf2::Quaternion temp_pose_orien;
     // Instead of best I can use the MMSE
-    temp_pose_orien = tf::createQuaternionFromRPY(_pf->getBestState().getRoll(), _pf->getBestState().getPitch(),
-                                                  _pf->getBestState().getYaw());
-    temp_pose_orien.normalize();
-    tf::quaternionTFToMsg(temp_pose_orien, temp_geomTransform.rotation);
+    temp_pose_orien.setRPY(_pf->getBestState().getRoll(), _pf->getBestState().getPitch(), _pf->getBestState().getYaw());
+    temp_geomTransform.rotation = tf2::toMsg(temp_pose_orien.normalize());
 
     tf2::fromMsg(temp_geomTransform, temp_tf2Transform);
 

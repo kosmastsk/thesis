@@ -25,15 +25,23 @@ DroneStateDistribution::DroneStateDistribution(double xmin, double xmax, double 
 }
 
 // Gauss
-DroneStateDistribution::DroneStateDistribution(double xInit, double yInit, double zInit, double rollInit,
-                                               double pitchInit, double yawInit)
+DroneStateDistribution::DroneStateDistribution(double xStd, double yStd, double zStd, double rollStd, double pitchStd,
+                                               double yawStd, double xMean, double yMean, double zMean, double rollMean,
+                                               double pitchMean, double yawMean, bool gaussian)
 {
-  _XMin = xInit;
-  _YMin = yInit;
-  _ZMin = zInit;
-  _RollMin = rollInit;
-  _PitchMin = pitchInit;
-  _YawMin = yawInit;
+  _XStdDev = xStd;
+  _YStdDev = yStd;
+  _ZStdDev = zStd;
+  _RollStdDev = rollStd;
+  _PitchStdDev = pitchStd;
+  _YawStdDev = yawStd;
+  _xMean = xMean;
+  _yMean = yMean;
+  _zMean = zMean;
+  _rollMean = rollMean;
+  _pitchMean = pitchMean;
+  _yawMean = yawMean;
+
   m_RNG = new libPF::CRandomNumberGenerator();
   _uniform = false;
 }
@@ -74,6 +82,16 @@ void DroneStateDistribution::setStdDev(double x, double y, double z, double r, d
   _YawStdDev = yaw;
 }
 
+void DroneStateDistribution::setMean(double x, double y, double z, double r, double p, double yaw)
+{
+  _xMean = x;
+  _yMean = y;
+  _zMean = z;
+  _rollMean = r;
+  _pitchMean = p;
+  _yawMean = yaw;
+}
+
 const DroneState DroneStateDistribution::DroneStateDistribution::draw() const
 {
   DroneState state;
@@ -97,14 +115,14 @@ const DroneState DroneStateDistribution::DroneStateDistribution::draw() const
     /**
     * This method creates gaussian distributed random numbers (Box-Müller method).
     * @param standardDeviation Standard deviation d of the random number to generate.
-    * @return N(0, d*d)-distributed random number
+    * @return N(u, d*d)-distributed random number
     */
-    state.setXPos(m_RNG->getGaussian(_XStdDev));
-    state.setYPos(m_RNG->getGaussian(_YStdDev));
-    state.setZPos(m_RNG->getGaussian(_ZStdDev));
-    state.setRoll(m_RNG->getGaussian(_RollStdDev));
-    state.setPitch(m_RNG->getGaussian(_PitchStdDev));
-    state.setYaw(m_RNG->getGaussian(_YawStdDev));
+    state.setXPos(m_RNG->getGaussian(_XStdDev) + _xMean);
+    state.setYPos(m_RNG->getGaussian(_YStdDev) + _yMean);
+    state.setZPos(m_RNG->getGaussian(_ZStdDev) + _zMean);
+    state.setRoll(m_RNG->getGaussian(_RollStdDev) + _rollMean);
+    state.setPitch(m_RNG->getGaussian(_PitchStdDev) + _pitchMean);
+    state.setYaw(m_RNG->getGaussian(_YawStdDev) + _yawMean);
   }
 
   return state;

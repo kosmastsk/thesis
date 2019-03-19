@@ -139,13 +139,21 @@ private:
 
   geometry_msgs::PoseStamped _lastOdomPose;
 
-  /// Store the standard deviations of the model
+  // Store the standard deviations of the model
   double _XStdDev;
   double _YStdDev;
   double _ZStdDev;
   double _RollStdDev;
   double _PitchStdDev;
   double _YawStdDev;
+
+  // Initial position which will be used as the center of the Gaussian Distribution
+  double _xMean;
+  double _yMean;
+  double _zMean;
+  double _rollMean;
+  double _pitchMean;
+  double _yawMean;
 };
 
 #endif

@@ -21,6 +21,14 @@ DroneMovementModel::DroneMovementModel(ros::NodeHandle* nh, tf2_ros::Buffer* tfB
   nh->param<double>("/movement/pitch_std_dev", _PitchStdDev, 0.2);
   nh->param<double>("/movement/yaw_std_dev", _YawStdDev, 0.2);
 
+  nh->param<double>("/x_pos", _xMean, 0);
+  nh->param<double>("/y_pos", _yMean, 0);
+  nh->param<double>("/z_pos", _zMean, 0);
+
+  nh->param<double>("/roll", _rollMean, 0);
+  nh->param<double>("/pitch", _pitchMean, 0);
+  nh->param<double>("/yaw", _yawMean, 0);
+
   ROS_INFO("Drone movement model has been initialized!\n");
 }
 
@@ -71,13 +79,15 @@ void DroneMovementModel::drift(DroneState& state, double dt) const
 
 void DroneMovementModel::diffuse(DroneState& state, double dt) const
 {
-  state.setXPos(state.getXPos() + m_RNG->getGaussian(_XStdDev) * dt);
-  state.setYPos(state.getYPos() + m_RNG->getGaussian(_YStdDev) * dt);
-  state.setZPos(state.getZPos() + m_RNG->getGaussian(_ZStdDev) * dt);
+  // Transform the N(0,1) distribution that has been created, using the sigma*X + u transform
+  // Now our distribution has the previous standard deviation but mean _*Mean, different one for each direction
+  state.setXPos(state.getXPos() + (m_RNG->getGaussian(_XStdDev) + _xMean) * dt);
+  state.setYPos(state.getYPos() + (m_RNG->getGaussian(_YStdDev) + _yMean) * dt);
+  state.setZPos(state.getZPos() + (m_RNG->getGaussian(_ZStdDev) + _zMean) * dt);
 
-  state.setRoll(state.getRoll() + m_RNG->getGaussian(_RollStdDev) * dt);
-  state.setPitch(state.getPitch() + m_RNG->getGaussian(_PitchStdDev) * dt);
-  state.setYaw(state.getYaw() + m_RNG->getGaussian(_YawStdDev) * dt);
+  state.setRoll(state.getRoll() + (m_RNG->getGaussian(_RollStdDev) + _rollMean) * dt);
+  state.setPitch(state.getPitch() + (m_RNG->getGaussian(_PitchStdDev) + _pitchMean) * dt);
+  state.setYaw(state.getYaw() + (m_RNG->getGaussian(_YawStdDev) + _yawMean) * dt);
 }
 
 void DroneMovementModel::setXStdDev(double d)
