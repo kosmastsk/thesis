@@ -5,8 +5,8 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 
-float goal[6][3] = { { 1, 0, 0.2 }, { 4, 1, 2 }, { 6, 1, 2 }, { 8, 2, 2 }, { 6, 2, 2 }, { 0, 0, 0 } };
-float tolerance = 0.05;
+float goal[3][3] = { { 6, 0, 2 }, { 8, -2, 2.5 }, { 12, 5, 2 } };
+float tolerance = 0.2;
 
 double kp = 0.5;      // 0.5;
 double ki = 0.0002;   // 0.0002;
@@ -51,6 +51,7 @@ geometry_msgs::Twist twist;
 bool must_exit = false;
 int waypoint_number = 0;
 
+// void odoCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 void odoCallback(const nav_msgs::OdometryConstPtr& msg)
 {
   real.x = msg->pose.pose.position.x;
@@ -145,7 +146,8 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::Publisher pub_vel = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
-  ros::Subscriber sub = np.subscribe("/ground_truth/state", 1000, odoCallback);
+  ros::Subscriber sub = np.subscribe("/ground_truth/state", 10, odoCallback);
+  // amcl_pose
 
   // Marker for waypoints
   ros::Publisher vis_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker", 100);

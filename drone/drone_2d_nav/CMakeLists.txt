@@ -40,6 +40,13 @@ add_executable(control
 target_link_libraries(control ${catkin_LIBRARIES})
 add_dependencies(control ${catkin_EXPORTED_TARGETS})
 
+add_executable(error_detector
+  src/error_detector.cpp)
+target_link_libraries(error_detector
+  ${catkin_LIBRARIES})
+add_dependencies(error_detector
+  ${catkin_EXPORTED_TARGETS})
+
 add_executable(vel_to_odom
   src/velocity_to_odom.cpp)
 target_link_libraries(vel_to_odom ${catkin_LIBRARIES})

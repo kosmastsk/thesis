@@ -20,17 +20,22 @@ Converter::Converter()
 
 Converter::Converter(char* argv[])
 {
-  _outputFrame = std::string("world");
+  // Initialize the Subscribers
+  _cmdVelListener = _nh.subscribe("/cmd_vel", 10, &Converter::cmdVelCallback, this);
+
+  _heightListener = _nh.subscribe("/height", 10, &Converter::heightCallback, this);
+
+  // Set frames for the new message
+  _outputFrame = std::string("map");
   _baseFrame = std::string("base_footprint");
 
-  // Initialize with zeros the message
+  // Initialize the message using parameters
   _previousOdom.header.frame_id = _outputFrame;
   _previousOdom.child_frame_id = _baseFrame;
 
-  // TODO parameter server
-  _previousOdom.pose.pose.position.x = 1.0;
-  _previousOdom.pose.pose.position.y = 0;
-  _previousOdom.pose.pose.position.z = 0.2;
+  _nh.param<double>("/x_pos", _previousOdom.pose.pose.position.x, 0);
+  _nh.param<double>("/y_pos", _previousOdom.pose.pose.position.y, 0);
+  _nh.param<double>("/z_pos", _previousOdom.pose.pose.position.z, 0);
 
   _previousOdom.pose.pose.orientation.x = 0;
   _previousOdom.pose.pose.orientation.y = 0;
@@ -41,12 +46,6 @@ Converter::Converter(char* argv[])
   _previousOdom.twist.twist.linear = {};
   _previousOdom.twist.twist.angular = {};
   _previousOdom.twist.covariance = {};
-
-  // Initialize the Subscriber
-  _cmdVelListener = _nh.subscribe("/cmd_vel", 50, &Converter::cmdVelCallback, this);
-
-  // Initialize the Subscriber
-  _heightListener = _nh.subscribe("/height", 50, &Converter::heightCallback, this);
 
   // Initialize the Publisher
   _odomPublisher = _nh.advertise<nav_msgs::Odometry>("/odom", 10);
@@ -68,7 +67,7 @@ Converter::~Converter()
 /*       cmdVelCallback       */
 /******************************/
 
-void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
+void Converter::cmdVelCallback(const geometry_msgs::TwistConstPtr& msg)
 {
   // Create the odometry nav_msgs
   nav_msgs::Odometry odom_msg;
@@ -103,6 +102,15 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   double s = msg->linear.x;
   double w = msg->angular.z;
 
+  // Add some noise
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::normal_distribution<double> dist(0, 0.1);
+
+  s += dist(rng);
+  w += dist(rng);
+  theta += dist(rng);
+
   odom_msg.pose.pose.position.x =
       getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * delta_t + theta);
   odom_msg.pose.pose.position.y =
@@ -120,17 +128,36 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
     odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y;
   }
 
+  // TODO check page 63 in the thesis
+
   // Orientation
   // Orientation is a quaternion. angular velocity is rad/sec
   // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
   tf2::Quaternion previous_orientation, rotation_quat;
   tf2::fromMsg(getPreviousOdom().pose.pose.orientation, previous_orientation);
-  rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
-                       msg->angular.z * delta_t);  // multiply with time to make it rads
+
+  // Fill in the rotation Quaternion
+  // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
+  // https://stackoverflow.com/questions/24197182/efficient-quaternion-angular-velocity
+  tf2::Vector3 ha = tf2::Vector3(msg->angular.x, msg->angular.y, w) * delta_t * 0.5;  // vector of half angle
+
+  double l = ha.length();  // magnitude
+
+  if (l > 0)
+  {
+    double ss = sin(l) / l;
+    rotation_quat = tf2::Quaternion(ha.x() * ss, ha.y() * ss, ha.z() * ss, cos(l));
+  }
+  else
+  {
+    rotation_quat = tf2::Quaternion(ha.x(), ha.y(), ha.z(), 1);
+  }
+
+  // rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
+  // msg->angular.z * delta_t);  // multiply with time to make it rads
 
   // Apply the rotation, normalize it and then convert tf2::quaternion to std_msgs::quaternion to be accepted in the
   // odom msg
-  // TODO multiply with 0.5 SOMEHOW
   odom_msg.pose.pose.orientation = tf2::toMsg((rotation_quat * previous_orientation).normalize());
 
   // Velocity
@@ -182,10 +209,10 @@ void Converter::publishOdometry()
 /* Main function */
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "vel_to_odom");
+  ros::init(argc, argv, "velocity_to_3d_odom");
 
   vel_to_3d_odom::Converter converter(argv);
-  ros::spin();
+  ros::spinOnce();
 
   return 0;
 }

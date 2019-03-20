@@ -31,7 +31,7 @@ Converter::Converter(char* argv[])
   // If position is provided in the amcl.launch file
   _nh.param<double>("/amcl/initial_pose_x", _previousOdom.pose.pose.position.x, 0.0);
   _nh.param<double>("/amcl/initial_pose_y", _previousOdom.pose.pose.position.y, 0.0);
-  _previousOdom.pose.pose.position.z = 0.2;
+  _previousOdom.pose.pose.position.z = 0.0;
 
   _previousOdom.pose.pose.orientation.x = 0;
   _previousOdom.pose.pose.orientation.y = 0;
@@ -43,8 +43,6 @@ Converter::Converter(char* argv[])
   _previousOdom.twist.twist.angular = {};
   _previousOdom.twist.covariance = {};
 
-  // Initialize the Subscriber
-  _heightListener = _nh.subscribe("/height", 50, &Converter::heightCallback, this);
   // Initialize the Subscriber
   _cmdVelListener = _nh.subscribe("/cmd_vel", 50, &Converter::cmdVelCallback, this);
 
@@ -101,11 +99,20 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   double s = msg->linear.x;
   double w = msg->angular.z;
 
+  // Add some noise
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::normal_distribution<double> dist(0, 0.1);
+
+  s += dist(rng);
+  w += dist(rng);
+  theta += dist(rng);
+
   odom_msg.pose.pose.position.x =
       getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * delta_t + theta);
   odom_msg.pose.pose.position.y =
       getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * delta_t + theta);
-  odom_msg.pose.pose.position.z = getHeight();
+  odom_msg.pose.pose.position.z = 0;
 
   // Special case when the robot is reaching is goal and not receiveing any more goals, the result is nan.
 
@@ -163,16 +170,6 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
 
   // Update time variable for next call
   _lastTime = odom_msg.header.stamp;  // ros::Time::now();
-}
-
-/******************************/
-/*       heightCallback       */
-/******************************/
-
-void Converter::heightCallback(const std_msgs::Float64::ConstPtr& msg)
-{
-  // Provide the current height to the odometry topic
-  setHeight(msg->data);
 }
 
 /******************************/

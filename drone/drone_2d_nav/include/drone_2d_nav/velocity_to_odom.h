@@ -31,13 +31,10 @@ private:
   // Variables
   ros::NodeHandle _nh;
   ros::Subscriber _cmdVelListener;
-  ros::Subscriber _heightListener;
   ros::Publisher _odomPublisher;
 
   std::string _outputFrame;
   std::string _baseFrame;
-
-  float _height;
 
   nav_msgs::Odometry _previousOdom;
 
@@ -47,8 +44,6 @@ private:
 
   // Callback
   void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg);
-  void heightCallback(const std_msgs::Float64::ConstPtr& msg);
-  void odomCallback(const nav_msgs::OdometryConstPtr& msg);
 
 public:
   Converter();
@@ -66,15 +61,6 @@ public:
   void updateOdomTime(ros::Time t)
   {
     _previousOdom.header.stamp = t;
-  }
-
-  float getHeight()
-  {
-    return _height;
-  }
-  void setHeight(float value)
-  {
-    _height = value;
   }
 };
 }  // namespace vel_to_odom

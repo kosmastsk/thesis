@@ -8,7 +8,6 @@ project(drone_3d_nav)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED
-  drone_gazebo
   octomap_server
   roscpp
   sensor_msgs

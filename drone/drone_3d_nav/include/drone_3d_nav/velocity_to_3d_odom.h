@@ -8,18 +8,15 @@
 // ROS headers
 #include <ros/ros.h>
 
+#include "geometry_msgs/Quaternion.h"
+#include <geometry_msgs/TransformStamped.h>
 #include "geometry_msgs/Twist.h"
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include "nav_msgs/Odometry.h"
 #include "std_msgs/Float64.h"
 
-#include "geometry_msgs/Quaternion.h"
-#include <geometry_msgs/TransformStamped.h>
-#include <geometry_msgs/Vector3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/transform_datatypes.h>
-
-// #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2/impl/utils.h>
 
@@ -48,7 +45,6 @@ private:
   // Callback
   void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg);
   void heightCallback(const std_msgs::Float64::ConstPtr& msg);
-  void odomCallback(const nav_msgs::OdometryConstPtr& msg);
 
 public:
   Converter();

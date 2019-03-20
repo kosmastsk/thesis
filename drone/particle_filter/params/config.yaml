@@ -5,7 +5,7 @@ provide_initial_pose: true
 # Position
 x_pos: 1.0
 y_pos: 0.0
-z_pos: 0.2
+z_pos: 0.18
 
 # Orientation
 roll: 0.0
