@@ -12,6 +12,7 @@
 
 // ROS headers
 #include <ros/ros.h>
+#include <ros/service.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Transform.h>
@@ -117,6 +118,7 @@ protected:
   ros::Timer _latestTransformTimer;
 
   // Functions
+  void reset();
 
   void publishPoseEstimate(const ros::Time& t);
   void prepareLaserPointCloud(const sensor_msgs::LaserScanConstPtr& scan, pcl::PointCloud<pcl::PointXYZ>& pc,

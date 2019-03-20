@@ -45,11 +45,10 @@ void DroneMovementModel::drift(DroneState& state, double dt) const
   currentPose.position.z = state.getZPos();
 
   // Convert RPY to quaternion, to apply the odom transform, then roll back
-  tf::Quaternion currentOrientation;
-  currentOrientation = tf::createQuaternionFromRPY(state.getRoll(), state.getPitch(), state.getPitch());
-  currentOrientation.normalize();
+  tf2::Quaternion currentOrientation;
+  currentOrientation.setRPY(state.getRoll(), state.getPitch(), state.getYaw());
   // Convert tf::quaternion to std_msgs::quaternion to be accepted in the odom msg
-  tf::quaternionTFToMsg(currentOrientation, currentPose.orientation);
+  currentPose.orientation = tf2::toMsg(currentOrientation.normalize());
 
   geometry_msgs::TransformStamped odomTransform;
 
@@ -60,17 +59,17 @@ void DroneMovementModel::drift(DroneState& state, double dt) const
 
   applyOdomTransform(odomTransform, currentPose);
 
-  // Set the positions
+  // Set the updated state
   state.setXPos(currentPose.position.x);
   state.setYPos(currentPose.position.y);
   state.setZPos(currentPose.position.z);
 
   // Set the orientation. Pose has quaternion but we need RPY, convert!
-  tf::Quaternion newOrientation;
-  tf::quaternionMsgToTF(currentPose.orientation, newOrientation);
+  tf2::Quaternion newOrientation;
+  tf2::fromMsg(currentPose.orientation, newOrientation);
 
   double roll, pitch, yaw;
-  tf::Matrix3x3(newOrientation).getRPY(roll, pitch, yaw);
+  tf2::Matrix3x3(newOrientation).getRPY(roll, pitch, yaw);
 
   state.setRoll(roll);
   state.setPitch(pitch);

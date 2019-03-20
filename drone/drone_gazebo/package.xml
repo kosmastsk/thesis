@@ -29,6 +29,7 @@
   <depend>hector_quadrotor_interface</depend>
   <depend>hector_uav_msgs</depend>
   <depend>tf2</depend>
+  <depend>tf</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>urdf</depend>
   <depend>hector_quadrotor_model</depend>
@@ -39,9 +40,9 @@
   <depend>drone_description</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>topic_tools</depend>
   <depend>hector_sensors_description</depend>
   <depend>teraranger_array_converter</depend>
-  <depend>message_to_tf</depend>
-
 
 </package>

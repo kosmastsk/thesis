@@ -63,7 +63,7 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   _poseArray.poses.resize(_numParticles);
 
   // publishers can be advertised first, before needed:
-  _posePublisher = _nh.advertise<geometry_msgs::PoseStamped>("/amcl/pose", 50);
+  _posePublisher = _nh.advertise<geometry_msgs::PoseStamped>("/amcl_pose", 50);
   _poseArrayPublisher = _nh.advertise<geometry_msgs::PoseArray>("/amcl/particlecloud", 50);
   _filteredPointCloudPublisher = _nh.advertise<sensor_msgs::PointCloud2>("/amcl/filtered_cloud", 5);
   _init_pose_pub = _nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/amcl/initial_pose", 10);
@@ -101,6 +101,10 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
   ROS_INFO("Particle filter created with %d particles!\n", _pf->numParticles());
+
+  // FIXME it blocks the services and cannot continue
+  // Only calling the service using the terminal works
+  // reset();
 }
 
 /******************************/
@@ -114,6 +118,38 @@ Particles::~Particles()
   delete _initialPoseFilter;
   delete _initialPoseListener;
   ROS_INFO("Particles object destroyed");
+}
+
+/******************************/
+/*           reset            */
+/******************************/
+
+void Particles::reset()
+{
+  bool provide_pose;
+  _nh.param<bool>("/provide_initial_pose", provide_pose, 1);
+
+  std_srvs::Empty::Request req = std_srvs::Empty::Request();
+  std_srvs::Empty::Response res = std_srvs::Empty::Response();
+
+  if (provide_pose)
+  {
+    ROS_INFO("Waiting for /initial_pose service to be advertised\n");
+    // wait until the node is shutdown
+    if (ros::service::waitForService("/initialize_pose", 100))
+    {
+      ros::service::call("/initialize_pose", req, res);
+    }
+  }
+  else
+  {
+    ROS_INFO("Waiting for /global_localization service to be advertised\n");
+    // wait until the node is shutdown
+    if (ros::service::waitForService("/global_localization", 10000))
+    {
+      ros::service::call("/global_localization", req, res);
+    }
+  }
 }
 
 /******************************/
@@ -242,7 +278,6 @@ void Particles::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamp
   ROS_INFO("Set pose orientation around (roll : %f, pitch : %f, yaw : %f) ", roll, pitch, yaw);
 
   // Create Gaussian distribution for particles
-  // FIXME libPF returns a distribution with the center in 0. Need to make it changeable
   DroneStateDistribution distribution(_XStdDev, _YStdDev, _ZStdDev, _RollStdDev, _PitchStdDev, _YawStdDev,
                                       transform.getOrigin().getX(), transform.getOrigin().getY(),
                                       transform.getOrigin().getZ(), roll, pitch, yaw, 1);

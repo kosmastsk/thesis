@@ -8,12 +8,14 @@ project(drone_3d_nav)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED
+  drone_gazebo
   octomap_server
   roscpp
   sensor_msgs
   tf
 )
 
+find_package(Boost REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -54,4 +56,11 @@ add_executable(navigate
 target_link_libraries(navigate
   ${catkin_LIBRARIES})
 add_dependencies(navigate
+  ${catkin_EXPORTED_TARGETS})
+
+add_executable(error_detector
+  src/error_detector.cpp)
+target_link_libraries(error_detector
+  ${catkin_LIBRARIES})
+add_dependencies(error_detector
   ${catkin_EXPORTED_TARGETS})

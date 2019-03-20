@@ -248,7 +248,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 1
       Name: Odometry
       Position Tolerance: 0.100000001
@@ -264,7 +264,7 @@ Visualization Manager:
         Value: Arrow
       Topic: /odom
       Unreliable: false
-      Value: true
+      Value: false
     - Angle Tolerance: 0.100000001
       Class: rviz/Odometry
       Covariance:
@@ -311,7 +311,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.0500000007
       Shape: Arrow
-      Topic: /amcl/pose
+      Topic: /amcl_pose
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -399,18 +399,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.453241318
-        Y: -0.673793316
-        Z: 0.991391301
+        X: 0.601419806
+        Y: -2.81101704
+        Z: 2.71698451
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.939971924
+      Pitch: 0.484971941
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.12826276
+      Yaw: 3.4182632
     Saved: ~
 Window Geometry:
   Displays:
