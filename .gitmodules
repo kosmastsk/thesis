@@ -1,0 +1,3 @@
+[submodule "path_planning"]
+	path = path_planning
+	url = git@github.com:kosmastsk/path_planning.git
