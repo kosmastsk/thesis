@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
   roscpp
   sensor_msgs
   tf
+  trajectory_msgs
 )
 
 find_package(Boost REQUIRED)

@@ -3,6 +3,7 @@
 <launch>
 
   <rosparam command="load" file="$(find particle_filter)/params/config.yaml" />
+  <rosparam command="load" file="$(find drone_3d_nav)/config/params.yaml" />
 
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
@@ -31,7 +32,7 @@
   </include>
 
   <!-- Load a map in rviz -->
-  <arg name="map" default="$(find drone_gazebo)/maps/warehouse.ot"/> <!-- /maps/dummy.ot"/> -->
+  <arg name="map" default="$(find drone_gazebo)/maps/warehouse.ot"/> <!-- /maps/warehouse.ot"/> -->
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen" args="$(arg map)">
     <param name="frame_id" value="map" />
   </node>
@@ -54,7 +55,12 @@
   <!-- Particle filter node - AMCL for octomap -->
   <node pkg="particle_filter" name="particle_filter" type="particle_filter" output="screen"/>
 
-  <!-- NODES -->
+  <!-- Path planning -->
+  <node name="path_planning_node" type="path_planning_node" pkg="path_planning" output="screen"/>
+
+  <!-- Navigator -->
+  <node name="navigate" type="navigate" pkg="drone_3d_nav" output="screen" />
+
   <!-- Height estimation node -->
   <node name="estimator" type="estimator" pkg="drone_gazebo" />
 
