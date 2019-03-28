@@ -11,46 +11,22 @@
   <arg name="gui" default="false"/>
   <arg name="verbose" default="true"/>
   <arg name="paused" default="false"/>
-  <arg name="debug" default="false"/>
 
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="use_sim_time" value="true"/>
-    <arg name="debug" value="$(arg debug)"/>
+  <include file="$(find drone_gazebo)/launch/drone_gazebo.launch">
     <arg name="gui" value="$(arg gui)" />
     <arg name="verbose" value="$(arg verbose)" />
     <arg name="paused" value="$(arg paused)" />
-    <arg name="world_name" value="$(arg world)"/>
+    <arg name="world" value="$(arg world)"/>
   </include>
 
-  <!-- Spawn simulated quadrotor uav -->
-  <include file="$(find drone_gazebo)/launch/spawn_quadrotor.launch" >
-    <arg name="model" value="$(find drone_description)/urdf/italdron_evo4hse.urdf"/>
-    <arg name="controllers" value="
-        controller/attitude
-        controller/velocity
-        "/>
-  </include>
-
-  <!-- Load a map in rviz -->
+  <!-- Load an octomap in rviz -->
   <arg name="map" default="$(find drone_gazebo)/maps/warehouse.ot"/> <!-- /maps/warehouse.ot"/> -->
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen" args="$(arg map)">
     <param name="frame_id" value="map" />
   </node>
 
-  <!-- SENSORS -->
-  <!-- Convert the teraranger tower ranges from 8 topics to 1 -->
-  <node pkg="teraranger_array_converter" type="gazebo_to_range_array.py" name="gazebo_to_range_array" output="screen" />
-
-  <!-- Convert from /ranges to /scan, in LaserScan message type, to be easily handled by amcl -->
-  <node pkg="teraranger_array_converter" type="teraranger_array_converter.py" name="teraranger_array_converter" output="screen">
-    <param name="converter_mode" value="laser_scan"/>
-    <param name="sensor_mask" value="[true,true,true,true,true,true,true,true]"/>
-    <!--<param name="conversion_frame" value="base"/>-->
-    <param name="force_tf_refresh" value="False"/>
-  </node>
-
-  <!-- The pr2 controller for quadrotor -->
-  <node name="teleop" pkg="drone_gazebo" type="teleop" output="screen"/>
+  <!-- Provide odometry from cmd_vel topic -->
+  <node name="velocity_to_3d_odom" type="velocity_to_3d_odom" pkg="drone_3d_nav" output="screen"/>
 
   <!-- Particle filter node - AMCL for octomap -->
   <node pkg="particle_filter" name="particle_filter" type="particle_filter" output="screen"/>
@@ -61,11 +37,7 @@
   <!-- Navigator -->
   <node name="navigate" type="navigate" pkg="drone_3d_nav" output="screen" />
 
-  <!-- Height estimation node -->
-  <node name="estimator" type="estimator" pkg="drone_gazebo" />
 
-  <!-- Provide odometry from cmd_vel topic -->
-  <node name="velocity_to_3d_odom" type="velocity_to_3d_odom" pkg="drone_3d_nav" output="screen"/>
 
   <!-- VISUALIZATION -->
   <!-- Launch Rviz with pre loaded configuration-->
