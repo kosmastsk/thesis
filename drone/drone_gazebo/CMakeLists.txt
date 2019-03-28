@@ -14,8 +14,19 @@ find_package(catkin REQUIRED COMPONENTS
   hector_quadrotor_actions
   hector_quadrotor_controller_gazebo
   tf2_ros
+  std_msgs
+  message_generation
 )
 
+add_message_files(
+  FILES
+  Float64Stamped.msg
+)
+
+generate_messages(
+DEPENDENCIES
+std_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -29,7 +40,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
   LIBRARIES drone_gazebo
-  CATKIN_DEPENDS
+  CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 

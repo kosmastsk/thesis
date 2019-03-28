@@ -44,5 +44,7 @@
   <depend>topic_tools</depend>
   <depend>hector_sensors_description</depend>
   <depend>teraranger_array_converter</depend>
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
 
 </package>
