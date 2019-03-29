@@ -36,6 +36,7 @@ private:
   std::queue<geometry_msgs::Transform> _waypoints;
   int _number_of_waypoints;
   bool _waypoints_received;
+  bool _hovering;
 
   geometry_msgs::Transform _current_goal;
 

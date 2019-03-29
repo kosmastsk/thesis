@@ -18,6 +18,7 @@ Navigator::Navigator()
   _waypoint_number = 0;
   _waypoints_received = false;
   _dt = 0;
+  _hovering = false;
 
   _error_x = 0;
   _error_y = 0;
@@ -79,20 +80,28 @@ void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryC
   // The first item in the points array is the initial position
   _waypoint_number = 1;
   _number_of_waypoints = msg->points.size();
+  // Empty the queue for new waypoints
+  while (!_waypoints.empty())
+  {
+    _waypoints.pop();
+  }
+
   ROS_INFO("%d waypoints received\n", _number_of_waypoints);
   for (unsigned int i = 0; i < _number_of_waypoints; i++)
   {
     _waypoints.push(msg->points[i].transforms[0]);
   }
+
   _current_goal = _waypoints.front();
   _waypoints.pop();  // Remove this element from the queue
   _waypoints_received = true;
+  _must_exit = false;
 }
 
 void Navigator::odomCallback(const nav_msgs::OdometryConstPtr& msg)
 {
   // If the waypoints have not received, we cannot proceed with the navigation.
-  if (!_waypoints_received)
+  if (!_waypoints_received && !_hovering)
   {
     ROS_WARN_ONCE("Waypoints not received. Skipping odometry...\n");
     return;
@@ -109,6 +118,7 @@ void Navigator::odomCallback(const nav_msgs::OdometryConstPtr& msg)
   tf2::fromMsg(_current_goal.rotation, current_goal_quat);
   tf2::fromMsg(_pose.rotation, pose_quat);
 
+  // If we want to find roll and pitch, we need Matrix3x3 and getRPY
   double current_goal_yaw = tf2::impl::getYaw(current_goal_quat);
   double pose_yaw = tf2::impl::getYaw(pose_quat);
 
@@ -173,14 +183,8 @@ void Navigator::odomCallback(const nav_msgs::OdometryConstPtr& msg)
   {
     if (_must_exit == true)
     {
-      ROS_INFO("Final waypoint reached. Exiting...\n");
-      _twist.linear.x = 0;
-      _twist.linear.y = 0;
-      _twist.linear.z = 0;
-      _twist.angular.x = 0;
-      _twist.angular.y = 0;
-      _twist.angular.z = 0;
-      _waypoint_number = 0;
+      ROS_INFO("Final waypoint reached. Hovering...\n");
+      _hovering = true;
       _waypoints_received = false;  // Set it to false again, so to wait for new waypoints to serve
     }
     else
