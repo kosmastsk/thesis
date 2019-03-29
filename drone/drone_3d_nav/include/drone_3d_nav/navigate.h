@@ -29,7 +29,7 @@ private:
   ros::Publisher _stamped_vel_pub;
 
   ros::Subscriber _waypoints_sub;
-  ros::Subscriber _odom_sub;
+  ros::Subscriber _pose_sub;
 
   visualization_msgs::MarkerArray _marker_array_msg;
 
@@ -106,7 +106,7 @@ private:
 
   // Callbacks
   void waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
-  void odomCallback(const nav_msgs::OdometryConstPtr& msg);
+  void poseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 
 public:
   Navigator();

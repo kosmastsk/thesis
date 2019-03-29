@@ -22,6 +22,7 @@
             <bodyName>base_link</bodyName>
             <frameId>$(arg base_link_frame)</frameId>
             <topicName>raw_imu</topicName>
+            <xyzOffset>0 0 0</xyzOffset>
             <rpyOffset>0 0 0</rpyOffset> <!-- deprecated -->
             <gaussianNoise>0</gaussianNoise>  <!-- deprecated -->
             <accelDrift>0.1 0.1 0.1</accelDrift>

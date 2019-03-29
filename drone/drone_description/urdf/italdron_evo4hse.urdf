@@ -51,7 +51,7 @@
   <gazebo reference="height_sensor_frame">
     <sensor name="height_sensor" type="ray">
       <always_on>true</always_on>
-      <update_rate>20</update_rate>
+      <update_rate>100</update_rate>
       <pose>0 0 0 0 0 0</pose>
       <visualize>true</visualize>
       <ray>
@@ -97,6 +97,7 @@
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
       <topicName>raw_imu</topicName>
+      <xyzOffset>0 0 0</xyzOffset>
       <rpyOffset>0 0 0</rpyOffset>
       <!-- deprecated -->
       <gaussianNoise>0</gaussianNoise>

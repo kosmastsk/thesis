@@ -107,11 +107,22 @@ void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& heigh
   // Calculate the interval between the two calls
   double delta_t = ros::Time::now().toSec() - _lastTime.toSec();
 
+  // Get the yaw value
+  tf2::Quaternion temp_quat;
+  tf2::fromMsg(getPreviousOdom().pose.pose.orientation, temp_quat);
+  double yaw = tf2::impl::getYaw(temp_quat);
+
   // Fill in the message
   odom_msg.header.stamp = ros::Time::now();
 
-  odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x + velocity->twist.linear.x * delta_t;
-  odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y + velocity->twist.linear.y * delta_t;
+  // x += cos(yaw)*vx - sin(yaw)*vy
+  // y += sin(yaw)*vx + cos(yaw)*vy
+  odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x +
+                                  cos(yaw) * (velocity->twist.linear.x * delta_t) -
+                                  sin(yaw) * (velocity->twist.linear.y * delta_t);
+  odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y +
+                                  cos(yaw) * (velocity->twist.linear.y * delta_t) +
+                                  sin(yaw) * (velocity->twist.linear.x * delta_t);
   odom_msg.pose.pose.position.z = height->data;
 
   // Position

@@ -67,7 +67,7 @@ Navigator::Navigator()
   _vel_pub = _nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
   _stamped_vel_pub = _nh.advertise<geometry_msgs::TwistStamped>("/cmd_vel/stamped", 1);
 
-  _odom_sub = _nh.subscribe("/ground_truth/state", 1, &Navigator::odomCallback, this);
+  _pose_sub = _nh.subscribe("/amcl_pose", 1, &Navigator::poseCallback, this);
   _waypoints_sub = _nh.subscribe("/waypoints_smooth", 1, &Navigator::waypointCallback, this);
 }
 
@@ -98,20 +98,20 @@ void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryC
   _must_exit = false;
 }
 
-void Navigator::odomCallback(const nav_msgs::OdometryConstPtr& msg)
+void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 {
   // If the waypoints have not received, we cannot proceed with the navigation.
   if (!_waypoints_received && !_hovering)
   {
-    ROS_WARN_ONCE("Waypoints not received. Skipping odometry...\n");
+    ROS_WARN_ONCE("Waypoints not received. Skipping current pose...\n");
     return;
   }
 
-  _pose.translation.x = msg->pose.pose.position.x;
-  _pose.translation.y = msg->pose.pose.position.y;
-  _pose.translation.z = msg->pose.pose.position.z;
+  _pose.translation.x = msg->pose.position.x;
+  _pose.translation.y = msg->pose.position.y;
+  _pose.translation.z = msg->pose.position.z;
 
-  _pose.rotation = msg->pose.pose.orientation;  // geometry_msgs::Quaternion showing the current orientation
+  _pose.rotation = msg->pose.orientation;  // geometry_msgs::Quaternion showing the current orientation
 
   // Get the Yaw from current goal and odometry measurement
   tf2::Quaternion current_goal_quat, pose_quat;
