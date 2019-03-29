@@ -39,6 +39,7 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 
 #define KEYCODE_A 0x61
 #define KEYCODE_D 0x64
@@ -64,16 +65,19 @@ class TeleopPR2Keyboard
 private:
   double walk_vel, run_vel, yaw_rate, yaw_rate_run;
   geometry_msgs::Twist cmd;
+  geometry_msgs::TwistStamped stamped_cmd;
 
   ros::NodeHandle n_;
   ros::Publisher vel_pub_;
+  ros::Publisher stamped_vel_pub_;
 
 public:
   void init()
   {
     cmd.linear.x = cmd.linear.y = cmd.angular.z = 0;
 
-    vel_pub_ = n_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    vel_pub_ = n_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    stamped_vel_pub_ = n_.advertise<geometry_msgs::TwistStamped>("/cmd_vel/stamped", 1);
 
     ros::NodeHandle n_private("~");
     n_private.param("walk_vel", walk_vel, 1.0);
@@ -220,6 +224,10 @@ void TeleopPR2Keyboard::keyboardLoop()
 
     if (dirty == true)
     {
+      stamped_cmd.twist = cmd;
+      stamped_cmd.header.stamp = ros::Time::now();
+
+      stamped_vel_pub_.publish(stamped_cmd);
       vel_pub_.publish(cmd);
     }
   }

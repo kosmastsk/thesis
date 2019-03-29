@@ -2,7 +2,6 @@
 
 <launch>
 
-  <rosparam command="load" file="$(find particle_filter)/params/config.yaml" />
   <rosparam command="load" file="$(find drone_3d_nav)/config/params.yaml" />
 
   <!-- Launch the gazebo simulator -->
@@ -29,15 +28,13 @@
   <node name="velocity_to_3d_odom" type="velocity_to_3d_odom" pkg="drone_3d_nav" output="screen"/>
 
   <!-- Particle filter node - AMCL for octomap -->
-  <node pkg="particle_filter" name="particle_filter" type="particle_filter" output="screen"/>
+  <include file="$(find particle_filter)/launch/particle_filter.launch"/>
 
   <!-- Path planning -->
   <node name="path_planning_node" type="path_planning_node" pkg="path_planning" output="screen"/>
 
   <!-- Navigator -->
   <node name="navigate" type="navigate" pkg="drone_3d_nav" output="screen" />
-
-
 
   <!-- VISUALIZATION -->
   <!-- Launch Rviz with pre loaded configuration-->

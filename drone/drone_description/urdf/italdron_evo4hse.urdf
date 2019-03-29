@@ -92,6 +92,20 @@
       <xyzOffsets>0 0 0</xyzOffsets>
       <rpyOffsets>0 0 0</rpyOffsets>
     </plugin>
+    <plugin filename="libhector_gazebo_ros_imu.so" name="quadrotor_imu_sim">
+      <updateRate>100.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <frameId>base_link</frameId>
+      <topicName>raw_imu</topicName>
+      <rpyOffset>0 0 0</rpyOffset>
+      <!-- deprecated -->
+      <gaussianNoise>0</gaussianNoise>
+      <!-- deprecated -->
+      <accelDrift>0.1 0.1 0.1</accelDrift>
+      <accelGaussianNoise>0.35 0.35 0.3</accelGaussianNoise>
+      <rateDrift>0.1 0.1 0.1</rateDrift>
+      <rateGaussianNoise>0.05 0.05 0.015</rateGaussianNoise>
+    </plugin>
   </gazebo>
   <gazebo>
     <plugin filename="libgazebo_ros_control.so" name="quadrotor_controller">

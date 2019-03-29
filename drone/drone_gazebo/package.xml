@@ -46,5 +46,6 @@
   <depend>teraranger_array_converter</depend>
   <depend>message_generation</depend>
   <depend>message_runtime</depend>
+  <depend>std_msgs</depend>
 
 </package>

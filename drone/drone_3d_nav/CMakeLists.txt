@@ -13,6 +13,8 @@ find_package(catkin REQUIRED
   sensor_msgs
   tf
   trajectory_msgs
+  genmsg
+  drone_gazebo
 )
 
 find_package(Boost REQUIRED)
@@ -27,9 +29,9 @@ find_package(Boost REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES drone_3d_nav
-#  CATKIN_DEPENDS other_catkin_pkg
+#  INCLUDE_DIRS
+#  LIBRARIES
+#  CATKIN_DEPENDS
 #  DEPENDS system_lib
 )
 

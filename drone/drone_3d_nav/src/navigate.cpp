@@ -64,6 +64,7 @@ Navigator::Navigator()
   _action_yaw = 0;
 
   _vel_pub = _nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+  _stamped_vel_pub = _nh.advertise<geometry_msgs::TwistStamped>("/cmd_vel/stamped", 1);
 
   _odom_sub = _nh.subscribe("/ground_truth/state", 1, &Navigator::odomCallback, this);
   _waypoints_sub = _nh.subscribe("/waypoints_smooth", 1, &Navigator::waypointCallback, this);
@@ -163,10 +164,10 @@ void Navigator::odomCallback(const nav_msgs::OdometryConstPtr& msg)
   _twist.angular.y = 0;  //_action_pitch;
   _twist.angular.z = _action_yaw;
 
-  ROS_INFO("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
+  /*  ROS_INFO("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
 
-  ROS_INFO("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
-
+    ROS_INFO("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
+  */
   // Ensure that the drone's position is in accepted range error
   if ((fabs(_error_x) <= _tolerance) && (fabs(_error_y) <= _tolerance) && (fabs(_error_z) <= _tolerance))
   {
@@ -202,7 +203,11 @@ void Navigator::odomCallback(const nav_msgs::OdometryConstPtr& msg)
     _must_exit = true;
   }
 
+  _twist_stamped.twist = _twist;
+  _twist_stamped.header.stamp = ros::Time::now();
+
   _vel_pub.publish(_twist);
+  _stamped_vel_pub.publish(_twist_stamped);
 }
 }  // namespace navigate
 

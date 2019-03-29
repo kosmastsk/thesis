@@ -86,9 +86,6 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   _scanFilter = new tf2_ros::MessageFilter<sensor_msgs::LaserScan>(*_scanListener, _tfBuffer, _worldFrameID, 100, _nh);
   _scanFilter->registerCallback(boost::bind(&Particles::scanCallback, this, _1));
 
-  // subscription on point cloud, tf message filter
-  // TODO
-
   // subscription on init pose, tf message filter
   _initialPoseListener =
       new message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>(_nh, "/amcl/initial_pose", 5);

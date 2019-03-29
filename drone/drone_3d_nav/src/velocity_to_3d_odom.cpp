@@ -21,9 +21,20 @@ Converter::Converter()
 Converter::Converter(char* argv[])
 {
   // Initialize the Subscribers
-  _cmdVelListener = _nh.subscribe("/cmd_vel", 10, &Converter::cmdVelCallback, this);
+  _height_listener = new message_filters::Subscriber<drone_gazebo::Float64Stamped>(_nh, "/height", 100);
+  _imu_listener = new message_filters::Subscriber<sensor_msgs::Imu>(_nh, "/raw_imu", 100);
+  _velocity_listener = new message_filters::Subscriber<geometry_msgs::TwistStamped>(_nh, "/cmd_vel/stamped", 100);
 
-  _heightListener = _nh.subscribe("/height", 10, &Converter::heightCallback, this);
+  // Using the ApproximateTime Policy
+  // http://wiki.ros.org/message_filters/ApproximateTime
+  typedef message_filters::sync_policies::ApproximateTime<drone_gazebo::Float64Stamped, sensor_msgs::Imu,
+                                                          geometry_msgs::TwistStamped>
+      MySyncPolicy;
+
+  message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), *_height_listener, *_imu_listener,
+                                                   *_velocity_listener);
+
+  sync.registerCallback(boost::bind(&Converter::syncedCallback, this, _1, _2, _3));
 
   // Set frames for the new message
   _outputFrame = std::string("map");
@@ -64,11 +75,20 @@ Converter::~Converter()
 }
 
 /******************************/
-/*       cmdVelCallback       */
+/*      syncedCallback        */
 /******************************/
 
-void Converter::cmdVelCallback(const geometry_msgs::TwistConstPtr& msg)
+void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& height, const sensor_msgs::ImuConstPtr& imu,
+                               const geometry_msgs::TwistStampedConstPtr& velocity)
 {
+  // Check the element 0 of orientation covariance. If it is -1, it means that the IMU is not producing orientation
+  // estimate, so we need to disregard the associated estimate
+  if (imu->orientation_covariance[0] == -1)
+  {
+    ROS_WARN("IMU is not producing orientation estimate. orientation_covariance[0] == 1\n");
+    return;
+  }
+
   // Create the odometry nav_msgs
   nav_msgs::Odometry odom_msg;
   odom_msg.header.frame_id = _outputFrame;
@@ -90,35 +110,37 @@ void Converter::cmdVelCallback(const geometry_msgs::TwistConstPtr& msg)
   // Fill in the message
   odom_msg.header.stamp = ros::Time::now();
 
-  // TODO Find a more efficient way for moving in the 3D world if is possible
+  odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x + velocity->twist.linear.x * delta_t;
+  odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y + velocity->twist.linear.y * delta_t;
+  odom_msg.pose.pose.position.z = height->data;
 
   // Position
   // Why this works is in the following links
   // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePath.htm
   // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePathWithCalc.htm
-  tf2::Quaternion temp_quat;
-  tf2::fromMsg(getPreviousOdom().pose.pose.orientation, temp_quat);
-  double theta = tf2::impl::getYaw(temp_quat);
-  double s = msg->linear.x;
-  double w = msg->angular.z;
+  /*
+    tf2::Quaternion temp_quat;
+    tf2::fromMsg(getPreviousOdom().pose.pose.orientation, temp_quat);
+    double theta = tf2::impl::getYaw(temp_quat);
+    double s = velocity->twist.linear.x;
+    double w = imu->angular_velocity.z;
 
-  // Add some noise
-  std::random_device dev;
-  std::mt19937 rng(dev());
-  std::normal_distribution<double> dist(0, 0.1);
+    // Add some noise
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::normal_distribution<double> dist(0, 0.1);
 
-  s += dist(rng);
-  w += dist(rng);
-  theta += dist(rng);
+    s += dist(rng);
+    w += dist(rng);
+    theta += dist(rng);
 
-  odom_msg.pose.pose.position.x =
-      getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * delta_t + theta);
-  odom_msg.pose.pose.position.y =
-      getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * delta_t + theta);
-  odom_msg.pose.pose.position.z = getHeight();
-
-  // Special case when the robot is reaching is goal and not receiveing any more goals, the result is nan.
-
+    odom_msg.pose.pose.position.x =
+        getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * delta_t + theta);
+    odom_msg.pose.pose.position.y =
+        getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * delta_t + theta);
+    odom_msg.pose.pose.position.z = height->data;
+  */
+  // Special case when the robot is reaching a goal and not receiving any more goals, the result is nan.
   if (std::isnan(odom_msg.pose.pose.position.x))
   {
     odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x;
@@ -128,43 +150,48 @@ void Converter::cmdVelCallback(const geometry_msgs::TwistConstPtr& msg)
     odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y;
   }
 
-  // TODO check page 63 in the thesis
-
   // Orientation
-  // Orientation is a quaternion. angular velocity is rad/sec
-  // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
-  tf2::Quaternion previous_orientation, rotation_quat;
-  tf2::fromMsg(getPreviousOdom().pose.pose.orientation, previous_orientation);
+  odom_msg.pose.pose.orientation = imu->orientation;
 
-  // Fill in the rotation Quaternion
-  // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
-  // https://stackoverflow.com/questions/24197182/efficient-quaternion-angular-velocity
-  tf2::Vector3 ha = tf2::Vector3(msg->angular.x, msg->angular.y, w) * delta_t * 0.5;  // vector of half angle
+  /*
+    // check page 63 in the thesis
 
-  double l = ha.length();  // magnitude
 
-  if (l > 0)
-  {
-    double ss = sin(l) / l;
-    rotation_quat = tf2::Quaternion(ha.x() * ss, ha.y() * ss, ha.z() * ss, cos(l));
-  }
-  else
-  {
-    rotation_quat = tf2::Quaternion(ha.x(), ha.y(), ha.z(), 1);
-  }
+    // Orientation is a quaternion. angular velocity is rad/sec
+    // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
+    tf2::Quaternion previous_orientation, rotation_quat;
+    tf2::fromMsg(getPreviousOdom().pose.pose.orientation, previous_orientation);
 
-  // rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
-  // msg->angular.z * delta_t);  // multiply with time to make it rads
+    // Fill in the rotation Quaternion
+    // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
+    // https://stackoverflow.com/questions/24197182/efficient-quaternion-angular-velocity
+    tf2::Vector3 ha = tf2::Vector3(msg->angular.x, msg->angular.y, w) * delta_t * 0.5;  // vector of half angle
 
-  // Apply the rotation, normalize it and then convert tf2::quaternion to std_msgs::quaternion to be accepted in the
-  // odom msg
-  odom_msg.pose.pose.orientation = tf2::toMsg((rotation_quat * previous_orientation).normalize());
+    double l = ha.length();  // magnitude
+
+    if (l > 0)
+    {
+      double ss = sin(l) / l;
+      rotation_quat = tf2::Quaternion(ha.x() * ss, ha.y() * ss, ha.z() * ss, cos(l));
+    }
+    else
+    {
+      rotation_quat = tf2::Quaternion(ha.x(), ha.y(), ha.z(), 1);
+    }
+
+    // rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
+    // msg->angular.z * delta_t);  // multiply with time to make it rads
+
+    // Apply the rotation, normalize it and then convert tf2::quaternion to std_msgs::quaternion to be accepted in the
+    // odom msg
+    odom_msg.pose.pose.orientation = tf2::toMsg((rotation_quat * previous_orientation).normalize());
+    */
 
   // Velocity
   // https://answers.ros.org/question/141871/why-is-there-a-twist-in-odometry-message/
   // TODO : Is there a way to calculate the measured one and not the desired????
-  odom_msg.twist.twist.linear = msg->linear;
-  odom_msg.twist.twist.angular = msg->angular;
+  odom_msg.twist.twist.linear = velocity->twist.linear;
+  odom_msg.twist.twist.angular = velocity->twist.angular;
 
   // Publish
   // _odomPublisher.publish(odom_msg);
@@ -174,16 +201,6 @@ void Converter::cmdVelCallback(const geometry_msgs::TwistConstPtr& msg)
 
   // Update time variable for next call
   _lastTime = odom_msg.header.stamp;  // ros::Time::now();
-}
-
-/******************************/
-/*       heightCallback       */
-/******************************/
-
-void Converter::heightCallback(const std_msgs::Float64::ConstPtr& msg)
-{
-  // Provide the current height to the odometry topic
-  setHeight(msg->data);
 }
 
 /******************************/

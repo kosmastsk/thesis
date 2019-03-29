@@ -24,8 +24,8 @@ add_message_files(
 )
 
 generate_messages(
-DEPENDENCIES
-std_msgs
+  DEPENDENCIES
+  std_msgs
 )
 
 ###################################
@@ -39,8 +39,8 @@ std_msgs
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-  LIBRARIES drone_gazebo
-  CATKIN_DEPENDS message_runtime
+#  LIBRARIES
+  CATKIN_DEPENDS message_runtime std_msgs
 #  DEPENDS system_lib
 )
 
@@ -61,7 +61,7 @@ add_executable(estimator
 target_link_libraries(estimator
   ${catkin_LIBRARIES})
 add_dependencies(estimator
-  ${catkin_EXPORTED_TARGETS})
+  ${catkin_EXPORTED_TARGETS} drone_gazebo_generate_messages_cpp)
 
 add_executable(teleop src/teleop_pr2_keyboard_modificato.cpp)
 target_link_libraries(teleop ${catkin_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

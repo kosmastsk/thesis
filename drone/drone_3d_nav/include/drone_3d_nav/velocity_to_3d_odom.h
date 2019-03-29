@@ -8,17 +8,24 @@
 // ROS headers
 #include <ros/ros.h>
 
-#include "geometry_msgs/Quaternion.h"
+#include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
-#include "geometry_msgs/Twist.h"
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include "nav_msgs/Odometry.h"
-#include "std_msgs/Float64.h"
+#include <nav_msgs/Odometry.h>
+#include <std_msgs/Float64.h>
+#include <sensor_msgs/Imu.h>
+#include "drone_gazebo/Float64Stamped.h"
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2/impl/utils.h>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
 namespace vel_to_3d_odom
 {
@@ -27,9 +34,12 @@ class Converter
 private:
   // Variables
   ros::NodeHandle _nh;
-  ros::Subscriber _cmdVelListener;
-  ros::Subscriber _heightListener;
+
   ros::Publisher _odomPublisher;
+
+  message_filters::Subscriber<drone_gazebo::Float64Stamped>* _height_listener;
+  message_filters::Subscriber<sensor_msgs::Imu>* _imu_listener;
+  message_filters::Subscriber<geometry_msgs::TwistStamped>* _velocity_listener;
 
   std::string _outputFrame;
   std::string _baseFrame;
@@ -43,8 +53,8 @@ private:
   void publishOdometry();
 
   // Callback
-  void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg);
-  void heightCallback(const std_msgs::Float64::ConstPtr& msg);
+  void syncedCallback(const drone_gazebo::Float64StampedConstPtr& height, const sensor_msgs::ImuConstPtr& imu,
+                      const geometry_msgs::TwistStampedConstPtr& velocity);
 
 public:
   Converter();
@@ -63,15 +73,6 @@ public:
   void updateOdomTime(ros::Time t)
   {
     _previousOdom.header.stamp = t;
-  }
-
-  float getHeight()
-  {
-    return _height;
-  }
-  void setHeight(float value)
-  {
-    _height = value;
   }
 };
 }  // namespace vel_to_odom

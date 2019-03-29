@@ -2,6 +2,7 @@
 #include <queue>
 
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Transform.h>
 #include <nav_msgs/Odometry.h>
@@ -25,6 +26,7 @@ private:
   ros::NodeHandle _nh;
 
   ros::Publisher _vel_pub;
+  ros::Publisher _stamped_vel_pub;
 
   ros::Subscriber _waypoints_sub;
   ros::Subscriber _odom_sub;
@@ -96,6 +98,7 @@ private:
 
   geometry_msgs::Transform _pose;
   geometry_msgs::Twist _twist;
+  geometry_msgs::TwistStamped _twist_stamped;
 
   bool _must_exit;
   int _waypoint_number;
