@@ -1,0 +1,28 @@
+# PID
+# the I is always zero, as in the simulation it is a perfect world, where there is no wind or other factor that change the stability of the drone
+# https://robotics.stackexchange.com/questions/9554/quadcopter-pid-algorithm
+# x position
+x_kp: 0.7 # 0.5
+x_ki: 0 # 0.0002
+x_kd: 0.00015 # 000015 # 0.00005
+
+# y position
+y_kp: 0.6
+y_ki: 0
+y_kd: 0.00001
+
+# z position
+z_kp: 2.5
+z_ki: 0
+z_kd: 0.000025
+
+# yaw
+yaw_kp: 0.1
+yaw_ki: 0
+yaw_kd: 0.00005
+
+# Tolerance of the distance from the waypoints, to be accepted
+tolerance: 0.30
+
+# 6,3,2 is the path tried
+# 10, 4 ,2

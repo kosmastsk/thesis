@@ -44,14 +44,21 @@ private:
   double _dt;
 
   // PID
-  double _kp;
-  double _ki;
-  double _kd;
+  double _x_kp;
+  double _x_ki;
+  double _x_kd;
 
-  double _kp_yaw;
-  double _ki_yaw;
-  double _kd_yaw;
-  // float _w;
+  double _y_kp;
+  double _y_ki;
+  double _y_kd;
+
+  double _z_kp;
+  double _z_ki;
+  double _z_kd;
+
+  double _yaw_kp;
+  double _yaw_ki;
+  double _yaw_kd;
 
   float _error_x;
   float _error_y;

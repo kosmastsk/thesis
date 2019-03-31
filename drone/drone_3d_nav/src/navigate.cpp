@@ -5,14 +5,18 @@ namespace navigate
 Navigator::Navigator()
 {
   // Parameters
-
-  _nh.param<double>("/kp", _kp, 0.5);
-  _nh.param<double>("/ki", _ki, 0.0002);
-  _nh.param<double>("/kd", _kd, 0.00005);
-  _nh.param<double>("/kp_yaw", _kp_yaw, 0.5);
-  _nh.param<double>("/ki_yaw", _ki_yaw, 0.0002);
-  _nh.param<double>("/kd_yaw", _kd_yaw, 0.00005);
-  _nh.param<float>("/tolerance", _tolerance, 0.1);
+  _nh.param<double>("/x_kp", _x_kp, 0.5);
+  _nh.param<double>("/x_ki", _x_ki, 0);
+  _nh.param<double>("/x_kd", _x_kd, 0);
+  _nh.param<double>("/y_kp", _y_kp, 0.5);
+  _nh.param<double>("/y_ki", _y_ki, 0);
+  _nh.param<double>("/y_kd", _y_kd, 0);
+  _nh.param<double>("/z_kp", _z_kp, 0.5);
+  _nh.param<double>("/z_ki", _z_ki, 0);
+  _nh.param<double>("/z_kd", _z_kd, 0);
+  _nh.param<double>("/yaw_kp", _yaw_kp, 0.5);
+  _nh.param<double>("/yaw_ki", _yaw_ki, 0);
+  _nh.param<double>("/yaw_kd", _yaw_kd, 0);
 
   _must_exit = false;
   _waypoint_number = 0;
@@ -23,15 +27,11 @@ Navigator::Navigator()
   _error_x = 0;
   _error_y = 0;
   _error_z = 0;
-  // _error_roll = 0;
-  // _error_pitch = 0;
   _error_yaw = 0;
 
   _prev_error_x = 0;
   _prev_error_y = 0;
   _prev_error_z = 0;
-  // _prev_error_roll = 0;
-  // _prev_error_pitch = 0;
   _prev_error_yaw = 0;
 
   _rise = 1;
@@ -39,34 +39,27 @@ Navigator::Navigator()
   _proportional_x = 0;
   _proportional_y = 0;
   _proportional_z = 0;
-  // _proportional_roll = 0;
-  // _proportional_pitch = 0;
   _proportional_yaw = 0;
 
   _integral_x = 0;
   _integral_y = 0;
   _integral_z = 0;
-  // _integral_roll = 0;
-  // _integral_pitch = 0;
   _integral_yaw = 0;
 
   _derivative_x = 0;
   _derivative_y = 0;
   _derivative_z = 0;
-  // _derivative_roll = 0;
-  // _derivative_pitch = 0;
   _derivative_yaw = 0;
 
   _action_x = 0;
   _action_y = 0;
   _action_z = 0;
-  // _action_roll = 0;
-  // _action_pitch = 0;
   _action_yaw = 0;
 
   _vel_pub = _nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
   _stamped_vel_pub = _nh.advertise<geometry_msgs::TwistStamped>("/cmd_vel/stamped", 1);
 
+  // amcl_pose
   _pose_sub = _nh.subscribe("/amcl_pose", 1, &Navigator::poseCallback, this);
   _waypoints_sub = _nh.subscribe("/waypoints_smooth", 1, &Navigator::waypointCallback, this);
 }
@@ -96,6 +89,8 @@ void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryC
   _waypoints.pop();  // Remove this element from the queue
   _waypoints_received = true;
   _must_exit = false;
+  // If this is not the first time, that waypoints are sent, we need to restore tolerance value
+  _nh.param<float>("/tolerance", _tolerance, 0.15);
 }
 
 void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -128,56 +123,44 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _error_x = _current_goal.translation.x - _pose.translation.x;
   _error_y = _current_goal.translation.y - _pose.translation.y;
   _error_z = _current_goal.translation.z - _pose.translation.z;
-  // _error_roll = current_goal_roll - pose_roll;     // _current_goal.rotation.x - _pose.rotation.x;
-  // _error_pitch = current_goal_pitch - pose_pitch;  // _current_goal.rotation.y - _pose.rotation.y;
-  _error_yaw = current_goal_yaw - pose_yaw;  // _current_goal.rotation.z - _pose.rotation.z;
+  _error_yaw = current_goal_yaw - pose_yaw;
 
-  _proportional_x = _kp * _error_x;
-  _proportional_y = _kp * _error_y;
-  _proportional_z = _kp * _error_z;
-  // _proportional_roll = _kp * _error_roll;
-  // _proportional_pitch = _kp * _error_pitch;
-  _proportional_yaw = _kp_yaw * _error_yaw;
+  _proportional_x = _x_kp * _error_x;
+  _proportional_y = _y_kp * _error_y;
+  _proportional_z = _z_kp * _error_z;
+  _proportional_yaw = _yaw_kp * _error_yaw;
 
-  _integral_x = _ki * (_integral_x + _error_x * _dt);
-  _integral_y = _ki * (_integral_y + _error_y * _dt);
-  _integral_z = _ki * (_integral_z + _error_z * _dt);
-  // _integral_roll += _ki * _error_roll;
-  // _integral_pitch += _ki * _error_pitch;
-  _integral_yaw = _ki_yaw * (_integral_yaw + _error_yaw * _dt);
+  _integral_x = _x_ki * (_integral_x + _error_x * _dt);
+  _integral_y = _y_ki * (_integral_y + _error_y * _dt);
+  _integral_z = _z_ki * (_integral_z + _error_z * _dt);
+  _integral_yaw = _yaw_ki * (_integral_yaw + _error_yaw * _dt);
 
-  _derivative_x = _kd * (_error_x - _prev_error_x);
-  _derivative_y = _kd * (_error_y - _prev_error_y);
-  _derivative_z = _kd * (_error_z - _prev_error_z);
-  // _derivative_roll = _kd * (_error_roll - _prev_error_roll);
-  // _derivative_pitch = _kd * (_error_pitch - _prev_error_pitch);
-  _derivative_yaw = _kd_yaw * (_error_yaw - _prev_error_yaw);
+  _derivative_x = _x_kd * (_error_x - _prev_error_x);
+  _derivative_y = _y_kd * (_error_y - _prev_error_y);
+  _derivative_z = _z_kd * (_error_z - _prev_error_z);
+  _derivative_yaw = _yaw_kd * (_error_yaw - _prev_error_yaw);
 
   _prev_error_x = _error_x;
   _prev_error_y = _error_y;
   _prev_error_z = _error_z;
-  // _prev_error_roll = _error_roll;
-  // _prev_error_pitch = _error_pitch;
   _prev_error_yaw = _error_yaw;
 
   _action_x = _proportional_x + _integral_x + _derivative_x;
   _action_y = _proportional_y + _integral_y + _derivative_y;
-  _action_z = 5 * _proportional_z + _integral_z + _derivative_z;
-  // _action_roll = _proportional_roll + _integral_roll + _derivative_roll;
-  // _action_pitch = _proportional_pitch + _integral_pitch + _derivative_pitch;
+  _action_z = _proportional_z + _integral_z + _derivative_z;
   _action_yaw = _proportional_yaw + _integral_yaw + _derivative_yaw;
 
   _twist.linear.x = _action_x;
   _twist.linear.y = _action_y;
   _twist.linear.z = _action_z;
-  _twist.angular.x = 0;  //_action_roll;
-  _twist.angular.y = 0;  //_action_pitch;
+  _twist.angular.x = 0;
+  _twist.angular.y = 0;
   _twist.angular.z = _action_yaw;
 
-  /*  ROS_INFO("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
+  ROS_DEBUG("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
 
-    ROS_INFO("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
-  */
+  ROS_DEBUG("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
+
   // Ensure that the drone's position is in accepted range error
   if ((fabs(_error_x) <= _tolerance) && (fabs(_error_y) <= _tolerance) && (fabs(_error_z) <= _tolerance))
   {
@@ -205,6 +188,7 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   {
     _waypoint_number = 0;
     _must_exit = true;
+    _tolerance *= 0.5;  // Make the tolerance for the last waypoint, more strict
   }
 
   _twist_stamped.twist = _twist;
