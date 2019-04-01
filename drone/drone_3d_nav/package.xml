@@ -21,6 +21,7 @@
   <depend>roscpp</depend>
   <depend>tf</depend>
   <depend>sensor_msgs</depend>
+  <depend>path_planning</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

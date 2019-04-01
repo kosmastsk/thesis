@@ -63,9 +63,9 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   _poseArray.poses.resize(_numParticles);
 
   // publishers can be advertised first, before needed:
-  _posePublisher = _nh.advertise<geometry_msgs::PoseStamped>("/amcl_pose", 50);
-  _poseArrayPublisher = _nh.advertise<geometry_msgs::PoseArray>("/amcl/particlecloud", 50);
-  _filteredPointCloudPublisher = _nh.advertise<sensor_msgs::PointCloud2>("/amcl/filtered_cloud", 5);
+  _posePublisher = _nh.advertise<geometry_msgs::PoseStamped>("/amcl_pose", 10);
+  _poseArrayPublisher = _nh.advertise<geometry_msgs::PoseArray>("/amcl/particlecloud", 10);
+  _filteredPointCloudPublisher = _nh.advertise<sensor_msgs::PointCloud2>("/amcl/filtered_cloud", 1);
   _init_pose_pub = _nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/amcl/initial_pose", 10);
 
   // ROS subscriptions last:
@@ -88,7 +88,7 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
 
   // subscription on init pose, tf message filter
   _initialPoseListener =
-      new message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>(_nh, "/amcl/initial_pose", 5);
+      new message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>(_nh, "/amcl/initial_pose", 2);
 
   _initialPoseFilter = new tf2_ros::MessageFilter<geometry_msgs::PoseWithCovarianceStamped>(
       *_initialPoseListener, _tfBuffer, _mapFrameID, 5, _nh);
@@ -184,7 +184,6 @@ void Particles::scanCallback(const sensor_msgs::LaserScanConstPtr& msg)
     ros::Time start = ros::Time::now();
     double dt = (odomPose.header.stamp - _mm->getLastOdomPose().header.stamp).toSec();
     if (!_receivedSensorData || isAboveMotionThreshold(odomPose))
-    // QUESTION what does it give me??
     {
       pcl::PointCloud<pcl::PointXYZ> pcFiltered;
       std::vector<float> laserRanges;
@@ -399,12 +398,12 @@ void Particles::publishPoseEstimate(const ros::Time& t)
   bestPose.header.frame_id = _mapFrameID;
   bestPose.header.stamp = t;
 
-  bestPose.pose.position.x = _pf->getState(0).getXPos();
-  bestPose.pose.position.y = _pf->getState(0).getYPos();
-  bestPose.pose.position.z = _pf->getState(0).getZPos();
+  bestPose.pose.position.x = _pf->getBestState().getXPos();
+  bestPose.pose.position.y = _pf->getBestState().getYPos();
+  bestPose.pose.position.z = _pf->getBestState().getZPos();
 
   tf2::Quaternion temp_pose_orien;
-  temp_pose_orien.setRPY(_pf->getState(0).getRoll(), _pf->getState(0).getPitch(), _pf->getState(0).getYaw());
+  temp_pose_orien.setRPY(_pf->getBestState().getRoll(), _pf->getBestState().getPitch(), _pf->getBestState().getYaw());
   // Convert tf2::quaternion to std_msgs::quaternion to be accepted in the odom msg
   bestPose.pose.orientation = tf2::toMsg(temp_pose_orien.normalize());
 
@@ -520,8 +519,7 @@ void Particles::prepareLaserPointCloud(const sensor_msgs::LaserScanConstPtr& sca
   }
   ranges = rangesSparse;
 
-  ROS_INFO("Laser PointCloud subsampled: %zu from %zu (%u out of valid range)", pc.size(), cloudPtr->size(),
-           numBeamsSkipped);
+  ROS_INFO("Laser PointCloud: (%u out of valid range)", numBeamsSkipped);
 }
 
 /******************************/

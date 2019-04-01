@@ -89,23 +89,29 @@ double DroneObservationModel::measure(const DroneState& state) const
 
     float z = obsRange - raycastRange;
 
-    // todo check normalization factors in Probabilistics Robotics page 138
-    if (obsRange < _maxRange)
-      p += _ZHit * 1 / (std::sqrt(2 * M_PI * _SigmaHit * _SigmaHit)) * exp(-(z * z) / (2 * _SigmaHit * _SigmaHit));
+    //  Probabilistics Robotics page 129
+    // Algorithm beam range finder model
 
+    // Part 1: good, but noisy, hit
+    if (obsRange < _maxRange)
+      p += (_ZHit * exp(-(z * z) / (2 * _SigmaHit * _SigmaHit))) / (std::sqrt(2 * M_PI * _SigmaHit * _SigmaHit));
+
+    // Part 2: short reading from unexpected obstacle (e.g., a person)
     if (z < 0)
       p += _ZShort * _LambdaShort * exp(-_LambdaShort * obsRange);
 
-    if (obsRange >= _maxRange)
+    // Part 3: Failure to detect obstacle, reported as max-range
+    if (obsRange == _maxRange)
       p += _ZMax * 1.0;
 
+    // Part 4: Random measurements
     if (obsRange < _maxRange)
       p += _ZRand * 1.0 / _maxRange;
 
     ROS_ASSERT(p > 0.0);
     weight *= p;
   }
-
+  // std::cout << "Weight : " << weight << std::endl;
   return weight;
 }
 

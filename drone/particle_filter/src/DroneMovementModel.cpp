@@ -80,13 +80,14 @@ void DroneMovementModel::diffuse(DroneState& state, double dt) const
 {
   // Transform the N(0,1) distribution that has been created, using the sigma*X + u transform
   // Now our distribution has the previous standard deviation but mean _*Mean, different one for each direction
-  state.setXPos(state.getXPos() + (m_RNG->getGaussian(_XStdDev) + _xMean) * dt);
-  state.setYPos(state.getYPos() + (m_RNG->getGaussian(_YStdDev) + _yMean) * dt);
-  state.setZPos(state.getZPos() + (m_RNG->getGaussian(_ZStdDev) + _zMean) * dt);
+  state.setXPos(state.getXPos() + (m_RNG->getGaussian(_XStdDev)) * dt);
+  // (m_RNG->getGaussian(_XStdDev) + _xMean) * dt); // DOESNT WORK, MOVES FASTER THAN NEEDED
+  state.setYPos(state.getYPos() + (m_RNG->getGaussian(_YStdDev)) * dt);
+  state.setZPos(state.getZPos() + (m_RNG->getGaussian(_ZStdDev)) * dt);
 
-  state.setRoll(state.getRoll() + (m_RNG->getGaussian(_RollStdDev) + _rollMean) * dt);
-  state.setPitch(state.getPitch() + (m_RNG->getGaussian(_PitchStdDev) + _pitchMean) * dt);
-  state.setYaw(state.getYaw() + (m_RNG->getGaussian(_YawStdDev) + _yawMean) * dt);
+  state.setRoll(state.getRoll() + (m_RNG->getGaussian(_RollStdDev)) * dt);
+  state.setPitch(state.getPitch() + (m_RNG->getGaussian(_PitchStdDev)) * dt);
+  state.setYaw(state.getYaw() + (m_RNG->getGaussian(_YawStdDev)) * dt);
 }
 
 void DroneMovementModel::setXStdDev(double d)

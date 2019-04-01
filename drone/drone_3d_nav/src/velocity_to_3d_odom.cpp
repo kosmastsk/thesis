@@ -200,7 +200,6 @@ void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& heigh
 
   // Velocity
   // https://answers.ros.org/question/141871/why-is-there-a-twist-in-odometry-message/
-  // TODO : Is there a way to calculate the measured one and not the desired????
   odom_msg.twist.twist.linear = velocity->twist.linear;
   odom_msg.twist.twist.angular = velocity->twist.angular;
 

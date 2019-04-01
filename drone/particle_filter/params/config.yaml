@@ -3,7 +3,7 @@ provide_initial_pose: true
 # if false, global localization will be called
 
 # Position
-x_pos: 1.0
+x_pos: 0.0
 y_pos: 0.0
 z_pos: 0.18
 
@@ -13,7 +13,7 @@ pitch: 0.0
 yaw: 0.0
 
 # Number of particles
-particles: 500
+particles: 200
 
 # Standard deviations for movement model
 /movement/x_std_dev: 0.2
@@ -22,7 +22,7 @@ particles: 500
 
 /movement/roll_std_dev: 0.0
 /movement/pitch_std_dev: 0.0
-/movement/yaw_std_dev: 0.0
+/movement/yaw_std_dev: 0.1
 
 
 # Frames
@@ -35,14 +35,14 @@ baseLinkFrame: "base_link"
 transform_tolerance_time: 1.0
 
 # Observation parameters / Raycasting
-laser_z_hit: 0.5
-laser_z_short: 0.05
-laser_z_rand: 0.5
-laser_z_max: 0.05
-laser_sigma_hit: 0.2
-laser_lambda_short: 0.1
-min_range: 0.01
+laser_z_hit: 0.65 # Mixture weight for the z_hit part of the model 0.5
+laser_z_short: 0.1 # Mixture weight for the z_short part of the model 0.05
+laser_z_rand: 0.1 # Mixture weight for the z_rand part of the model 0.5
+laser_z_max: 0.15 # Mixture weight for the z_max part of the model 0.05
+laser_sigma_hit: 0.2 # Standard deviation for Gaussian model used in z_hit part of the model 0.2
+laser_lambda_short: 0.1 # Exponential decay parameter for z_short part of model 0.1
+min_range: 0.05
 max_range: 14.0
 observation_threshold_trans: 0.3
-observation_threshold_rot: 0.4
+observation_threshold_rot: 0.2
 sensor_sample_distance: 0.2

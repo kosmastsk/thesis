@@ -22,7 +22,7 @@ yaw_ki: 0
 yaw_kd: 0.00005
 
 # Tolerance of the distance from the waypoints, to be accepted
-tolerance: 0.30
+tolerance: 0.20
 
 # 6,3,2 is the path tried
 # 10, 4 ,2

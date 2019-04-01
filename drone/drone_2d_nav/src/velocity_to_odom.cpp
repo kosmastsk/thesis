@@ -158,7 +158,6 @@ void Converter::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
 
   // Velocity
   // https://answers.ros.org/question/141871/why-is-there-a-twist-in-odometry-message/
-  // TODO : Is there a way to calculate the measured one and not the desired????
   odom_msg.twist.twist.linear = msg->linear;
   odom_msg.twist.twist.angular = msg->angular;
 

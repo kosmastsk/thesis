@@ -56,11 +56,11 @@ Navigator::Navigator()
   _action_z = 0;
   _action_yaw = 0;
 
-  _vel_pub = _nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-  _stamped_vel_pub = _nh.advertise<geometry_msgs::TwistStamped>("/cmd_vel/stamped", 1);
+  _vel_pub = _nh.advertise<geometry_msgs::Twist>("/cmd_vel", 5);
+  _stamped_vel_pub = _nh.advertise<geometry_msgs::TwistStamped>("/cmd_vel/stamped", 5);
 
   // amcl_pose
-  _pose_sub = _nh.subscribe("/amcl_pose", 1, &Navigator::poseCallback, this);
+  _pose_sub = _nh.subscribe("/amcl_pose", 5, &Navigator::poseCallback, this);
   _waypoints_sub = _nh.subscribe("/waypoints_smooth", 1, &Navigator::waypointCallback, this);
 }
 
