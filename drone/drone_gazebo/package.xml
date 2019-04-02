@@ -26,7 +26,6 @@
 
   <depend>roscpp</depend>
   <depend>geometry_msgs</depend>
-  <depend>hector_quadrotor_interface</depend>
   <depend>hector_uav_msgs</depend>
   <depend>tf2</depend>
   <depend>tf</depend>
@@ -34,15 +33,11 @@
   <depend>urdf</depend>
   <depend>hector_quadrotor_model</depend>
   <depend>hector_quadrotor_controllers</depend>
-  <depend>hector_quadrotor_pose_estimation</depend>
-  <depend>hector_quadrotor_actions</depend>
-  <depend>hector_quadrotor_controller_gazebo</depend>
   <depend>drone_description</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>topic_tools</depend>
-  <depend>hector_sensors_description</depend>
   <depend>teraranger_array_converter</depend>
   <depend>message_generation</depend>
   <depend>message_runtime</depend>

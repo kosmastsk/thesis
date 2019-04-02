@@ -186,7 +186,6 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 
   if (_waypoint_number == _number_of_waypoints)
   {
-    _waypoint_number = 0;
     _must_exit = true;
     _tolerance *= 0.5;  // Make the tolerance for the last waypoint, more strict
   }

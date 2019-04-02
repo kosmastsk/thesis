@@ -95,18 +95,24 @@ double DroneObservationModel::measure(const DroneState& state) const
     // Part 1: good, but noisy, hit
     if (obsRange < _maxRange)
       p += (_ZHit * exp(-(z * z) / (2 * _SigmaHit * _SigmaHit))) / (std::sqrt(2 * M_PI * _SigmaHit * _SigmaHit));
+    // std::cout << "Part 1 : "
+    // << (_ZHit * exp(-(z * z) / (2 * _SigmaHit * _SigmaHit))) / (std::sqrt(2 * M_PI * _SigmaHit * _SigmaHit))
+    // << std::endl;
 
     // Part 2: short reading from unexpected obstacle (e.g., a person)
     if (z < 0)
       p += _ZShort * _LambdaShort * exp(-_LambdaShort * obsRange);
+    // std::cout << "Part 2 : " << _ZShort * _LambdaShort * exp(-_LambdaShort * obsRange) << std::endl;
 
     // Part 3: Failure to detect obstacle, reported as max-range
     if (obsRange == _maxRange)
       p += _ZMax * 1.0;
+    // std::cout << "Part 3 : " << _ZMax * 1.0 << std::endl;
 
     // Part 4: Random measurements
     if (obsRange < _maxRange)
       p += _ZRand * 1.0 / _maxRange;
+    // std::cout << "Part 4 : " << _ZRand * 1.0 / _maxRange << std::endl;
 
     ROS_ASSERT(p > 0.0);
     weight *= p;

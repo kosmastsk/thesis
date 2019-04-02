@@ -11,8 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   hector_quadrotor_model
   hector_quadrotor_controllers
   drone_description
-  hector_quadrotor_actions
-  hector_quadrotor_controller_gazebo
   tf2_ros
   std_msgs
   message_generation
