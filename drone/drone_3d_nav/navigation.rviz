@@ -149,73 +149,17 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: octomap_rviz_plugin/ColorOccupancyGrid
-      Enabled: false
+      Enabled: true
       Max. Height Display: 3.40282347e+38
       Max. Octree Depth: 16
       Min. Height Display: -3.40282347e+38
       Name: Octomap
-      Octomap Topic: /octomap_binary
-      Queue Size: 5
-      Value: false
+      Octomap Topic: /octomap_full
+      Queue Size: 1
+      Value: true
       Voxel Alpha: 1
-      Voxel Coloring: Z-Axis
+      Voxel Coloring: Cell Color
       Voxel Rendering: Occupied Voxels
-    - Alpha: 0.699999988
-      Class: rviz/Map
-      Color Scheme: costmap
-      Draw Behind: false
-      Enabled: false
-      Name: Costmap
-      Topic: /move_base/global_costmap/costmap
-      Unreliable: false
-      Use Timestamp: false
-      Value: false
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 255; 0; 0
-      Enabled: false
-      Head Diameter: 0.300000012
-      Head Length: 0.200000003
-      Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
-      Name: Global plan
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.0299999993
-      Shaft Diameter: 0.100000001
-      Shaft Length: 0.100000001
-      Topic: /move_base/TebLocalPlannerROS/global_plan
-      Unreliable: false
-      Value: false
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 0; 85; 255
-      Enabled: false
-      Head Diameter: 0.300000012
-      Head Length: 0.200000003
-      Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
-      Name: Local plan
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.0299999993
-      Shaft Diameter: 0.100000001
-      Shaft Length: 0.100000001
-      Topic: /move_base/TebLocalPlannerROS/local_plan
-      Unreliable: false
-      Value: false
     - Alpha: 1
       Arrow Length: 0.300000012
       Axes Length: 0.300000012
@@ -249,7 +193,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 1
       Name: Odometry
       Position Tolerance: 0.100000001
@@ -265,7 +209,7 @@ Visualization Manager:
         Value: Arrow
       Topic: /odom
       Unreliable: false
-      Value: true
+      Value: false
     - Angle Tolerance: 0.100000001
       Class: rviz/Odometry
       Covariance:
@@ -285,7 +229,7 @@ Visualization Manager:
         Value: true
       Enabled: true
       Keep: 1
-      Name: Ground Truth odometry
+      Name: "Ground Truth "
       Position Tolerance: 0.100000001
       Shape:
         Alpha: 1
@@ -305,7 +249,7 @@ Visualization Manager:
       Axes Radius: 0.100000001
       Class: rviz/Pose
       Color: 148; 0; 229
-      Enabled: true
+      Enabled: false
       Head Length: 0.300000012
       Head Radius: 0.100000001
       Name: AMCL pose
@@ -313,21 +257,6 @@ Visualization Manager:
       Shaft Radius: 0.0500000007
       Shape: Arrow
       Topic: /amcl_pose
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.100000001
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: false
-      Head Length: 0.300000012
-      Head Radius: 0.100000001
-      Name: 2D Nav Goal
-      Shaft Length: 1
-      Shaft Radius: 0.0500000007
-      Shape: Arrow
-      Topic: /move_base/current_goal
       Unreliable: false
       Value: false
     - Alpha: 1
@@ -360,14 +289,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /visualization_marker
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization_marker
@@ -416,10 +337,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.694797337
+      Pitch: 0.579797208
       Target Frame: base_footprint
       Value: Orbit (rviz)
-      Yaw: 2.90308499
+      Yaw: 3.05808449
     Saved: ~
 Window Geometry:
   Displays:

@@ -115,14 +115,13 @@ void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& heigh
   // Fill in the message
   odom_msg.header.stamp = ros::Time::now();
 
-  // x += cos(yaw)*vx - sin(yaw)*vy
-  // y += sin(yaw)*vx + cos(yaw)*vy
+  // x += (cos(yaw)*vx - sin(yaw)*vy) * dt;
+  // y += (sin(yaw)*vx + cos(yaw)*vy) * dt;
+  // https://answers.ros.org/question/231942/computing-odometry-from-two-velocities/
   odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x +
-                                  cos(yaw) * (velocity->twist.linear.x * delta_t) -
-                                  sin(yaw) * (velocity->twist.linear.y * delta_t);
+                                  (cos(yaw) * velocity->twist.linear.x - sin(yaw) * velocity->twist.linear.y) * delta_t;
   odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y +
-                                  cos(yaw) * (velocity->twist.linear.y * delta_t) +
-                                  sin(yaw) * (velocity->twist.linear.x * delta_t);
+                                  (cos(yaw) * velocity->twist.linear.y + sin(yaw) * velocity->twist.linear.x) * delta_t;
   odom_msg.pose.pose.position.z = height->data;
 
   // Position

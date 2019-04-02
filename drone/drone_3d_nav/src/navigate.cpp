@@ -187,7 +187,10 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   if (_waypoint_number == _number_of_waypoints)
   {
     _must_exit = true;
-    _tolerance *= 0.5;  // Make the tolerance for the last waypoint, more strict
+    // Make the tolerance for the last waypoint, more strict
+    float final_tolerance;
+    _nh.param<float>("/tolerance", final_tolerance, 0.15);
+    _tolerance = final_tolerance / 2;  // Make the tolerance for the last waypoint, more strict
   }
 
   _twist_stamped.twist = _twist;
