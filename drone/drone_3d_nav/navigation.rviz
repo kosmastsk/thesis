@@ -7,7 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Odometry1/Shape1
-        - /Goal Point1/Namespaces1
+        - /IRRT*1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 778
   - Class: rviz/Selection
@@ -28,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -292,10 +292,56 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization_marker
-      Name: Goal Point
+      Name: IRRT*
       Namespaces:
-        {}
+        path: true
       Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 170; 0; 0
+      Enabled: true
+      Head Diameter: 0.300000012
+      Head Length: 0.200000003
+      Length: 0.300000012
+      Line Style: Lines
+      Line Width: 0.0299999993
+      Name: AMCL path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.0299999993
+      Shaft Diameter: 0.100000001
+      Shaft Length: 0.100000001
+      Topic: /path/amcl_pose
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 0; 170; 0
+      Enabled: true
+      Head Diameter: 0.300000012
+      Head Length: 0.200000003
+      Length: 0.300000012
+      Line Style: Lines
+      Line Width: 0.0299999993
+      Name: True path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.0299999993
+      Shaft Diameter: 0.100000001
+      Shaft Length: 0.100000001
+      Topic: /path/truth
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
@@ -329,18 +375,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.184283659
-        Y: -0.296732187
-        Z: 1.47409892
+        X: -0.74431473
+        Y: -0.331435591
+        Z: 1.27442944
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.579797208
+      Pitch: 0.649797142
       Target Frame: base_footprint
       Value: Orbit (rviz)
-      Yaw: 3.05808449
+      Yaw: 3.02808428
     Saved: ~
 Window Geometry:
   Displays:
