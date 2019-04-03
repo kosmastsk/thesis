@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   std_msgs
   message_generation
+  tf
+  topic_tools
 )
 
 add_message_files(
@@ -38,7 +40,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES
-  CATKIN_DEPENDS message_runtime std_msgs
+  CATKIN_DEPENDS message_runtime std_msgs tf topic_tools
 #  DEPENDS system_lib
 )
 
@@ -60,6 +62,13 @@ target_link_libraries(estimator
   ${catkin_LIBRARIES})
 add_dependencies(estimator
   ${catkin_EXPORTED_TARGETS} drone_gazebo_generate_messages_cpp)
+
+add_executable(message_to_tf
+  src/message_to_tf.cpp)
+target_link_libraries(message_to_tf
+  ${catkin_LIBRARIES})
+add_dependencies(message_to_tf
+  ${catkin_EXPORTED_TARGETS})
 
 add_executable(teleop src/teleop_pr2_keyboard_modificato.cpp)
 target_link_libraries(teleop ${catkin_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

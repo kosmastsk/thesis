@@ -105,51 +105,31 @@ void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& heigh
   }
 
   // Calculate the interval between the two calls
-  double delta_t = ros::Time::now().toSec() - _lastTime.toSec();
+  double delta_t = (ros::Time::now() - _lastTime).toSec();
 
-  // Get the yaw value
+  // Get the yaw value from the imu
   tf2::Quaternion temp_quat;
-  tf2::fromMsg(getPreviousOdom().pose.pose.orientation, temp_quat);
+  tf2::fromMsg(imu->orientation, temp_quat);
   double yaw = tf2::impl::getYaw(temp_quat);
 
   // Fill in the message
   odom_msg.header.stamp = ros::Time::now();
 
-  // x += (cos(yaw)*vx - sin(yaw)*vy) * dt;
-  // y += (sin(yaw)*vx + cos(yaw)*vy) * dt;
+  // Position
+  // x += (cos(yaw)*vx - sin(yaw)*vy) * dt
+  // y += (sin(yaw)*vx + cos(yaw)*vy) * dt
   // https://answers.ros.org/question/231942/computing-odometry-from-two-velocities/
-  odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x +
-                                  (cos(yaw) * velocity->twist.linear.x - sin(yaw) * velocity->twist.linear.y) * delta_t;
-  odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y +
-                                  (cos(yaw) * velocity->twist.linear.y + sin(yaw) * velocity->twist.linear.x) * delta_t;
+  // Integrate acceleration in the velocities, as the velocity is not constant
+  double linear_vel_x, linear_vel_y;
+  linear_vel_x = getPreviousOdom().twist.twist.linear.x + imu->linear_acceleration.x * delta_t;
+  linear_vel_y = getPreviousOdom().twist.twist.linear.y + imu->linear_acceleration.y * delta_t;
+
+  odom_msg.pose.pose.position.x =
+      getPreviousOdom().pose.pose.position.x + (cos(yaw) * linear_vel_x - sin(yaw) * linear_vel_y) * delta_t;
+  odom_msg.pose.pose.position.y =
+      getPreviousOdom().pose.pose.position.y + (cos(yaw) * linear_vel_y + sin(yaw) * linear_vel_x) * delta_t;
   odom_msg.pose.pose.position.z = height->data;
 
-  // Position
-  // Why this works is in the following links
-  // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePath.htm
-  // http://rossum.sourceforge.net/papers/CalculationsForRobotics/CirclePathWithCalc.htm
-  /*
-    tf2::Quaternion temp_quat;
-    tf2::fromMsg(getPreviousOdom().pose.pose.orientation, temp_quat);
-    double theta = tf2::impl::getYaw(temp_quat);
-    double s = velocity->twist.linear.x;
-    double w = imu->angular_velocity.z;
-
-    // Add some noise
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::normal_distribution<double> dist(0, 0.1);
-
-    s += dist(rng);
-    w += dist(rng);
-    theta += dist(rng);
-
-    odom_msg.pose.pose.position.x =
-        getPreviousOdom().pose.pose.position.x - (s / w) * sin(theta) + (s / w) * sin(w * delta_t + theta);
-    odom_msg.pose.pose.position.y =
-        getPreviousOdom().pose.pose.position.y + (s / w) * cos(theta) - (s / w) * cos(w * delta_t + theta);
-    odom_msg.pose.pose.position.z = height->data;
-  */
   // Special case when the robot is reaching a goal and not receiving any more goals, the result is nan.
   if (std::isnan(odom_msg.pose.pose.position.x))
   {
@@ -160,56 +140,19 @@ void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& heigh
     odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y;
   }
 
-  // Orientation
+  // Orientation is provided directly from the imu
   odom_msg.pose.pose.orientation = imu->orientation;
-
-  /*
-    // check page 63 in the thesis
-
-
-    // Orientation is a quaternion. angular velocity is rad/sec
-    // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
-    tf2::Quaternion previous_orientation, rotation_quat;
-    tf2::fromMsg(getPreviousOdom().pose.pose.orientation, previous_orientation);
-
-    // Fill in the rotation Quaternion
-    // https://stackoverflow.com/questions/46908345/integrate-angular-velocity-as-quaternion-rotation
-    // https://stackoverflow.com/questions/24197182/efficient-quaternion-angular-velocity
-    tf2::Vector3 ha = tf2::Vector3(msg->angular.x, msg->angular.y, w) * delta_t * 0.5;  // vector of half angle
-
-    double l = ha.length();  // magnitude
-
-    if (l > 0)
-    {
-      double ss = sin(l) / l;
-      rotation_quat = tf2::Quaternion(ha.x() * ss, ha.y() * ss, ha.z() * ss, cos(l));
-    }
-    else
-    {
-      rotation_quat = tf2::Quaternion(ha.x(), ha.y(), ha.z(), 1);
-    }
-
-    // rotation_quat.setRPY(msg->angular.x * delta_t, msg->angular.y * delta_t,
-    // msg->angular.z * delta_t);  // multiply with time to make it rads
-
-    // Apply the rotation, normalize it and then convert tf2::quaternion to std_msgs::quaternion to be accepted in the
-    // odom msg
-    odom_msg.pose.pose.orientation = tf2::toMsg((rotation_quat * previous_orientation).normalize());
-    */
 
   // Velocity
   // https://answers.ros.org/question/141871/why-is-there-a-twist-in-odometry-message/
   odom_msg.twist.twist.linear = velocity->twist.linear;
   odom_msg.twist.twist.angular = velocity->twist.angular;
 
-  // Publish
-  // _odomPublisher.publish(odom_msg);
-
   // Update the values for the next call
   setPreviousOdom(odom_msg);
 
   // Update time variable for next call
-  _lastTime = odom_msg.header.stamp;  // ros::Time::now();
+  _lastTime = odom_msg.header.stamp;
 }
 
 /******************************/

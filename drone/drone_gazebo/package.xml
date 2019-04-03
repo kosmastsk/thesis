@@ -33,14 +33,20 @@
   <depend>urdf</depend>
   <depend>hector_quadrotor_model</depend>
   <depend>hector_quadrotor_controllers</depend>
+  <depend>hector_quadrotor_controller_gazebo</depend>
+  <depend>hector_quadrotor_gazebo_plugins</depend>
+  <depend>hector_quadrotor_gazebo</depend>
   <depend>drone_description</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>topic_tools</depend>
   <depend>teraranger_array_converter</depend>
+  <depend>teraranger_array</depend>
+  <depend>teraranger_description</depend>
   <depend>message_generation</depend>
   <depend>message_runtime</depend>
   <depend>std_msgs</depend>
+  <depend>octomap_ros</depend>
 
 </package>

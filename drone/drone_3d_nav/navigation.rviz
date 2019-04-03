@@ -28,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -149,14 +149,14 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: octomap_rviz_plugin/ColorOccupancyGrid
-      Enabled: false
+      Enabled: true
       Max. Height Display: 3.40282347e+38
       Max. Octree Depth: 16
       Min. Height Display: -3.40282347e+38
       Name: Octomap
       Octomap Topic: /octomap_full
       Queue Size: 1
-      Value: false
+      Value: true
       Voxel Alpha: 1
       Voxel Coloring: Cell Color
       Voxel Rendering: Occupied Voxels
@@ -271,7 +271,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -282,19 +282,19 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0500000007
       Style: Flat Squares
       Topic: /amcl/filtered_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization_marker
       Name: IRRT*
       Namespaces:
-        {}
+        path: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -305,8 +305,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.00999999978
       Name: AMCL path
       Offset:
         X: 0
@@ -328,8 +328,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.00999999978
       Name: True path
       Offset:
         X: 0
@@ -368,25 +368,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.04900408
+      Distance: 4.30727482
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.74431473
-        Y: -0.331435591
-        Z: 1.27442944
+        X: -2.27537346
+        Y: 0.245735407
+        Z: 2.18351722
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.649797142
+      Pitch: 0.674797297
       Target Frame: base_footprint
       Value: Orbit (rviz)
-      Yaw: 3.02808428
+      Yaw: 3.06451178
     Saved: ~
 Window Geometry:
   Displays:
@@ -404,5 +404,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 1280
+  X: 0
   Y: 24
