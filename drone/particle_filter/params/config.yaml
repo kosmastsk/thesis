@@ -2,6 +2,10 @@
 provide_initial_pose: true
 # if false, global localization will be called
 
+# percentage of particles to use for the AMCL pose (int)
+# "mean" state of the best x% particles. If x <= 0, the state with the highest weight is returned.
+percentage_of_particles_to_use: 10
+
 # Position
 x_pos: 0.0
 y_pos: 0.0

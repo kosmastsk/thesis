@@ -117,6 +117,8 @@ protected:
   ros::Time _lastLaserTime;
   ros::Timer _latestTransformTimer;
 
+  int _percentage_of_particles;
+
   // Functions
   void reset();
 

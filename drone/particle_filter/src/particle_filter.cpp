@@ -38,6 +38,8 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   _nh.param<double>("/movement/pitch_std_dev", _PitchStdDev, 0.2);
   _nh.param<double>("/movement/yaw_std_dev", _YawStdDev, 0.2);
 
+  _nh.param<int>("/percentage_of_particles_to_use", _percentage_of_particles, 50);
+
   // Initialize Models
   // Movement model
   _mm = new DroneMovementModel(&_nh, &_tfBuffer, _worldFrameID, _baseFootprintFrameID, _baseLinkFrameID);
@@ -394,16 +396,18 @@ void Particles::publishPoseEstimate(const ros::Time& t)
   _poseArrayPublisher.publish(_poseArray);
 
   // Send best particle as pose and one array
+  DroneState bestState = _pf->getBestXPercentEstimate(_percentage_of_particles);
+
   geometry_msgs::PoseStamped bestPose;
   bestPose.header.frame_id = _mapFrameID;
   bestPose.header.stamp = t;
 
-  bestPose.pose.position.x = _pf->getBestState().getXPos();
-  bestPose.pose.position.y = _pf->getBestState().getYPos();
-  bestPose.pose.position.z = _pf->getBestState().getZPos();
+  bestPose.pose.position.x = bestState.getXPos();
+  bestPose.pose.position.y = bestState.getYPos();
+  bestPose.pose.position.z = bestState.getZPos();
 
   tf2::Quaternion temp_pose_orien;
-  temp_pose_orien.setRPY(_pf->getBestState().getRoll(), _pf->getBestState().getPitch(), _pf->getBestState().getYaw());
+  temp_pose_orien.setRPY(bestState.getRoll(), bestState.getPitch(), bestState.getYaw());
   // Convert tf2::quaternion to std_msgs::quaternion to be accepted in the odom msg
   bestPose.pose.orientation = tf2::toMsg(temp_pose_orien.normalize());
 
@@ -417,13 +421,13 @@ void Particles::publishPoseEstimate(const ros::Time& t)
     tf2::Transform temp_tf2Transform;
     geometry_msgs::Transform temp_geomTransform;
 
-    temp_geomTransform.translation.x = _pf->getBestState().getXPos();
-    temp_geomTransform.translation.y = _pf->getBestState().getYPos();
-    temp_geomTransform.translation.z = _pf->getBestState().getZPos();
+    temp_geomTransform.translation.x = bestState.getXPos();
+    temp_geomTransform.translation.y = bestState.getYPos();
+    temp_geomTransform.translation.z = bestState.getZPos();
 
     tf2::Quaternion temp_pose_orien;
     // Instead of best I can use the MMSE
-    temp_pose_orien.setRPY(_pf->getBestState().getRoll(), _pf->getBestState().getPitch(), _pf->getBestState().getYaw());
+    temp_pose_orien.setRPY(bestState.getRoll(), bestState.getPitch(), bestState.getYaw());
     temp_geomTransform.rotation = tf2::toMsg(temp_pose_orien.normalize());
 
     tf2::fromMsg(temp_geomTransform, temp_tf2Transform);
