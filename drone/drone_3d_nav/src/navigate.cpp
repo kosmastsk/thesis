@@ -18,6 +18,8 @@ Navigator::Navigator()
   _nh.param<double>("/yaw_ki", _yaw_ki, 0);
   _nh.param<double>("/yaw_kd", _yaw_kd, 0);
 
+  _nh.param<float>("/max_speed", _max_speed, 2);
+
   _must_exit = false;
   _waypoint_number = 0;
   _waypoints_received = false;
@@ -150,6 +152,12 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _action_z = _proportional_z + _integral_z + _derivative_z;
   _action_yaw = _proportional_yaw + _integral_yaw + _derivative_yaw;
 
+  // Clamp the actions
+  Navigator::clamp(_action_x, _max_speed);
+  Navigator::clamp(_action_y, _max_speed);
+  Navigator::clamp(_action_z, _max_speed);
+  Navigator::clamp(_action_yaw, _max_speed);
+
   _twist.linear.x = _action_x;
   _twist.linear.y = _action_y;
   _twist.linear.z = _action_z;
@@ -157,10 +165,10 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _twist.angular.y = 0;
   _twist.angular.z = _action_yaw;
 
-  ROS_DEBUG("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
+  /*  ROS_INFO("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
 
-  ROS_DEBUG("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
-
+    ROS_INFO("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
+  */
   // Ensure that the drone's position is in accepted range error
   if ((fabs(_error_x) <= _tolerance) && (fabs(_error_y) <= _tolerance) && (fabs(_error_z) <= _tolerance))
   {
@@ -181,6 +189,8 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
       ROS_INFO("Next goal %d\n", _waypoint_number + 1);
       ROS_INFO("Coordinates (x,y,z, yaw) : (%f, %f, %f, %f)\n", _current_goal.translation.x,
                _current_goal.translation.y, _current_goal.translation.z, current_goal_yaw);
+      // Do not publish twist that are related to the waypoint, since we can now proceed to waypoint + 1
+      return;
     }
   }
 
@@ -198,6 +208,16 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 
   _vel_pub.publish(_twist);
   _stamped_vel_pub.publish(_twist_stamped);
+}
+
+void Navigator::clamp(float& action, float max_action)
+{
+  if (fabs(action) > max_action)
+  {
+    // The first () gives us the sign of the action. If it is greater than max, then give it the max value
+    action = ((action > 0) - (action < 0)) * max_action;
+  }
+  return;
 }
 }  // namespace navigate
 

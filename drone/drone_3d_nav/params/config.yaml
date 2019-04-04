@@ -12,14 +12,17 @@ y_ki: 0
 y_kd: 0.0001
 
 # z position
-z_kp: 1.5
+z_kp: 2
 z_ki: 0
 z_kd: 0.00025
 
 # yaw
-yaw_kp: 0.05
+yaw_kp: 0.01
 yaw_ki: 0
 yaw_kd: 0.00005
 
 # Tolerance of the distance from the waypoints, to be accepted
 tolerance: 0.25
+
+# Max speed allowed for the drone to move in x,y,z,yaw (m/s)
+max_speed: 2

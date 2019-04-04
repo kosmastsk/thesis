@@ -41,6 +41,7 @@ private:
   geometry_msgs::Transform _current_goal;
 
   float _tolerance;
+  float _max_speed;
   double _dt;
 
   // PID
@@ -63,15 +64,11 @@ private:
   float _error_x;
   float _error_y;
   float _error_z;
-  // float _error_roll;
-  // float _error_pitch;
   float _error_yaw;
 
   float _prev_error_x;
   float _prev_error_y;
   float _prev_error_z;
-  // float _prev_error_roll;
-  // float _prev_error_pitch;
   float _prev_error_yaw;
 
   float _rise;
@@ -79,29 +76,21 @@ private:
   float _proportional_x;
   float _proportional_y;
   float _proportional_z;
-  // float _proportional_roll;
-  // float _proportional_pitch;
   float _proportional_yaw;
 
   float _integral_x;
   float _integral_y;
   float _integral_z;
-  // float _integral_roll;
-  // float _integral_pitch;
   float _integral_yaw;
 
   float _derivative_x;
   float _derivative_y;
   float _derivative_z;
-  // float _derivative_roll;
-  // float _derivative_pitch;
   float _derivative_yaw;
 
   float _action_x;
   float _action_y;
   float _action_z;
-  // float _action_roll;
-  // float _action_pitch;
   float _action_yaw;
 
   geometry_msgs::Transform _pose;
@@ -114,6 +103,10 @@ private:
   // Callbacks
   void waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
   void poseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+
+  // We do not want the drone to get really high values of speed, either positive or negative. So we need to clamp it in
+  // the range [-max_action, +max_action]
+  void clamp(float& action, float max_action);
 
 public:
   Navigator();
