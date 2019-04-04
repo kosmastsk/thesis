@@ -1,0 +1,4 @@
+# Information related to the RFID sensor
+range_x: 1 # in metres
+range_y: 1
+range_z: 1

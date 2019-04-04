@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <rosparam command="load" file="$(find drone_coverage)/params/sensor_config.yaml" />
+
+  <node name="drone_coverage_node" type="drone_coverage" pkg="drone_coverage" output="screen"/>
+
+</launch>
