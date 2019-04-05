@@ -26,7 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES drone_coverage
-            wall_finder
+            coverage_finder
   CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
@@ -48,10 +48,10 @@ link_directories(
 )
 
 # Wall finder library
-add_library(wall_finder
-  src/wall_finder.cpp
+add_library(coverage_finder
+  src/coverage_finder.cpp
 )
-target_link_libraries(wall_finder
+target_link_libraries(coverage_finder
   ${catkin_LIBRARIES}
 )
 
@@ -60,5 +60,5 @@ add_executable(drone_coverage
   src/drone_coverage_node.cpp)
 target_link_libraries(drone_coverage
   ${catkin_LIBRARIES}
-  wall_finder
+  coverage_finder
 )
