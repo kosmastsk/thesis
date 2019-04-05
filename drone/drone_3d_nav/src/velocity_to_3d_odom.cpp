@@ -119,15 +119,8 @@ void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& heigh
   // x += (cos(yaw)*vx - sin(yaw)*vy) * dt
   // y += (sin(yaw)*vx + cos(yaw)*vy) * dt
   // https://answers.ros.org/question/231942/computing-odometry-from-two-velocities/
-  // Integrate acceleration in the velocities, as the velocity is not constant
-  double linear_vel_x, linear_vel_y;
-  linear_vel_x = getPreviousOdom().twist.twist.linear.x + imu->linear_acceleration.x * delta_t;
-  linear_vel_y = getPreviousOdom().twist.twist.linear.y + imu->linear_acceleration.y * delta_t;
-
-  odom_msg.pose.pose.position.x =
-      getPreviousOdom().pose.pose.position.x + (cos(yaw) * linear_vel_x - sin(yaw) * linear_vel_y) * delta_t;
-  odom_msg.pose.pose.position.y =
-      getPreviousOdom().pose.pose.position.y + (cos(yaw) * linear_vel_y + sin(yaw) * linear_vel_x) * delta_t;
+  odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x + velocity->twist.linear.x * delta_t;
+  odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y + velocity->twist.linear.y * delta_t;
   odom_msg.pose.pose.position.z = height->data;
 
   // Special case when the robot is reaching a goal and not receiving any more goals, the result is nan.

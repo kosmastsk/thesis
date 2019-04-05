@@ -137,10 +137,10 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _integral_z = _z_ki * (_integral_z + _error_z * _dt);
   _integral_yaw = _yaw_ki * (_integral_yaw + _error_yaw * _dt);
 
-  _derivative_x = _x_kd * (_error_x - _prev_error_x);
-  _derivative_y = _y_kd * (_error_y - _prev_error_y);
-  _derivative_z = _z_kd * (_error_z - _prev_error_z);
-  _derivative_yaw = _yaw_kd * (_error_yaw - _prev_error_yaw);
+  _derivative_x = _x_kd * (_error_x - _prev_error_x) / _dt;
+  _derivative_y = _y_kd * (_error_y - _prev_error_y) / _dt;
+  _derivative_z = _z_kd * (_error_z - _prev_error_z) / _dt;
+  _derivative_yaw = _yaw_kd * (_error_yaw - _prev_error_yaw) / _dt;
 
   _prev_error_x = _error_x;
   _prev_error_y = _error_y;
@@ -152,7 +152,11 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _action_z = _proportional_z + _integral_z + _derivative_z;
   _action_yaw = _proportional_yaw + _integral_yaw + _derivative_yaw;
 
-  // Clamp the actions
+  // converting from world frame to drone frame
+  _action_x = _action_x * cos(_error_yaw) + _action_y * sin(_error_yaw);
+  _action_y = _action_y * cos(_error_yaw) + _action_x * sin(_error_yaw);
+
+  // Clamp the velocities
   Navigator::clamp(_action_x, _max_speed);
   Navigator::clamp(_action_y, _max_speed);
   Navigator::clamp(_action_z, _max_speed);
@@ -219,6 +223,7 @@ void Navigator::clamp(float& action, float max_action)
   }
   return;
 }
+
 }  // namespace navigate
 
 int main(int argc, char** argv)
