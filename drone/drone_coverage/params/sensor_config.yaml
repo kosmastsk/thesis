@@ -1,3 +1,10 @@
-# Information related to the RFID sensor
+#####
 rfid:
-  range: 1 # in metres
+  range: 2 # in metres
+
+uav:
+  radius: 0.4 # in metres
+  safety_offset: 0.2 # in metres
+
+world:
+  min_obstacle_height: 0.3 # in metres

@@ -50,14 +50,14 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: octomap_rviz_plugin/ColorOccupancyGrid
-      Enabled: true
+      Enabled: false
       Max. Height Display: 3.40282347e+38
       Max. Octree Depth: 16
       Min. Height Display: -3.40282347e+38
       Name: Full Octomap
       Octomap Topic: /octomap_full
       Queue Size: 5
-      Value: true
+      Value: false
       Voxel Alpha: 0.100000001
       Voxel Coloring: Z-Axis
       Voxel Rendering: Occupied Voxels
@@ -78,7 +78,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_array
       Name: Waypoints
       Namespaces:
-        {}
+        coverage_path_planning: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -106,25 +106,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.69623375
+      Distance: 19.1077232
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.30634952
-        Y: -0.974240005
-        Z: -0.0750052929
+        X: 3.67860079
+        Y: 1.90098596
+        Z: 2.31040025
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.805398703
+      Pitch: 0.8703987
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.69038153
+      Yaw: 3.63538146
     Saved: ~
 Window Geometry:
   Displays:

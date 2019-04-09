@@ -38,7 +38,13 @@ private:
   double _min_bounds[3];
   double _max_bounds[3];
   double _init_pose[3];
+
+  double _uav_radius;
+  double _uav_safety_offset;
+
   double _sensor_range;
+
+  double _min_obstacle_height;
 
   octomap::point3d _sensor_position;
 
@@ -54,6 +60,7 @@ public:
   void findCoveredSurface();
   void publishCoveredSurface();
   void publishWaypoints();
+  bool safeCheck(octomap::point3d wall_point, octomap::point3d sensor_position);
 };
 
 }  // namespace drone_coverage

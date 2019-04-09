@@ -4,6 +4,8 @@ namespace drone_coverage
 {
 CoverageFinder::CoverageFinder()
 {
+  ros::WallTime startTime = ros::WallTime::now();
+
   ROS_INFO("Wall Finder object created\n");
   _octomap_loaded = 0;
   _map_sub = _nh.subscribe<octomap_msgs::Octomap>("/octomap_binary", 1, &CoverageFinder::octomapCallback, this);
@@ -16,8 +18,12 @@ CoverageFinder::CoverageFinder()
   _nh.param<double>("/y_pos", _init_pose[1], 0);
   _nh.param<double>("/z_pos", _init_pose[2], 0);
 
-  // Get sensor configuration
+  // Get configurations
   _nh.param<double>("/rfid/range", _sensor_range, 1);
+  _nh.param<double>("/uav/radius", _uav_radius, 0.5);
+  _nh.param<double>("/uav/safety_offset", _uav_safety_offset, 0.3);
+  _uav_safety_offset += _uav_radius;
+  _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
 
   while (!_octomap_loaded)
   {
@@ -26,7 +32,7 @@ CoverageFinder::CoverageFinder()
     ros::Rate(10).sleep();
   }
 
-  // Offline - we can start in the beginning of the bounds, no the actual initial position
+  // Offline - we can start in the beginning of the bounds plus the safety distance of the drone
   _init_pose[0] = _min_bounds[0];
   _init_pose[1] = _min_bounds[1];
   _init_pose[2] = _min_bounds[2];
@@ -36,9 +42,9 @@ CoverageFinder::CoverageFinder()
 
   // The initial position of the sensor/drone is not ON the bounds, but we start with an offset that allows the sensor
   // to ray around
-  _sensor_position.x() = _init_pose[0] + 0.75 * _sensor_range;
-  _sensor_position.y() = _init_pose[1] + 0.75 * _sensor_range;
-  _sensor_position.z() = _init_pose[2] + 0.75 * _sensor_range;
+  _sensor_position.x() = _init_pose[0];
+  _sensor_position.y() = _init_pose[1];
+  _sensor_position.z() = _init_pose[2];
 
   // Locate the walls in the octomap
   CoverageFinder::findCoveredSurface();
@@ -48,6 +54,9 @@ CoverageFinder::CoverageFinder()
 
   // Publish sensor positions / waypoints
   CoverageFinder::publishWaypoints();
+
+  double dt = (ros::WallTime::now() - startTime).toSec();
+  ROS_INFO_STREAM("Coverage Finder took " << dt << " seconds.");
 }
 
 CoverageFinder::~CoverageFinder()
@@ -74,7 +83,6 @@ void CoverageFinder::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
     }
     else
     {
-      _octomap_loaded = 1;
       ROS_INFO("Octomap successfully loaded\n");
     }
   }
@@ -90,79 +98,78 @@ void CoverageFinder::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
   // We don't want points that are under the ground --> bound < 0 -->convert them to 0
   _min_bounds[2] = (_min_bounds[2] < 0) ? 0 : _min_bounds[2];
 
+  _octomap_loaded = 1;
+
   ROS_INFO("Octomap bounds are (x,y,z) : \n [min]  %f, %f, %f\n [max]  %f, %f, %f", _min_bounds[0], _min_bounds[1],
            _min_bounds[2], _max_bounds[0], _max_bounds[1], _max_bounds[2]);
 }
 
 void CoverageFinder::findCoveredSurface()
 {
-  octomap::point3d wallPoint;
+  octomap::point3d center;
   bool wall_found, point_inserted;
   octomap::point3d direction(1, 0, 0);
 
   // For every valid point inside the world, raycast
   // The step between each position is the half coverage of the sensor
+  // NOTE we are starting from the mean bounds, reaching the max bounds
+  // If someone wants to start from a different place, more checks need to be done, to ensure safety distance are OK
   while (_sensor_position.z() < _max_bounds[2])
   {
     while (_sensor_position.x() < _max_bounds[0])
     {
       while (_sensor_position.y() < _max_bounds[1])
       {
+        // is_point_safe = true;
         // 360 degrees horizontally
         for (double horizontal = -M_PI; horizontal <= M_PI; horizontal += M_PI / 8)
         {
-          // Get every point on the direction vector
-          wall_found = _octomap->castRay(_sensor_position, direction.rotate_IP(0, 0, horizontal), wallPoint, true,
-                                         _sensor_range);
-
-          // Skip the points of the floor.
-          if (wallPoint.z() == 0)
-            continue;
-
-          // Skip points that are obstacles
-          if (wallPoint == _sensor_position)
-            continue;
-
-          if (wall_found)
+          // 360 degrees vertically
+          for (double vertical = -M_PI; vertical <= M_PI; vertical += M_PI / 8)
           {
-            ROS_DEBUG("Covered point at %f %f %f\n", wallPoint.x(), wallPoint.y(), wallPoint.z());
-            point_inserted = _walls->insertRay(_sensor_position, wallPoint, _sensor_range);
+            // Get every point on the direction vector
+            wall_found = _octomap->castRay(_sensor_position, direction.rotate_IP(0, vertical, horizontal), center, true,
+                                           _sensor_range);
 
-            // Keep the positions, where the sensor must be in order to locate the wall points
-            _points.push_back(_sensor_position);
+            // Skip the points of the floor.
+            if (center.z() < _min_obstacle_height)
+              continue;
+
+            if (wall_found)
+            {
+              ROS_DEBUG("Covered point at %f %f %f\n", center.x(), center.y(), center.z());
+              point_inserted = _walls->insertRay(_sensor_position, center, _sensor_range);
+
+              // Keep the positions, where the sensor must be in order to locate the wall points
+              _points.push_back(_sensor_position);
+            }
           }
         }
-        // Next point in y -- Check for not overpassing the bounds
-        _sensor_position.y() += 0.75 * _sensor_range;
-        if (_sensor_position.y() > (_max_bounds[1] - 0.75 * _sensor_range))
-          break;
+        // Next point in y
+        _sensor_position.y() += 0.5 * _sensor_range;
       }
 
-      // Next point in x -- Check for not overpassing the bounds
-      _sensor_position.x() += 0.75 * _sensor_range;
-      if (_sensor_position.x() > (_max_bounds[0] - 0.75 * _sensor_range))
-        break;
+      // Next point in x
+      _sensor_position.x() += 0.5 * _sensor_range;
 
       // Reinitialize z position
-      _sensor_position.y() = _min_bounds[1] + 0.75 * _sensor_range;
+      _sensor_position.y() = _init_pose[1];
     }
 
-    // Next point in z -- Check for not overpassing the bounds
-    _sensor_position.z() += 0.75 * _sensor_range;
-    if (_sensor_position.z() > (_max_bounds[2] - 0.75 * _sensor_range))
-      break;
+    // Next point in z
+    _sensor_position.z() += 0.5 * _sensor_range;
 
     // Reinitialize x and y position
-    _sensor_position.x() = _min_bounds[0] + 0.75 * _sensor_range;
-    _sensor_position.y() = _min_bounds[1] + 0.75 * _sensor_range;
+    _sensor_position.x() = _init_pose[0];
+    _sensor_position.y() = _init_pose[1];
   }
 }
 
 void CoverageFinder::publishCoveredSurface()
 {
   ROS_INFO("Publishing covered surface. Use RViz to visualize it..\n");
-  // _walls->toMaxLikelihood();
-  // _walls->prune();
+  _walls->toMaxLikelihood();
+  _walls->prune();
   octomap_msgs::Octomap msg;
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "/map";
@@ -211,6 +218,22 @@ void CoverageFinder::publishWaypoints()
 
   _vis_pub.publish(marker_array);
   ROS_INFO("Finished!\n");
+}
+
+bool CoverageFinder::safeCheck(octomap::point3d center, octomap::point3d sensor_position)
+{
+  // Calculate distance for every axis
+  double x_dist, y_dist, z_dist;
+  x_dist = fabs(center.x() - sensor_position.x());
+  y_dist = fabs(center.y() - sensor_position.y());
+  z_dist = fabs(center.z() - sensor_position.z());
+
+  // If any of the distances is smaller than the allowed, it is not safe
+  if (x_dist < _uav_safety_offset || y_dist < _uav_safety_offset || z_dist < _uav_safety_offset)
+    return 0;
+
+  // It is safe, go on
+  return 1;
 }
 
 }  // namespace drone_coverage
