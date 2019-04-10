@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Waypoints1
+        - /Marker1
       Splitter Ratio: 0.495677233
     Tree Height: 719
   - Class: rviz/Selection
@@ -74,12 +75,20 @@ Visualization Manager:
       Voxel Coloring: Z-Axis
       Voxel Rendering: Occupied Voxels
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /visualization_marker_array
       Name: Waypoints
       Namespaces:
-        coverage_path_planning: true
+        {}
       Queue Size: 100
+      Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: Marker
+      Namespaces:
+        coverage_path_planning: true
+      Queue Size: 10000
       Value: true
   Enabled: true
   Global Options:
@@ -106,25 +115,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.1077232
+      Distance: 15.3801241
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 3.67860079
-        Y: 1.90098596
-        Z: 2.31040025
+        X: 3.00849342
+        Y: -1.04782534
+        Z: 1.12157571
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.8703987
+      Pitch: 0.840398669
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.63538146
+      Yaw: 3.34537935
     Saved: ~
 Window Geometry:
   Displays:

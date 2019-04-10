@@ -11,7 +11,7 @@ CoverageFinder::CoverageFinder()
   _map_sub = _nh.subscribe<octomap_msgs::Octomap>("/octomap_binary", 1, &CoverageFinder::octomapCallback, this);
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/covered_surface", 1);
-  _vis_pub = _nh.advertise<visualization_msgs::MarkerArray>("/visualization_marker_array", 10);
+  _vis_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1000);
 
   // Get initial positions from the Parameter Server
   _nh.param<double>("/x_pos", _init_pose[0], 0);
@@ -19,10 +19,17 @@ CoverageFinder::CoverageFinder()
   _nh.param<double>("/z_pos", _init_pose[2], 0);
 
   // Get configurations
-  _nh.param<double>("/rfid/range", _sensor_range, 1);
-  _nh.param<double>("/uav/radius", _uav_radius, 0.5);
+  _nh.param<double>("/rfid/range", _rfid_range, 1);
+  _nh.param<double>("/rfid/hfov", _rfid_hfov, 60);
+  _nh.param<double>("/rfid/vfov", _rfid_vfov, 30);
+  _nh.param<double>("/uav/footprint_radius", _uav_radius, 0.4);
   _nh.param<double>("/uav/safety_offset", _uav_safety_offset, 0.3);
+
+  // Adjust values
   _uav_safety_offset += _uav_radius;
+  _rfid_hfov = (_rfid_hfov / 180.0) * M_PI;
+  _rfid_vfov = (_rfid_vfov / 180.0) * M_PI;
+
   _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
 
   while (!_octomap_loaded)
@@ -33,12 +40,12 @@ CoverageFinder::CoverageFinder()
   }
 
   // Offline - we can start in the beginning of the bounds plus the safety distance of the drone
-  _init_pose[0] = _min_bounds[0];
-  _init_pose[1] = _min_bounds[1];
-  _init_pose[2] = _min_bounds[2];
+  _init_pose[0] = _min_bounds[0] + _uav_safety_offset;
+  _init_pose[1] = _min_bounds[1] + _uav_safety_offset;
+  _init_pose[2] = _min_bounds[2] + _uav_safety_offset;
 
   // Reset some variables that will be filled later
-  _walls = new octomap::OcTree(_octomap->getResolution());
+  _walls = new octomap::OcTree(_octomap_resolution);
 
   // The initial position of the sensor/drone is not ON the bounds, but we start with an offset that allows the sensor
   // to ray around
@@ -94,6 +101,7 @@ void CoverageFinder::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
 
   _octomap->getMetricMin(_min_bounds[0], _min_bounds[1], _min_bounds[2]);
   _octomap->getMetricMax(_max_bounds[0], _max_bounds[1], _max_bounds[2]);
+  _octomap_resolution = _octomap->getResolution();
 
   // We don't want points that are under the ground --> bound < 0 -->convert them to 0
   _min_bounds[2] = (_min_bounds[2] < 0) ? 0 : _min_bounds[2];
@@ -109,55 +117,66 @@ void CoverageFinder::findCoveredSurface()
   octomap::point3d center;
   bool wall_found, point_inserted;
   octomap::point3d direction(1, 0, 0);
+  double best_yaw;
 
   // For every valid point inside the world, raycast
   // The step between each position is the half coverage of the sensor
   // NOTE we are starting from the mean bounds, reaching the max bounds
   // If someone wants to start from a different place, more checks need to be done, to ensure safety distance are OK
-  while (_sensor_position.z() < _max_bounds[2])
+  while (_sensor_position.z() <= _max_bounds[2] - _uav_safety_offset)
   {
-    while (_sensor_position.x() < _max_bounds[0])
+    while (_sensor_position.x() <= _max_bounds[0] - _uav_safety_offset)
     {
-      while (_sensor_position.y() < _max_bounds[1])
+      while (_sensor_position.y() <= _max_bounds[1] - _uav_safety_offset)
       {
-        // is_point_safe = true;
         // 360 degrees horizontally
-        for (double horizontal = -M_PI; horizontal <= M_PI; horizontal += M_PI / 8)
+        // Find the yaw, that gives us the best view
+        for (double horizontal = M_PI / 2; horizontal <= -M_PI / 2; horizontal += DEGREE)
         {
-          // 360 degrees vertically
-          for (double vertical = -M_PI; vertical <= M_PI; vertical += M_PI / 8)
+          // TODO
+        }
+
+        // Save the sensor pose that gives that best view
+        // X, Y, Z, Roll, Pitch, Yaw
+        octomath::Pose6D pose(_sensor_position.x(), _sensor_position.y(), _sensor_position.z(), 0, 0, best_yaw);
+        _points.push_back(pose);
+
+        // For the best view, specific yaw value, calculate the covered surface by the sensor and add it to the octomap
+        for (double horizontal = best_yaw - _rfid_hfov / 2; horizontal <= best_yaw + _rfid_hfov / 2;
+             horizontal += DEGREE)
+        {
+          for (double vertical = best_yaw - _rfid_vfov / 2; vertical <= best_yaw + _rfid_vfov / 2; vertical += DEGREE)
           {
             // Get every point on the direction vector
             wall_found = _octomap->castRay(_sensor_position, direction.rotate_IP(0, vertical, horizontal), center, true,
-                                           _sensor_range);
+                                           _rfid_range);
 
-            // Skip the points of the floor.
+            // Ground elimination
             if (center.z() < _min_obstacle_height)
               continue;
 
             if (wall_found)
             {
-              ROS_DEBUG("Covered point at %f %f %f\n", center.x(), center.y(), center.z());
-              point_inserted = _walls->insertRay(_sensor_position, center, _sensor_range);
-
-              // Keep the positions, where the sensor must be in order to locate the wall points
-              _points.push_back(_sensor_position);
+              point_inserted = _walls->insertRay(_sensor_position, center, _rfid_range);
             }
-          }
-        }
+          }  // vertical loop
+
+        }  // horizontal loop
+
         // Next point in y
-        _sensor_position.y() += 0.5 * _sensor_range;
+        _sensor_position.y() += 0.5 * _rfid_range;
       }
 
       // Next point in x
-      _sensor_position.x() += 0.5 * _sensor_range;
+      _sensor_position.x() += 0.5 * _rfid_range;
 
       // Reinitialize z position
       _sensor_position.y() = _init_pose[1];
     }
 
     // Next point in z
-    _sensor_position.z() += 0.5 * _sensor_range;
+    // FIXME how much is necessary for the given vfov to cover all the height?
+    _sensor_position.z() += 0.5 * _rfid_range;
 
     // Reinitialize x and y position
     _sensor_position.x() = _init_pose[0];
@@ -176,7 +195,7 @@ void CoverageFinder::publishCoveredSurface()
   msg.binary = true;
   msg.id = _walls->getTreeType();
   ROS_DEBUG("Tree class type: %s", msg.id.c_str());
-  msg.resolution = _octomap->getResolution();
+  msg.resolution = _octomap_resolution;
   if (octomap_msgs::binaryMapToMsg(*_walls, msg))
     _covered_pub.publish(msg);
 }
@@ -185,9 +204,6 @@ void CoverageFinder::publishWaypoints()
 {
   ROS_INFO("Publishing waypoints..\n");
   // Publish path as markers
-  visualization_msgs::MarkerArray marker_array;
-
-  marker_array.markers.resize(_points.size());
 
   for (std::size_t idx = 0; idx < _points.size(); idx++)
   {
@@ -196,27 +212,26 @@ void CoverageFinder::publishWaypoints()
     marker.header.stamp = ros::Time();
     marker.ns = "coverage_path_planning";
     marker.id = idx;
-    marker.type = visualization_msgs::Marker::CUBE;
+    marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position.x = _points.at(idx).x();
     marker.pose.position.y = _points.at(idx).y();
     marker.pose.position.z = _points.at(idx).z();
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.15;
-    marker.scale.y = 0.15;
-    marker.scale.z = 0.15;
+    marker.pose.orientation.x = _points.at(idx).rot().x();
+    marker.pose.orientation.y = _points.at(idx).rot().y();
+    marker.pose.orientation.z = _points.at(idx).rot().z();
+    marker.pose.orientation.w = _points.at(idx).rot().u();
+    marker.scale.x = 0.6;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
     marker.color.a = 1.0;
     marker.color.r = 0;
     marker.color.g = 0;
     marker.color.b = 1;
-
-    marker_array.markers.push_back(marker);
+    _vis_pub.publish(marker);
+    ros::Duration(0.001).sleep();
   }
 
-  _vis_pub.publish(marker_array);
   ROS_INFO("Finished!\n");
 }
 

@@ -15,7 +15,8 @@
 #include <octomap_ros/conversions.h>
 
 #include "visualization_msgs/Marker.h"
-#include "visualization_msgs/MarkerArray.h"
+
+#define DEGREE M_PI / 180
 
 namespace drone_coverage
 {
@@ -31,9 +32,10 @@ private:
   // The pre-loaded octomap and the collection of 3d points
   octomap::OcTree* _octomap;
   octomap::OcTree* _walls;
+  double _octomap_resolution;
 
   // Keep all points in a vector
-  std::vector<octomap::point3d> _points;
+  std::vector<octomath::Pose6D> _points;
 
   double _min_bounds[3];
   double _max_bounds[3];
@@ -42,7 +44,9 @@ private:
   double _uav_radius;
   double _uav_safety_offset;
 
-  double _sensor_range;
+  double _rfid_range;
+  double _rfid_hfov;
+  double _rfid_vfov;
 
   double _min_obstacle_height;
 
