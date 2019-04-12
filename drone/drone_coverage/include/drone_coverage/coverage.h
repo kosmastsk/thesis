@@ -17,10 +17,11 @@
 #include "visualization_msgs/Marker.h"
 
 #define DEGREE M_PI / 180
+#define ORIENTATION_CIRCLE 0.03
 
 namespace drone_coverage
 {
-class CoverageFinder
+class Coverage
 {
 private:
   ros::NodeHandle _nh;
@@ -58,13 +59,15 @@ private:
   void octomapCallback(const octomap_msgs::Octomap::ConstPtr& msg);
 
 public:
-  CoverageFinder();
-  ~CoverageFinder();
+  Coverage();
+  ~Coverage();
 
-  void findCoveredSurface();
+  void calculateWaypointsAndCoverage();
   void publishCoveredSurface();
   void publishWaypoints();
-  bool safeCheck(octomap::point3d wall_point, octomap::point3d sensor_position);
+  bool safeCheck(octomap::point3d sensor_position);
+  double findCoverage(const octomap::point3d& wall_point, const octomap::point3d& direction);
+  bool findBestYaw(octomap::point3d sensor_position, double& yaw);
 };
 
 }  // namespace drone_coverage

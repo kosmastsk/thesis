@@ -5,7 +5,7 @@
   <rosparam command="load" file="$(find drone_coverage)/params/sensor_config.yaml" />
 
   <!-- Load an octomap in rviz -->
-  <arg name="map" default="$(find drone_gazebo)/maps/dummy.ot"/>
+  <arg name="map" default="$(find drone_gazebo)/maps/warehouse.ot"/>
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen" args="$(arg map)">
     <param name="frame_id" value="map" />
   </node>
