@@ -6,9 +6,14 @@ Coverage::Coverage()
 {
   ros::WallTime startTime = ros::WallTime::now();
 
-  ROS_INFO("Wall Finder object created\n");
+  ROS_INFO("Coverage object created\n");
   _octomap_loaded = 0;
+  _ogm_loaded = 0;
+
+  _ogm = new nav_msgs::OccupancyGrid();
+
   _map_sub = _nh.subscribe<octomap_msgs::Octomap>("/octomap_binary", 1, &Coverage::octomapCallback, this);
+  _ogm_sub = _nh.subscribe<nav_msgs::OccupancyGrid>("/projected_map", 1, &Coverage::ogmCallback, this);
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/covered_surface", 1);
   _vis_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1000);
@@ -35,6 +40,13 @@ Coverage::Coverage()
   while (!_octomap_loaded)
   {
     ROS_INFO_ONCE("Waiting to load octomap, cannot procceed.......\n");
+    ros::spinOnce();
+    ros::Rate(10).sleep();
+  }
+
+  while (!_ogm_loaded)
+  {
+    ROS_INFO_ONCE("Waiting to load 2D map, cannot procceed.......\n");
     ros::spinOnce();
     ros::Rate(10).sleep();
   }
@@ -73,6 +85,8 @@ Coverage::~Coverage()
     delete _octomap;
   if (_walls != NULL)
     delete _walls;
+  if (_ogm != NULL)
+    delete _ogm;
 }
 
 void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
@@ -111,6 +125,15 @@ void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
 
   ROS_INFO("Octomap bounds are (x,y,z) : \n [min]  %f, %f, %f\n [max]  %f, %f, %f", _min_bounds[0], _min_bounds[1],
            _min_bounds[2], _max_bounds[0], _max_bounds[1], _max_bounds[2]);
+}
+
+void Coverage::ogmCallback(const nav_msgs::OccupancyGridConstPtr& msg)
+{
+  _ogm->data = msg->data;
+  _ogm->info = msg->info;
+  _ogm->header = msg->header;
+  _ogm_loaded = true;
+  ROS_INFO("OGM loaded...\n");
 }
 
 void Coverage::calculateWaypointsAndCoverage()
@@ -250,10 +273,17 @@ void Coverage::publishWaypoints()
 
 bool Coverage::safeCheck(octomap::point3d sensor_position)
 {
-  // TODO
-  bool safe = 1;
+  // Transform each point in the map's coordinates, using the resolution and the _ogm_origin
+  int cell_x = (sensor_position.x() - _ogm->info.origin.position.x) / _ogm->info.resolution;
+  int cell_y = (sensor_position.y() - _ogm->info.origin.position.y) / _ogm->info.resolution;
+  // ROS_INFO("position x, position y %f %f\n", sensor_position.x(), sensor_position.y());
+  // ROS_INFO("cell x, cell y : %d %d\n", cell_x, cell_y);
 
-  return safe;
+  // Check using the 2D map, that the position of the drone is safe
+  if (_ogm->data[cell_x + _ogm->info.width * cell_y] == 100)
+    return 0;  // not safe
+
+  return 1;
 }
 
 bool Coverage::findBestYaw(octomap::point3d sensor_position, double& best_yaw)
@@ -298,7 +328,7 @@ double Coverage::findCoverage(const octomap::point3d& wall_point, const octomap:
 
   if (_octomap->getNormals(wall_point, normals, false))
   {
-    ROS_DEBUG("MC algorithm gives %d normals in voxel at (%f, %f, %f)\n", normals.size(), wall_point.x(),
+    ROS_DEBUG("MC algorithm gives %zu normals in voxel at (%f, %f, %f)\n", normals.size(), wall_point.x(),
               wall_point.y(), wall_point.z());
     // There is a chance of having zero normal vectors. This usually happens in a surface.
     // To deal with it, we suppose that the nearby nodes are on the same surface, and we try to find the normal vector

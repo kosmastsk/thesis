@@ -14,6 +14,9 @@
 #include <octomap_msgs/conversions.h>
 #include <octomap_ros/conversions.h>
 
+#include <geometry_msgs/Pose.h>
+#include <nav_msgs/OccupancyGrid.h>
+
 #include "visualization_msgs/Marker.h"
 
 #define DEGREE M_PI / 180
@@ -27,6 +30,7 @@ private:
   ros::NodeHandle _nh;
 
   ros::Subscriber _map_sub;
+  ros::Subscriber _ogm_sub;
   ros::Publisher _covered_pub;
   ros::Publisher _vis_pub;
 
@@ -34,6 +38,9 @@ private:
   octomap::OcTree* _octomap;
   octomap::OcTree* _walls;
   double _octomap_resolution;
+
+  // The pre-loaded OGM
+  nav_msgs::OccupancyGrid* _ogm;
 
   // Keep all points in a vector
   std::vector<octomath::Pose6D> _points;
@@ -54,9 +61,11 @@ private:
   octomap::point3d _sensor_position;
 
   bool _octomap_loaded;
+  bool _ogm_loaded;
 
   // Callbacks
-  void octomapCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+  void octomapCallback(const octomap_msgs::OctomapConstPtr& msg);
+  void ogmCallback(const nav_msgs::OccupancyGridConstPtr& msg);
 
 public:
   Coverage();
@@ -68,6 +77,7 @@ public:
   bool safeCheck(octomap::point3d sensor_position);
   double findCoverage(const octomap::point3d& wall_point, const octomap::point3d& direction);
   bool findBestYaw(octomap::point3d sensor_position, double& yaw);
+  void projectOctomap();
 };
 
 }  // namespace drone_coverage
