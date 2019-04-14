@@ -27,6 +27,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES drone_coverage
             coverage
+            graph
   CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
@@ -47,11 +48,19 @@ link_directories(
   ${OCTOMAP_LIBRARY_DIRS}
 )
 
-# Wall finder library
+# Coverage library
 add_library(coverage
   src/coverage.cpp
 )
 target_link_libraries(coverage
+  ${catkin_LIBRARIES}
+)
+
+# Graph library
+add_library(graph
+  src/graph.cpp
+)
+target_link_libraries(graph
   ${catkin_LIBRARIES}
 )
 
@@ -61,4 +70,5 @@ add_executable(drone_coverage
 target_link_libraries(drone_coverage
   ${catkin_LIBRARIES}
   coverage
+  graph
 )

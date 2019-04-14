@@ -1,5 +1,5 @@
-#ifndef WALL_FINDER_HEADER
-#define WALL_FINDER_HEADER
+#ifndef COVERAGE_HEADER
+#define COVERAGE_HEADER
 
 #include <iostream>
 #include <cmath>
@@ -20,7 +20,6 @@
 #include "visualization_msgs/Marker.h"
 
 #define DEGREE M_PI / 180
-#define ORIENTATION_CIRCLE 0.03
 
 namespace drone_coverage
 {
