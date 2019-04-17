@@ -73,7 +73,7 @@ public:
   void calculateWaypointsAndCoverage();
   void publishCoveredSurface();
   void publishWaypoints();
-  bool safeCheck(octomap::point3d sensor_position);
+  bool safeCheckFrom2D(octomap::point3d sensor_position);
   double findCoverage(const octomap::point3d& wall_point, const octomap::point3d& direction);
   bool findBestYaw(octomap::point3d sensor_position, double& yaw);
   void projectOctomap();

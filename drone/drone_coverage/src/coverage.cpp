@@ -106,6 +106,7 @@ void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
     else
     {
       ROS_INFO("Octomap successfully loaded\n");
+      _octomap->expand();  // bbx work currently only with expanded tree
     }
   }
   else
@@ -119,7 +120,7 @@ void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
   _octomap_resolution = _octomap->getResolution();
 
   // We don't want points that are under the ground --> bound < 0 -->convert them to 0
-  _min_bounds[2] = (_min_bounds[2] < 0) ? 0 : _min_bounds[2];
+  // _min_bounds[2] = (_min_bounds[2] < 0) ? 0 : _min_bounds[2];
 
   _octomap_loaded = 1;
 
@@ -153,15 +154,62 @@ void Coverage::calculateWaypointsAndCoverage()
     {
       while (_sensor_position.y() <= _max_bounds[1] - _uav_safety_offset)
       {
-        bool yaw_found = findBestYaw(_sensor_position, best_yaw);
+        /*
+        * Necessary checks for obstacles and points that should not be waypoints
+        * Each one, checks the same with the different way, to exclude as many points as possible that should be
+        * excluded
+        */
 
-        // If that position offers no coverage, continue to the next one
-        // Check if this position is safe in the octomap
-        // https://github.com/OctoMap/octomap/issues/42
-        if (!yaw_found || !safeCheck(_sensor_position))
+        // Check if is occupied node in octomap
+        octomap::OcTreeNode* node = _octomap->search(_sensor_position);
+        if (node != NULL && _octomap->isNodeOccupied(node))
         {
           // Next point in y
-          _sensor_position.y() += 0.5 * _rfid_range;
+          _sensor_position.y() = proceedOneStep(_sensor_position.y());
+          continue;
+        }
+
+        // Check for obstacles around
+        bool obstacle_found = 0;
+        for (double safe_check = -M_PI; safe_check <= M_PI; safe_check += M_PI / 8)
+        {
+          octomap::point3d direction(1, 1, 0);  // combination of x and y
+          if (_octomap->castRay(_sensor_position, direction.rotate_IP(0, 0, safe_check), wall_point, true, 2))
+          {
+            if (_sensor_position.distance(wall_point) < _uav_safety_offset)
+            {
+              obstacle_found = 1;
+              break;
+            }
+          }
+        }
+
+        if (obstacle_found)
+        {
+          // Next point in y
+          _sensor_position.y() = proceedOneStep(_sensor_position.y());
+          continue;
+        }
+
+        // Check if this position is safe in the octomap using the OGM(projected octomap)
+        // https://github.com/OctoMap/octomap/issues/42
+        if (!safeCheckFrom2D(_sensor_position))
+        {
+          // Next point in y
+          _sensor_position.y() = proceedOneStep(_sensor_position.y());
+          continue;
+        }
+
+        /*
+        * ******** END OF CHECKS ********
+        */
+
+        // If that position offers no coverage, continue to the next one
+        // Otherwise, give the yaw with the best view
+        if (!findBestYaw(_sensor_position, best_yaw))
+        {
+          // Next point in y
+          _sensor_position.y() = proceedOneStep(_sensor_position.y());
           continue;
         }
 
@@ -198,11 +246,11 @@ void Coverage::calculateWaypointsAndCoverage()
         }  // horizontal loop
 
         // Next point in y
-        _sensor_position.y() += 0.5 * _rfid_range;
+        _sensor_position.y() = proceedOneStep(_sensor_position.y());
       }
 
       // Next point in x
-      _sensor_position.x() += 0.5 * _rfid_range;
+      _sensor_position.x() = proceedOneStep(_sensor_position.x());
 
       // Reinitialize z position
       _sensor_position.y() = _init_pose[1];
@@ -218,6 +266,11 @@ void Coverage::calculateWaypointsAndCoverage()
     _sensor_position.x() = _init_pose[0];
     _sensor_position.y() = _init_pose[1];
   }
+}
+
+double Coverage::proceedOneStep(double coord)
+{
+  return coord + 0.5 * _rfid_range;
 }
 
 void Coverage::publishCoveredSurface()
@@ -248,7 +301,9 @@ void Coverage::publishWaypoints()
     marker.header.stamp = ros::Time();
     marker.ns = "coverage_path_planning";
     marker.id = idx;
-    marker.type = visualization_msgs::Marker::ARROW;
+    // marker.type = visualization_msgs::Marker::ARROW;
+    marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+    marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position.x = _points.at(idx).x();
     marker.pose.position.y = _points.at(idx).y();
@@ -257,9 +312,9 @@ void Coverage::publishWaypoints()
     marker.pose.orientation.y = _points.at(idx).rot().y();
     marker.pose.orientation.z = _points.at(idx).rot().z();
     marker.pose.orientation.w = _points.at(idx).rot().u();
-    marker.scale.x = 0.4;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
+    marker.scale.x = 1;  // 0.3;
+    marker.scale.y = 1;  // 0.1;
+    marker.scale.z = 1;  // 0.1;
     marker.color.a = 1.0;
     marker.color.r = 0;
     marker.color.g = 0;
@@ -271,7 +326,7 @@ void Coverage::publishWaypoints()
   ROS_INFO("Finished!\n");
 }
 
-bool Coverage::safeCheck(octomap::point3d sensor_position)
+bool Coverage::safeCheckFrom2D(octomap::point3d sensor_position)
 {
   // Transform each point in the map's coordinates, using the resolution and the _ogm_origin
   int cell_x = (sensor_position.x() - _ogm->info.origin.position.x) / _ogm->info.resolution;
@@ -292,7 +347,7 @@ bool Coverage::findBestYaw(octomap::point3d sensor_position, double& best_yaw)
 
   double best_coverage = 0;
 
-  for (double yaw = -M_PI; yaw <= M_PI; yaw += M_PI / 4)
+  for (double yaw = -M_PI; yaw <= M_PI; yaw += _rfid_hfov / 2)
   {
     octomap::point3d direction(1, 0, 0);
 
