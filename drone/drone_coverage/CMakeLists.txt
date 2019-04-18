@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_ros
 )
 
+find_package(Boost REQUIRED COMPONENTS graph) # tested with Version: 1.58.0.1ubuntu1
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -27,7 +29,6 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES drone_coverage
             coverage
-            graph
   CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
@@ -56,13 +57,6 @@ target_link_libraries(coverage
   ${catkin_LIBRARIES}
 )
 
-# Graph library
-add_library(graph
-  src/graph.cpp
-)
-target_link_libraries(graph
-  ${catkin_LIBRARIES}
-)
 
 # Main executable
 add_executable(drone_coverage
@@ -70,5 +64,4 @@ add_executable(drone_coverage
 target_link_libraries(drone_coverage
   ${catkin_LIBRARIES}
   coverage
-  graph
 )

@@ -66,14 +66,22 @@ Coverage::Coverage()
   _sensor_position.y() = _init_pose[1];
   _sensor_position.z() = _init_pose[2];
 
-  // Locate the walls in the octomap
-  Coverage::calculateWaypointsAndCoverage();
+  // Find the best points for the drone to be, that ensure max coverage
+  Coverage::calculateWaypoints();
+
+  // Find the covered surface of the waypoints left after post process
+  Coverage::calculateCoverage();
+
+  // Publish sensor positions / waypoints
+  Coverage::publishWaypoints();
 
   // Publish the points as an Octomap
   Coverage::publishCoveredSurface();
 
-  // Publish sensor positions / waypoints
-  Coverage::publishWaypoints();
+  // Create a graph with all points
+  generateGraph();
+
+  ROS_INFO("Finished!\n");
 
   double dt = (ros::WallTime::now() - startTime).toSec();
   ROS_INFO_STREAM("Coverage Finder took " << dt << " seconds.");
@@ -87,6 +95,8 @@ Coverage::~Coverage()
     delete _walls;
   if (_ogm != NULL)
     delete _ogm;
+  /*if (_graph != NULL)
+    delete _graph;*/
 }
 
 void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
@@ -137,8 +147,9 @@ void Coverage::ogmCallback(const nav_msgs::OccupancyGridConstPtr& msg)
   ROS_INFO("OGM loaded...\n");
 }
 
-void Coverage::calculateWaypointsAndCoverage()
+void Coverage::calculateWaypoints()
 {
+  ROS_INFO("Calculating waypoints...\n");
   octomap::point3d wall_point;
   bool ray_success, point_inserted;
   double best_yaw = 0;
@@ -218,33 +229,6 @@ void Coverage::calculateWaypointsAndCoverage()
         octomath::Pose6D pose(_sensor_position.x(), _sensor_position.y(), _sensor_position.z(), 0, 0, best_yaw);
         _points.push_back(pose);
 
-        // For the best view, specific yaw, calculate the covered surface by the sensor and add it to the octomap
-        // Horizontal FOV degrees
-        for (double horizontal = best_yaw - _rfid_hfov / 2; horizontal <= best_yaw + _rfid_hfov / 2;
-             horizontal += DEGREE)
-        {
-          // Vertical FOV degrees
-          for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
-          {
-            // direction at which we are facing the point
-            octomap::point3d direction(1, 0, 0);
-
-            // Get every point on the direction vector that belongs to the FOV
-            ray_success = _octomap->castRay(_sensor_position, direction.rotate_IP(0, vertical, horizontal), wall_point,
-                                            true, _rfid_range);
-
-            // Ground elimination
-            if (wall_point.z() < _min_obstacle_height)
-              continue;
-
-            if (ray_success)
-            {
-              point_inserted = _walls->insertRay(_sensor_position, wall_point, _rfid_range);
-            }
-          }  // vertical loop
-
-        }  // horizontal loop
-
         // Next point in y
         _sensor_position.y() = proceedOneStep(_sensor_position.y());
       }
@@ -260,11 +244,93 @@ void Coverage::calculateWaypointsAndCoverage()
     // Using triangle geometry, we increase the height of the drone, so that the vfov allows us to cover every point on
     // the wall at least twice
     _sensor_position.z() += _rfid_range * tan(_rfid_vfov / 2);
-    ROS_INFO("Setting z to %f\n", _sensor_position.z());
+    // ROS_INFO("Setting z to %f\n", _sensor_position.z());
 
     // Reinitialize x and y position
     _sensor_position.x() = _init_pose[0];
     _sensor_position.y() = _init_pose[1];
+  }
+
+  // Post-process the waypoints to remove noise and outliers
+  ROS_INFO("Waypoints post-processing...\n");
+
+  // Initialize _discovered_nodes vector
+  _discovered_nodes.resize(_points.size());
+  std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);
+
+  // Starting from the 0 element
+  _discovered_nodes.at(0) = true;
+  for (int i = 0; i < _points.size(); i++)
+  {
+    for (int j = 0; j < _points.size(); j++)
+    {
+      if (i == j)
+        continue;  // point with itself
+
+      // Check distance
+      double distance = _points.at(i).distance(_points.at(j));
+
+      // https://github.com/ethz-asl/volumetric_mapping/blob/master/octomap_world/src/octomap_world.cc#L420
+      if (distance < 0.75 * _rfid_range)
+      {
+        if (getVisibility(_points.at(i).trans(), _points.at(j).trans()))
+          // Mark node as discovered
+          _discovered_nodes.at(j) = 1;
+      }
+    }
+  }
+
+  // How many nodes have been undiscovered - noise points
+  int undiscovered_nodes = std::count(_discovered_nodes.begin(), _discovered_nodes.end(), 0);
+
+  ROS_INFO("%d nodes have been undiscovered\n", undiscovered_nodes);
+
+  // Copy the points that are visible to the final vector
+  for (int i = 0; i < _points.size(); i++)
+  {
+    if (_discovered_nodes.at(i) == 1)
+    {
+      _final_points.push_back(_points.at(i));
+    }
+  }
+
+  ROS_INFO("Number of points before : %zu\n", _points.size());
+  ROS_INFO("Number of points after : %zu\n", _final_points.size());
+}
+
+void Coverage::calculateCoverage()
+{
+  ROS_INFO("Calculating coverage...\n");
+  octomap::point3d wall_point;
+  // For each one of the points, calculate coverage
+  for (int i = 0; i < _final_points.size(); i++)
+  {
+    double yaw = _final_points.at(i).yaw();
+    // For the best view, specific yaw, calculate the covered surface by the sensor and add it to the octomap
+    // Horizontal FOV degrees
+    for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
+    {
+      // Vertical FOV degrees
+      for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
+      {
+        // direction at which we are facing the point
+        octomap::point3d direction(1, 0, 0);
+
+        // Get every point on the direction vector that belongs to the FOV
+        bool ray_success = _octomap->castRay(_final_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
+                                             wall_point, true, _rfid_range);
+
+        // Ground elimination
+        if (wall_point.z() < _min_obstacle_height)
+          continue;
+
+        if (ray_success)
+        {
+          _walls->insertRay(_final_points.at(i).trans(), wall_point, _rfid_range);
+        }
+      }  // vertical loop
+
+    }  // horizontal loop
   }
 }
 
@@ -294,7 +360,7 @@ void Coverage::publishWaypoints()
   ROS_INFO("Publishing waypoints..\n");
   // Publish path as markers
 
-  for (std::size_t idx = 0; idx < _points.size(); idx++)
+  for (std::size_t idx = 0; idx < _final_points.size(); idx++)
   {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "/map";
@@ -305,13 +371,13 @@ void Coverage::publishWaypoints()
     marker.type = visualization_msgs::Marker::MESH_RESOURCE;
     marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
     marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = _points.at(idx).x();
-    marker.pose.position.y = _points.at(idx).y();
-    marker.pose.position.z = _points.at(idx).z();
-    marker.pose.orientation.x = _points.at(idx).rot().x();
-    marker.pose.orientation.y = _points.at(idx).rot().y();
-    marker.pose.orientation.z = _points.at(idx).rot().z();
-    marker.pose.orientation.w = _points.at(idx).rot().u();
+    marker.pose.position.x = _final_points.at(idx).x();
+    marker.pose.position.y = _final_points.at(idx).y();
+    marker.pose.position.z = _final_points.at(idx).z();
+    marker.pose.orientation.x = _final_points.at(idx).rot().x();
+    marker.pose.orientation.y = _final_points.at(idx).rot().y();
+    marker.pose.orientation.z = _final_points.at(idx).rot().z();
+    marker.pose.orientation.w = _final_points.at(idx).rot().u();
     marker.scale.x = 1;  // 0.3;
     marker.scale.y = 1;  // 0.1;
     marker.scale.z = 1;  // 0.1;
@@ -424,6 +490,72 @@ double Coverage::findCoverage(const octomap::point3d& wall_point, const octomap:
 
   // Return the absolute value of the coverage metric
   return fabs(coverage);
+}
+
+void Coverage::generateGraph()
+{
+  ROS_INFO("Generating graph...\n");
+  // https://www.technical-recipes.com/2015/getting-started-with-the-boost-graph-library/
+
+  // Create the edges between nodes that their distance is smaller than 1.5m and they are visible between them
+  // writing out the edges in the graph
+  std::vector<Edge> edge_array_vector;
+  std::vector<double> weights;
+
+  for (int i = 0; i < _final_points.size(); i++)
+  {
+    for (int j = 0; j < _final_points.size(); j++)
+    {
+      if (i == j)
+        continue;  // point with itself
+
+      // Check distance
+      double distance = _final_points.at(i).distance(_final_points.at(j));
+
+      if (distance < 0.75 * _rfid_range)
+      {
+        // Save edge and weight
+        edge_array_vector.push_back(Edge(i, j));
+        weights.push_back(distance);
+        // push back Edge(i,j) to edge_array
+      }
+    }
+  }
+
+  // Copy the vector contents into an array, suitable for the graph constructor
+  Edge edge_array[edge_array_vector.size()];
+  std::copy(edge_array_vector.begin(), edge_array_vector.end(), edge_array);
+
+  double weight_array[weights.size()];
+  std::copy(weights.begin(), weights.end(), weight_array);
+
+  _graph = new Graph(edge_array, edge_array + sizeof(edge_array) / sizeof(Edge), weight_array, _final_points.size());
+
+  ROS_INFO("Graph has been created\n");
+}
+
+bool Coverage::getVisibility(const octomap::point3d view_point, const octomap::point3d point_to_test)
+{
+  // Get all nodes in a line
+  octomap::KeyRay key_ray;
+
+  _octomap->computeRayKeys(view_point, point_to_test, key_ray);
+
+  const octomap::OcTreeKey& point_to_test_key = _octomap->coordToKey(point_to_test);
+
+  // Now check if there are any unknown or occupied nodes in the ray,
+  // except for the point_to_test key.
+  for (octomap::OcTreeKey key : key_ray)
+  {
+    if (key != point_to_test_key)
+    {
+      octomap::OcTreeNode* node = _octomap->search(key);
+
+      if (node != NULL && _octomap->isNodeOccupied(node))
+        return false;
+    }
+  }
+  return true;
 }
 
 }  // namespace drone_coverage
