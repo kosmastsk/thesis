@@ -39,14 +39,14 @@ Coverage::Coverage()
 
   while (!_octomap_loaded)
   {
-    ROS_INFO_ONCE("Waiting to load octomap, cannot procceed.......\n");
+    ROS_INFO_ONCE("Waiting to load octomap, cannot proceed.......\n");
     ros::spinOnce();
     ros::Rate(10).sleep();
   }
 
   while (!_ogm_loaded)
   {
-    ROS_INFO_ONCE("Waiting to load 2D map, cannot procceed.......\n");
+    ROS_INFO_ONCE("Waiting to load 2D map, cannot proceed.......\n");
     ros::spinOnce();
     ros::Rate(10).sleep();
   }
@@ -254,31 +254,14 @@ void Coverage::calculateWaypoints()
   // Post-process the waypoints to remove noise and outliers
   ROS_INFO("Waypoints post-processing...\n");
 
+  // Start a recursive method to find neighbors of all points
   // Initialize _discovered_nodes vector
   _discovered_nodes.resize(_points.size());
   std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);
 
-  // Starting from the 0 element
-  _discovered_nodes.at(0) = true;
-  for (int i = 0; i < _points.size(); i++)
-  {
-    for (int j = 0; j < _points.size(); j++)
-    {
-      if (i == j)
-        continue;  // point with itself
-
-      // Check distance
-      double distance = _points.at(i).distance(_points.at(j));
-
-      // https://github.com/ethz-asl/volumetric_mapping/blob/master/octomap_world/src/octomap_world.cc#L420
-      if (distance < 0.75 * _rfid_range)
-      {
-        if (getVisibility(_points.at(i).trans(), _points.at(j).trans()))
-          // Mark node as discovered
-          _discovered_nodes.at(j) = 1;
-      }
-    }
-  }
+  int root = 1;
+  _discovered_nodes.at(root) = 1;
+  findNeighbors(root);
 
   // How many nodes have been undiscovered - noise points
   int undiscovered_nodes = std::count(_discovered_nodes.begin(), _discovered_nodes.end(), 0);
@@ -296,6 +279,35 @@ void Coverage::calculateWaypoints()
 
   ROS_INFO("Number of points before : %zu\n", _points.size());
   ROS_INFO("Number of points after : %zu\n", _final_points.size());
+}
+
+void Coverage::findNeighbors(int root)
+{
+  ROS_DEBUG("calling findNeighbors with root %d\n", root);
+  // For every node
+  for (int i = 0; i < _points.size(); i++)
+  {
+    if (i == root)
+      continue;
+
+    // If node is undiscovered
+    if (_discovered_nodes.at(i) == 0)
+    {
+      // If distance is fine
+      // Check distance and visibility from root
+      double distance = _points.at(root).distance(_points.at(i));
+      if (distance < 0.75 * _rfid_range)
+      {
+        // Check visibility
+        if (getVisibility(_points.at(root).trans(), _points.at(i).trans()))
+        {
+          _discovered_nodes.at(i) = 1;
+          // Call the funcion recursively
+          findNeighbors(i);
+        }
+      }
+    }
+  }
 }
 
 void Coverage::calculateCoverage()

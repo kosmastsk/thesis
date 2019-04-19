@@ -24,6 +24,8 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
+#include <boost/graph/graphviz.hpp>
+
 #define DEGREE M_PI / 180
 
 namespace drone_coverage
@@ -89,6 +91,7 @@ public:
   void calculateWaypoints();
   void calculateCoverage();
   double proceedOneStep(double coord);
+  void findNeighbors(int root);
   void publishCoveredSurface();
   void publishWaypoints();
   bool safeCheckFrom2D(octomap::point3d sensor_position);
