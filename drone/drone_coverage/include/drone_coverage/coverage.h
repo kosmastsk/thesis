@@ -4,7 +4,11 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <utility>  // for std::pair
+#include <algorithm>  // std::random_shuffle
+#include <utility>    // for std::pair
+
+#include <chrono>
+#include <ctime>
 
 #include <ros/ros.h>
 
@@ -73,8 +77,10 @@ private:
   // create a typedef for the Graph type
   typedef std::pair<int, int> Edge;
   typedef boost::property<boost::edge_weight_t, double> EdgeWeightProperty;
-  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, EdgeWeightProperty>
+  typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, boost::no_property, EdgeWeightProperty>
       Graph;
+  typedef boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
+  typedef boost::graph_traits<Graph>::edge_descriptor edge_descriptor;
 
   Graph* _graph;
 
@@ -92,6 +98,7 @@ public:
   void calculateCoverage();
   double proceedOneStep(double coord);
   void findNeighbors(int root);
+  void reorderPoints(std::vector<int> order);
   void publishCoveredSurface();
   void publishWaypoints();
   bool safeCheckFrom2D(octomap::point3d sensor_position);
@@ -100,6 +107,13 @@ public:
   bool findBestYaw(octomap::point3d sensor_position, double& yaw);
   void projectOctomap();
   void generateGraph();
+  void hillClimbing();
+  double calculateCost(std::vector<int> order, boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
+                       std::vector<vertex_descriptor> p, std::vector<double> d);
+
+  double getRandomNumber(double i, double j);
+  double getProbability(double difference, double temperature);
+  std::vector<int> getNextOrder(std::vector<int> order);
 };
 
 }  // namespace drone_coverage

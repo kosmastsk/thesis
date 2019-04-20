@@ -72,16 +72,19 @@ Coverage::Coverage()
   // Find the covered surface of the waypoints left after post process
   Coverage::calculateCoverage();
 
+  // Create a graph with all points
+  generateGraph();
+
+  // Apply a hill-climbing algorithm to find the best combination of the waypoints
+  hillClimbing();
+
+  ROS_INFO("Finished!\n");
+
   // Publish sensor positions / waypoints
   Coverage::publishWaypoints();
 
   // Publish the points as an Octomap
   Coverage::publishCoveredSurface();
-
-  // Create a graph with all points
-  generateGraph();
-
-  ROS_INFO("Finished!\n");
 
   double dt = (ros::WallTime::now() - startTime).toSec();
   ROS_INFO_STREAM("Coverage Finder took " << dt << " seconds.");
@@ -95,8 +98,8 @@ Coverage::~Coverage()
     delete _walls;
   if (_ogm != NULL)
     delete _ogm;
-  /*if (_graph != NULL)
-    delete _graph;*/
+  if (_graph != NULL)
+    delete _graph;
 }
 
 void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
@@ -259,12 +262,21 @@ void Coverage::calculateWaypoints()
   _discovered_nodes.resize(_points.size());
   std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);
 
-  int root = 1;
-  _discovered_nodes.at(root) = 1;
-  findNeighbors(root);
+  int undiscovered_nodes = _points.size();
+  for (int root = 0; root < _points.size(); root++)
+  {
+    _discovered_nodes.at(root) = 1;
+    findNeighbors(root);
 
-  // How many nodes have been undiscovered - noise points
-  int undiscovered_nodes = std::count(_discovered_nodes.begin(), _discovered_nodes.end(), 0);
+    // How many nodes have been undiscovered
+    undiscovered_nodes = std::count(_discovered_nodes.begin(), _discovered_nodes.end(), 0);
+
+    // We are satisfied with the number of nodes discoveres, so continue with the rest of the coverage utilities
+    if (undiscovered_nodes < 0.1 * _points.size())
+      break;
+    else
+      std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);  // Revert the discovered nodes
+  }
 
   ROS_INFO("%d nodes have been undiscovered\n", undiscovered_nodes);
 
@@ -380,8 +392,10 @@ void Coverage::publishWaypoints()
     marker.ns = "coverage_path_planning";
     marker.id = idx;
     // marker.type = visualization_msgs::Marker::ARROW;
-    marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-    marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.text = std::to_string(idx);
+    // marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+    // marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position.x = _final_points.at(idx).x();
     marker.pose.position.y = _final_points.at(idx).y();
@@ -390,9 +404,9 @@ void Coverage::publishWaypoints()
     marker.pose.orientation.y = _final_points.at(idx).rot().y();
     marker.pose.orientation.z = _final_points.at(idx).rot().z();
     marker.pose.orientation.w = _final_points.at(idx).rot().u();
-    marker.scale.x = 1;  // 0.3;
-    marker.scale.y = 1;  // 0.1;
-    marker.scale.z = 1;  // 0.1;
+    // marker.scale.x = 1;  // 0.3;
+    // marker.scale.y = 1;  // 0.1;
+    marker.scale.z = 0.5;  // 0.1;
     marker.color.a = 1.0;
     marker.color.r = 0;
     marker.color.g = 0;
@@ -511,7 +525,7 @@ void Coverage::generateGraph()
 
   // Create the edges between nodes that their distance is smaller than 1.5m and they are visible between them
   // writing out the edges in the graph
-  std::vector<Edge> edge_array_vector;
+  std::vector<Edge> edges;
   std::vector<double> weights;
 
   for (int i = 0; i < _final_points.size(); i++)
@@ -527,21 +541,13 @@ void Coverage::generateGraph()
       if (distance < 0.75 * _rfid_range)
       {
         // Save edge and weight
-        edge_array_vector.push_back(Edge(i, j));
+        edges.push_back(Edge(i, j));
         weights.push_back(distance);
-        // push back Edge(i,j) to edge_array
       }
     }
   }
 
-  // Copy the vector contents into an array, suitable for the graph constructor
-  Edge edge_array[edge_array_vector.size()];
-  std::copy(edge_array_vector.begin(), edge_array_vector.end(), edge_array);
-
-  double weight_array[weights.size()];
-  std::copy(weights.begin(), weights.end(), weight_array);
-
-  _graph = new Graph(edge_array, edge_array + sizeof(edge_array) / sizeof(Edge), weight_array, _final_points.size());
+  _graph = new Graph(edges.begin(), edges.end(), weights.begin(), _final_points.size());
 
   ROS_INFO("Graph has been created\n");
 }
@@ -568,6 +574,147 @@ bool Coverage::getVisibility(const octomap::point3d view_point, const octomap::p
     }
   }
   return true;
+}
+
+void Coverage::hillClimbing()
+{
+  // Better use int vector, than Pose6D
+  std::vector<int> order;
+  order.resize(_final_points.size());
+  for (std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it)
+    order.at(it - order.begin()) = it - order.begin();
+
+  ROS_INFO("Shuffling points....\n");
+
+  // Generate a random solution
+  // Shuffle _final_points except the first point
+  std::random_shuffle(++order.begin(), order.end());
+
+  // https://www.boost.org/doc/libs/1_42_0/libs/graph/example/dijkstra-example.cpp
+  // Create a property map for the graph
+  boost::property_map<Graph, boost::edge_weight_t>::type weightmap = get(boost::edge_weight, *_graph);
+  std::vector<vertex_descriptor> p(boost::num_vertices(*_graph));
+  std::vector<double> d(boost::num_vertices(*_graph));
+
+  /* Simulated Annealing algorithm*/
+  // https://www.codeproject.com/Articles/26758/Simulated-Annealing-Solving-the-Travelling-Salesma
+
+  ROS_INFO("Hill climbing with Simulated Annealing is running....\n");
+
+  double temperature = 1000;
+  double delta_distance = 0;
+  double cooling_rate = 0.999;
+  double absolute_temperature = 0.00001;
+
+  double distance = calculateCost(order, weightmap, p, d);
+  double init_distance = distance;
+  while (temperature > absolute_temperature)
+  {
+    ROS_DEBUG("temperature: %f\n", temperature);
+
+    std::vector<int> next_order = getNextOrder(order);
+    delta_distance = calculateCost(next_order, weightmap, p, d) - distance;
+    if ((delta_distance < 0) || (distance > 0 && getProbability(delta_distance, temperature) > getRandomNumber(0, 1)))
+    {
+      order = next_order;
+      distance += delta_distance;
+    }
+
+    temperature *= cooling_rate;
+  }
+  double shortest_distance = distance;
+
+  std::cout << "Initial VS shortest distance: " << init_distance << ", " << shortest_distance << std::endl;
+
+  /*
+  * RANDOM POINTS SWAPPING
+  // Find the cost of the shuffle solution
+  double min_cost = DBL_MAX;
+  double random_cost = calculateCost(order, weightmap, p, d);
+  // Instead of shuffling, we could apply a nearest neighbor technique
+  if (random_cost < min_cost)
+    min_cost = random_cost;
+
+
+    for (size_t iter = 0; iter < iterations; iter++)
+    {
+      // https://github.com/deerishi/tsp-using-simulated-annealing-c-/blob/master/tsp.cpp
+
+      srand((unsigned)time(0));
+      int position, next_position;
+
+      position = (rand() % order.size()) + 1;
+      next_position = (rand() % order.size()) + 1;
+      std::cout << position << std::endl;
+      std::cout << next_position << std::endl;
+
+      std::iter_swap(order.begin() + position, order.begin() + next_position);
+
+      // Swap two points and find their cost
+      double cost = calculateCost(order, weightmap, p, d);
+      if (cost > min_cost)
+      {
+        // Reverse the swapping
+        std::iter_swap(order.begin() + next_position, order.begin() + position);
+      }
+    }
+  */
+  // Order the Pose6D points according ot the order vector
+  reorderPoints(order);
+}
+
+void Coverage::reorderPoints(std::vector<int> order)
+{
+  std::vector<octomath::Pose6D> ordered_points;
+  for (int i = 0; i < order.size(); i++)
+  {
+    ordered_points.push_back(_final_points.at(order.at(i)));
+  }
+
+  _final_points = ordered_points;
+}
+
+double Coverage::calculateCost(std::vector<int> order, boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
+                               std::vector<vertex_descriptor> p, std::vector<double> d)
+{
+  double cost = 0;
+
+  for (int i = 0; i < order.size() - 1; i++)
+  {
+    // Source vertex
+    vertex_descriptor s = boost::vertex(order.at(i), *_graph);
+
+    boost::dijkstra_shortest_paths(*_graph, s, boost::predecessor_map(&p[0]).distance_map(&d[0]));
+
+    cost += d[order.at(i + 1)];
+  }
+  return cost;
+}
+
+double Coverage::getRandomNumber(double i, double j)  // This function generates a random number between
+{
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::default_random_engine generator(seed);
+  std::uniform_real_distribution<double> distribution(i, j);
+  return double(distribution(generator));
+}
+
+double Coverage::getProbability(double difference, double temperature)
+// This function finds the probability of how bad the new solution is
+{
+  return exp(-1 * difference / temperature);
+}
+
+std::vector<int> Coverage::getNextOrder(std::vector<int> order)
+{
+  std::vector<int> next_order = order;
+
+  int first_random_index = getRandomNumber(1, next_order.size() - 1);
+  int second_random_index = getRandomNumber(1, next_order.size() - 1);
+
+  std::iter_swap(order.begin() + first_random_index, order.begin() + second_random_index);
+
+  return next_order;
 }
 
 }  // namespace drone_coverage
