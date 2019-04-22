@@ -2,7 +2,7 @@
 
 namespace drone_coverage
 {
-Graph generateGraph(std::vector<octomath::Pose6D> points)
+Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points)
 {
   ROS_INFO("Generating graph...\n");
   // https://www.technical-recipes.com/2015/getting-started-with-the-boost-graph-library/
@@ -13,7 +13,6 @@ Graph generateGraph(std::vector<octomath::Pose6D> points)
   std::vector<double> weights;
 
   double rfid_range;
-  ros::NodeHandle nh;
   nh.param<double>("/rfid/range", rfid_range, 1);
 
   for (int i = 0; i < points.size(); i++)
@@ -40,7 +39,7 @@ Graph generateGraph(std::vector<octomath::Pose6D> points)
   return g;
 }
 
-std::vector<octomath::Pose6D> hillClimbing(Graph graph, std::vector<octomath::Pose6D> points)
+std::vector<octomath::Pose6D> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points)
 {
   // Better use int vector, than Pose6D
   std::vector<int> order;
@@ -48,10 +47,9 @@ std::vector<octomath::Pose6D> hillClimbing(Graph graph, std::vector<octomath::Po
   for (std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it)
     order.at(it - order.begin()) = it - order.begin();
 
-  ROS_INFO("Shuffling points....\n");
-
   // Generate a random solution
   // Shuffle points except the first point
+  // ROS_INFO("Shuffling points....\n");
   // std::random_shuffle(++order.begin(), order.end());
 
   // https://www.boost.org/doc/libs/1_42_0/libs/graph/example/dijkstra-example.cpp
@@ -65,10 +63,13 @@ std::vector<octomath::Pose6D> hillClimbing(Graph graph, std::vector<octomath::Po
 
   ROS_INFO("Hill climbing with Simulated Annealing is running....\n");
 
-  double temperature = 10;  // 1000;
+  // Load from Parameter Server
+  double temperature, cooling_rate, absolute_temperature;
+  nh.param<double>("/simulated_annealing/temperature", temperature, 1000);
+  nh.param<double>("/simulated_annealing/cooling_rate", cooling_rate, 0.999);
+  nh.param<double>("/simulated_annealing/absolute_temperature", absolute_temperature, 0.00001);
+
   double delta_distance = 0;
-  double cooling_rate = 0.999;
-  double absolute_temperature = 1;  // 0.00001;
 
   double distance = calculateCost(graph, order, weightmap, p, d);
   double init_distance = distance;

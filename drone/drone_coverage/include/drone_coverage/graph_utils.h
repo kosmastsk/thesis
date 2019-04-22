@@ -27,8 +27,8 @@ typedef boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_descriptor;
 
 // Functions
-Graph generateGraph(std::vector<octomath::Pose6D> points);
-std::vector<octomath::Pose6D> hillClimbing(Graph graph, std::vector<octomath::Pose6D> points);
+Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points);
+std::vector<octomath::Pose6D> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points);
 std::vector<octomath::Pose6D> reorderPoints(std::vector<octomath::Pose6D> points, std::vector<int> order);
 double calculateCost(Graph graph, std::vector<int> order,
                      boost::property_map<Graph, boost::edge_weight_t>::type weightmap, std::vector<vertex_descriptor> p,

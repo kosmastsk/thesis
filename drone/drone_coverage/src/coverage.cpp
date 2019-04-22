@@ -78,10 +78,10 @@ Coverage::Coverage()
   ROS_INFO("Waiting to publish the ordered waypoints....\n");
 
   // Create a graph with all points
-  _graph = generateGraph(_points);
+  _graph = generateGraph(_nh, _points);
 
   // Apply a hill-climbing algorithm to find the best combination of the waypoints
-  _points = hillClimbing(_graph, _points);
+  _points = hillClimbing(_nh, _graph, _points);
 
   // Publish sensor positions / waypoints
   Coverage::publishWaypoints();
