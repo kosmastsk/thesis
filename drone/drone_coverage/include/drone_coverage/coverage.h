@@ -1,14 +1,10 @@
 #ifndef COVERAGE_HEADER
 #define COVERAGE_HEADER
 
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <algorithm>  // std::random_shuffle
-#include <utility>    // for std::pair
+#include "drone_coverage/graph_utils.h"
 
-#include <chrono>
-#include <ctime>
+#include <iostream>
+#include <vector>
 
 #include <ros/ros.h>
 
@@ -23,12 +19,6 @@
 #include <nav_msgs/OccupancyGrid.h>
 
 #include "visualization_msgs/Marker.h"
-
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-
-#include <boost/graph/graphviz.hpp>
 
 #define DEGREE M_PI / 180
 
@@ -54,7 +44,6 @@ private:
 
   // Keep all points in a vector
   std::vector<octomath::Pose6D> _points;
-  std::vector<octomath::Pose6D> _final_points;
 
   double _min_bounds[3];
   double _max_bounds[3];
@@ -74,15 +63,7 @@ private:
   bool _octomap_loaded;
   bool _ogm_loaded;
 
-  // create a typedef for the Graph type
-  typedef std::pair<int, int> Edge;
-  typedef boost::property<boost::edge_weight_t, double> EdgeWeightProperty;
-  typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, boost::no_property, EdgeWeightProperty>
-      Graph;
-  typedef boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
-  typedef boost::graph_traits<Graph>::edge_descriptor edge_descriptor;
-
-  Graph* _graph;
+  Graph _graph;
 
   std::vector<bool> _discovered_nodes;
 
@@ -96,24 +77,17 @@ public:
 
   void calculateWaypoints();
   void calculateCoverage();
-  double proceedOneStep(double coord);
+
   void findNeighbors(int root);
-  void reorderPoints(std::vector<int> order);
+  bool safeCheckFrom2D(octomap::point3d sensor_position);
+  bool findBestYaw(octomap::point3d sensor_position, double& yaw);
+  double findCoverage(const octomap::point3d& wall_point, const octomap::point3d& direction);
+  bool getVisibility(const octomap::point3d view_point, const octomap::point3d point_to_test);
+
+  double proceedOneStep(double coord);
+
   void publishCoveredSurface();
   void publishWaypoints();
-  bool safeCheckFrom2D(octomap::point3d sensor_position);
-  bool getVisibility(const octomap::point3d view_point, const octomap::point3d point_to_test);
-  double findCoverage(const octomap::point3d& wall_point, const octomap::point3d& direction);
-  bool findBestYaw(octomap::point3d sensor_position, double& yaw);
-  void projectOctomap();
-  void generateGraph();
-  void hillClimbing();
-  double calculateCost(std::vector<int> order, boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
-                       std::vector<vertex_descriptor> p, std::vector<double> d);
-
-  double getRandomNumber(double i, double j);
-  double getProbability(double difference, double temperature);
-  std::vector<int> getNextOrder(std::vector<int> order);
 };
 
 }  // namespace drone_coverage

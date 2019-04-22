@@ -72,22 +72,22 @@ Coverage::Coverage()
   // Find the covered surface of the waypoints left after post process
   Coverage::calculateCoverage();
 
+  // Publish the points as an Octomap
+  Coverage::publishCoveredSurface();
+
+  ROS_INFO("Waiting to publish the ordered waypoints....\n");
+
   // Create a graph with all points
-  generateGraph();
+  _graph = generateGraph(_points);
 
   // Apply a hill-climbing algorithm to find the best combination of the waypoints
-  hillClimbing();
-
-  ROS_INFO("Finished!\n");
+  _points = hillClimbing(_graph, _points);
 
   // Publish sensor positions / waypoints
   Coverage::publishWaypoints();
 
-  // Publish the points as an Octomap
-  Coverage::publishCoveredSurface();
-
   double dt = (ros::WallTime::now() - startTime).toSec();
-  ROS_INFO_STREAM("Coverage Finder took " << dt << " seconds.");
+  ROS_INFO_STREAM("Coverage took " << dt << " seconds.");
 }
 
 Coverage::~Coverage()
@@ -98,8 +98,6 @@ Coverage::~Coverage()
     delete _walls;
   if (_ogm != NULL)
     delete _ogm;
-  if (_graph != NULL)
-    delete _graph;
 }
 
 void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
@@ -258,6 +256,8 @@ void Coverage::calculateWaypoints()
   ROS_INFO("Waypoints post-processing...\n");
 
   // Start a recursive method to find neighbors of all points
+  std::vector<octomath::Pose6D> final_points;
+
   // Initialize _discovered_nodes vector
   _discovered_nodes.resize(_points.size());
   std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);
@@ -285,12 +285,52 @@ void Coverage::calculateWaypoints()
   {
     if (_discovered_nodes.at(i) == 1)
     {
-      _final_points.push_back(_points.at(i));
+      final_points.push_back(_points.at(i));
     }
   }
 
   ROS_INFO("Number of points before : %zu\n", _points.size());
-  ROS_INFO("Number of points after : %zu\n", _final_points.size());
+  ROS_INFO("Number of points after : %zu\n", final_points.size());
+
+  // Save final points to the Class variable
+  _points.clear();
+  _points = final_points;
+}
+
+void Coverage::calculateCoverage()
+{
+  ROS_INFO("Calculating coverage...\n");
+  octomap::point3d wall_point;
+  // For each one of the points, calculate coverage
+  for (int i = 0; i < _points.size(); i++)
+  {
+    double yaw = _points.at(i).yaw();
+    // For the best view, specific yaw, calculate the covered surface by the sensor and add it to the octomap
+    // Horizontal FOV degrees
+    for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
+    {
+      // Vertical FOV degrees
+      for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
+      {
+        // direction at which we are facing the point
+        octomap::point3d direction(1, 0, 0);
+
+        // Get every point on the direction vector that belongs to the FOV
+        bool ray_success = _octomap->castRay(_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
+                                             wall_point, true, _rfid_range);
+
+        // Ground elimination
+        if (wall_point.z() < _min_obstacle_height)
+          continue;
+
+        if (ray_success)
+        {
+          _walls->insertRay(_points.at(i).trans(), wall_point, _rfid_range);
+        }
+      }  // vertical loop
+
+    }  // horizontal loop
+  }
 }
 
 void Coverage::findNeighbors(int root)
@@ -320,102 +360,6 @@ void Coverage::findNeighbors(int root)
       }
     }
   }
-}
-
-void Coverage::calculateCoverage()
-{
-  ROS_INFO("Calculating coverage...\n");
-  octomap::point3d wall_point;
-  // For each one of the points, calculate coverage
-  for (int i = 0; i < _final_points.size(); i++)
-  {
-    double yaw = _final_points.at(i).yaw();
-    // For the best view, specific yaw, calculate the covered surface by the sensor and add it to the octomap
-    // Horizontal FOV degrees
-    for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
-    {
-      // Vertical FOV degrees
-      for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
-      {
-        // direction at which we are facing the point
-        octomap::point3d direction(1, 0, 0);
-
-        // Get every point on the direction vector that belongs to the FOV
-        bool ray_success = _octomap->castRay(_final_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
-                                             wall_point, true, _rfid_range);
-
-        // Ground elimination
-        if (wall_point.z() < _min_obstacle_height)
-          continue;
-
-        if (ray_success)
-        {
-          _walls->insertRay(_final_points.at(i).trans(), wall_point, _rfid_range);
-        }
-      }  // vertical loop
-
-    }  // horizontal loop
-  }
-}
-
-double Coverage::proceedOneStep(double coord)
-{
-  return coord + 0.5 * _rfid_range;
-}
-
-void Coverage::publishCoveredSurface()
-{
-  ROS_INFO("Publishing covered surface. Use RViz to visualize it..\n");
-  _walls->toMaxLikelihood();
-  _walls->prune();
-  octomap_msgs::Octomap msg;
-  msg.header.stamp = ros::Time::now();
-  msg.header.frame_id = "/map";
-  msg.binary = true;
-  msg.id = _walls->getTreeType();
-  ROS_DEBUG("Tree class type: %s", msg.id.c_str());
-  msg.resolution = _octomap_resolution;
-  if (octomap_msgs::binaryMapToMsg(*_walls, msg))
-    _covered_pub.publish(msg);
-}
-
-void Coverage::publishWaypoints()
-{
-  ROS_INFO("Publishing waypoints..\n");
-  // Publish path as markers
-
-  for (std::size_t idx = 0; idx < _final_points.size(); idx++)
-  {
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "/map";
-    marker.header.stamp = ros::Time();
-    marker.ns = "coverage_path_planning";
-    marker.id = idx;
-    // marker.type = visualization_msgs::Marker::ARROW;
-    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker.text = std::to_string(idx);
-    // marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-    // marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = _final_points.at(idx).x();
-    marker.pose.position.y = _final_points.at(idx).y();
-    marker.pose.position.z = _final_points.at(idx).z();
-    marker.pose.orientation.x = _final_points.at(idx).rot().x();
-    marker.pose.orientation.y = _final_points.at(idx).rot().y();
-    marker.pose.orientation.z = _final_points.at(idx).rot().z();
-    marker.pose.orientation.w = _final_points.at(idx).rot().u();
-    // marker.scale.x = 1;  // 0.3;
-    // marker.scale.y = 1;  // 0.1;
-    marker.scale.z = 0.5;  // 0.1;
-    marker.color.a = 1.0;
-    marker.color.r = 0;
-    marker.color.g = 0;
-    marker.color.b = 1;
-    _vis_pub.publish(marker);
-    ros::Duration(0.001).sleep();
-  }
-
-  ROS_INFO("Finished!\n");
 }
 
 bool Coverage::safeCheckFrom2D(octomap::point3d sensor_position)
@@ -518,40 +462,6 @@ double Coverage::findCoverage(const octomap::point3d& wall_point, const octomap:
   return fabs(coverage);
 }
 
-void Coverage::generateGraph()
-{
-  ROS_INFO("Generating graph...\n");
-  // https://www.technical-recipes.com/2015/getting-started-with-the-boost-graph-library/
-
-  // Create the edges between nodes that their distance is smaller than 1.5m and they are visible between them
-  // writing out the edges in the graph
-  std::vector<Edge> edges;
-  std::vector<double> weights;
-
-  for (int i = 0; i < _final_points.size(); i++)
-  {
-    for (int j = 0; j < _final_points.size(); j++)
-    {
-      if (i == j)
-        continue;  // point with itself
-
-      // Check distance
-      double distance = _final_points.at(i).distance(_final_points.at(j));
-
-      if (distance < 0.75 * _rfid_range)
-      {
-        // Save edge and weight
-        edges.push_back(Edge(i, j));
-        weights.push_back(distance);
-      }
-    }
-  }
-
-  _graph = new Graph(edges.begin(), edges.end(), weights.begin(), _final_points.size());
-
-  ROS_INFO("Graph has been created\n");
-}
-
 bool Coverage::getVisibility(const octomap::point3d view_point, const octomap::point3d point_to_test)
 {
   // Get all nodes in a line
@@ -576,145 +486,64 @@ bool Coverage::getVisibility(const octomap::point3d view_point, const octomap::p
   return true;
 }
 
-void Coverage::hillClimbing()
+double Coverage::proceedOneStep(double coord)
 {
-  // Better use int vector, than Pose6D
-  std::vector<int> order;
-  order.resize(_final_points.size());
-  for (std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it)
-    order.at(it - order.begin()) = it - order.begin();
-
-  ROS_INFO("Shuffling points....\n");
-
-  // Generate a random solution
-  // Shuffle _final_points except the first point
-  std::random_shuffle(++order.begin(), order.end());
-
-  // https://www.boost.org/doc/libs/1_42_0/libs/graph/example/dijkstra-example.cpp
-  // Create a property map for the graph
-  boost::property_map<Graph, boost::edge_weight_t>::type weightmap = get(boost::edge_weight, *_graph);
-  std::vector<vertex_descriptor> p(boost::num_vertices(*_graph));
-  std::vector<double> d(boost::num_vertices(*_graph));
-
-  /* Simulated Annealing algorithm*/
-  // https://www.codeproject.com/Articles/26758/Simulated-Annealing-Solving-the-Travelling-Salesma
-
-  ROS_INFO("Hill climbing with Simulated Annealing is running....\n");
-
-  double temperature = 1000;
-  double delta_distance = 0;
-  double cooling_rate = 0.999;
-  double absolute_temperature = 0.00001;
-
-  double distance = calculateCost(order, weightmap, p, d);
-  double init_distance = distance;
-  while (temperature > absolute_temperature)
-  {
-    ROS_DEBUG("temperature: %f\n", temperature);
-
-    std::vector<int> next_order = getNextOrder(order);
-    delta_distance = calculateCost(next_order, weightmap, p, d) - distance;
-    if ((delta_distance < 0) || (distance > 0 && getProbability(delta_distance, temperature) > getRandomNumber(0, 1)))
-    {
-      order = next_order;
-      distance += delta_distance;
-    }
-
-    temperature *= cooling_rate;
-  }
-  double shortest_distance = distance;
-
-  std::cout << "Initial VS shortest distance: " << init_distance << ", " << shortest_distance << std::endl;
-
-  /*
-  * RANDOM POINTS SWAPPING
-  // Find the cost of the shuffle solution
-  double min_cost = DBL_MAX;
-  double random_cost = calculateCost(order, weightmap, p, d);
-  // Instead of shuffling, we could apply a nearest neighbor technique
-  if (random_cost < min_cost)
-    min_cost = random_cost;
-
-
-    for (size_t iter = 0; iter < iterations; iter++)
-    {
-      // https://github.com/deerishi/tsp-using-simulated-annealing-c-/blob/master/tsp.cpp
-
-      srand((unsigned)time(0));
-      int position, next_position;
-
-      position = (rand() % order.size()) + 1;
-      next_position = (rand() % order.size()) + 1;
-      std::cout << position << std::endl;
-      std::cout << next_position << std::endl;
-
-      std::iter_swap(order.begin() + position, order.begin() + next_position);
-
-      // Swap two points and find their cost
-      double cost = calculateCost(order, weightmap, p, d);
-      if (cost > min_cost)
-      {
-        // Reverse the swapping
-        std::iter_swap(order.begin() + next_position, order.begin() + position);
-      }
-    }
-  */
-  // Order the Pose6D points according ot the order vector
-  reorderPoints(order);
+  return coord + 0.5 * _rfid_range;
 }
 
-void Coverage::reorderPoints(std::vector<int> order)
+void Coverage::publishCoveredSurface()
 {
-  std::vector<octomath::Pose6D> ordered_points;
-  for (int i = 0; i < order.size(); i++)
+  ROS_INFO("Publishing covered surface. Use RViz to visualize it..\n");
+  _walls->toMaxLikelihood();
+  _walls->prune();
+  octomap_msgs::Octomap msg;
+  msg.header.stamp = ros::Time::now();
+  msg.header.frame_id = "/map";
+  msg.binary = true;
+  msg.id = _walls->getTreeType();
+  ROS_DEBUG("Tree class type: %s", msg.id.c_str());
+  msg.resolution = _octomap_resolution;
+  if (octomap_msgs::binaryMapToMsg(*_walls, msg))
+    _covered_pub.publish(msg);
+}
+
+void Coverage::publishWaypoints()
+{
+  ROS_INFO("Publishing waypoints..\n");
+  // Publish path as markers
+
+  for (std::size_t idx = 0; idx < _points.size(); idx++)
   {
-    ordered_points.push_back(_final_points.at(order.at(i)));
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "/map";
+    marker.header.stamp = ros::Time();
+    marker.ns = "coverage_path_planning";
+    marker.id = idx;
+    // marker.type = visualization_msgs::Marker::ARROW;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.text = std::to_string(idx);
+    // marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+    // marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = _points.at(idx).x();
+    marker.pose.position.y = _points.at(idx).y();
+    marker.pose.position.z = _points.at(idx).z();
+    marker.pose.orientation.x = _points.at(idx).rot().x();
+    marker.pose.orientation.y = _points.at(idx).rot().y();
+    marker.pose.orientation.z = _points.at(idx).rot().z();
+    marker.pose.orientation.w = _points.at(idx).rot().u();
+    // marker.scale.x = 1;  // 0.3;
+    // marker.scale.y = 1;  // 0.1;
+    marker.scale.z = 0.5;  // 0.1;
+    marker.color.a = 1.0;
+    marker.color.r = 0;
+    marker.color.g = 0;
+    marker.color.b = 1;
+    _vis_pub.publish(marker);
+    ros::Duration(0.001).sleep();
   }
 
-  _final_points = ordered_points;
-}
-
-double Coverage::calculateCost(std::vector<int> order, boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
-                               std::vector<vertex_descriptor> p, std::vector<double> d)
-{
-  double cost = 0;
-
-  for (int i = 0; i < order.size() - 1; i++)
-  {
-    // Source vertex
-    vertex_descriptor s = boost::vertex(order.at(i), *_graph);
-
-    boost::dijkstra_shortest_paths(*_graph, s, boost::predecessor_map(&p[0]).distance_map(&d[0]));
-
-    cost += d[order.at(i + 1)];
-  }
-  return cost;
-}
-
-double Coverage::getRandomNumber(double i, double j)  // This function generates a random number between
-{
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::default_random_engine generator(seed);
-  std::uniform_real_distribution<double> distribution(i, j);
-  return double(distribution(generator));
-}
-
-double Coverage::getProbability(double difference, double temperature)
-// This function finds the probability of how bad the new solution is
-{
-  return exp(-1 * difference / temperature);
-}
-
-std::vector<int> Coverage::getNextOrder(std::vector<int> order)
-{
-  std::vector<int> next_order = order;
-
-  int first_random_index = getRandomNumber(1, next_order.size() - 1);
-  int second_random_index = getRandomNumber(1, next_order.size() - 1);
-
-  std::iter_swap(order.begin() + first_random_index, order.begin() + second_random_index);
-
-  return next_order;
+  ROS_INFO("Finished!\n");
 }
 
 }  // namespace drone_coverage

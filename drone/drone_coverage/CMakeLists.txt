@@ -29,6 +29,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES drone_coverage
             coverage
+            graph_utils
   CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
@@ -57,6 +58,15 @@ target_link_libraries(coverage
   ${catkin_LIBRARIES}
 )
 
+# Coverage library
+add_library(graph_utils
+  src/graph_utils.cpp
+)
+target_link_libraries(graph_utils
+  ${catkin_LIBRARIES}
+)
+
+
 
 # Main executable
 add_executable(drone_coverage
@@ -64,4 +74,5 @@ add_executable(drone_coverage
 target_link_libraries(drone_coverage
   ${catkin_LIBRARIES}
   coverage
+  graph_utils
 )
