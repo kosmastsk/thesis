@@ -1,4 +1,10 @@
+hill_climbing:
+  run: true
+  iterations: 1000
+  goal: 80
+
 simulated_annealing:
-  temperature: 10 # 1000
+  run: false
+  temperature: 1 # 1000
   cooling_rate: 0.999
-  absolute_temperature: 1 #0.00001
+  absolute_temperature: 0.1 #0.00001

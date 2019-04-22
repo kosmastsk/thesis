@@ -61,35 +61,12 @@ std::vector<octomath::Pose6D> hillClimbing(ros::NodeHandle nh, Graph graph, std:
   //  Simulated Annealing algorithm
   // https://www.codeproject.com/Articles/26758/Simulated-Annealing-Solving-the-Travelling-Salesma
 
-  ROS_INFO("Hill climbing with Simulated Annealing is running....\n");
-
-  // Load from Parameter Server
-  double temperature, cooling_rate, absolute_temperature;
-  nh.param<double>("/simulated_annealing/temperature", temperature, 1000);
-  nh.param<double>("/simulated_annealing/cooling_rate", cooling_rate, 0.999);
-  nh.param<double>("/simulated_annealing/absolute_temperature", absolute_temperature, 0.00001);
-
-  double delta_distance = 0;
-
-  double distance = calculateCost(graph, order, weightmap, p, d);
-  double init_distance = distance;
-  while (temperature > absolute_temperature)
-  {
-    ROS_INFO("temperature: %f\n", temperature);
-
-    std::vector<int> next_order = getNextOrder(order);
-    delta_distance = calculateCost(graph, next_order, weightmap, p, d) - distance;
-    if ((delta_distance < 0) || (distance > 0 && getProbability(delta_distance, temperature) > getRandomNumber(0, 1)))
-    {
-      order = next_order;
-      distance += delta_distance;
-    }
-
-    temperature *= cooling_rate;
-  }
-  double shortest_distance = distance;
-
-  ROS_INFO("Initial VS shortest distance: %f, %f\n", init_distance, shortest_distance);
+  bool runSA;
+  nh.param<bool>("/simulated_annealing/run", runSA, 0);
+  if (runSA)
+    order = simulatedAnnealing(nh, graph, order, weightmap, p, d);
+  else
+    order = hillClimbing(nh, graph, order, weightmap, p, d);
 
   // Order the Pose6D points according ot the order vector
   return reorderPoints(points, order);
@@ -108,22 +85,26 @@ std::vector<octomath::Pose6D> reorderPoints(std::vector<octomath::Pose6D> points
   return ordered_points;
 }
 
-double calculateCost(Graph graph, std::vector<int> order,
-                     boost::property_map<Graph, boost::edge_weight_t>::type weightmap, std::vector<vertex_descriptor> p,
+double calculateCost(Graph graph, std::vector<int> order, WeightMap weightmap, std::vector<vertex_descriptor> p,
                      std::vector<double> d)
 {
+  ros::WallTime startTime = ros::WallTime::now();
+
   double cost = 0;
 
   for (int i = 0; i < order.size() - 1; i++)
   {
     // Source vertex
-    vertex_descriptor s = boost::vertex(order.at(i), graph);
-
-    boost::dijkstra_shortest_paths(graph, s, boost::predecessor_map(&p[0]).distance_map(&d[0]));
+    vertex_descriptor start = boost::vertex(order.at(i), graph);
+    vertex_descriptor goal = boost::vertex(order.at(i + 1), graph);
+    boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                             boost::predecessor_map(&p[0]).distance_map(&d[0]));
 
     cost += d[order.at(i + 1)];
   }
 
+  double dt = (ros::WallTime::now() - startTime).toSec();
+  ROS_INFO_STREAM("Calculating cost took " << dt << " seconds.");
   return cost;
 }
 
@@ -141,12 +122,101 @@ double getProbability(double difference, double temperature)
   return exp(-1 * difference / temperature);
 }
 
-std::vector<int> getNextOrder(std::vector<int> order)
+std::vector<int> getNextOrder(std::vector<int> order, int& first_index, int& second_index)
 {
-  int first_random_index = getRandomNumber(1, order.size() - 1);
-  int second_random_index = getRandomNumber(1, order.size() - 1);
+  first_index = int(getRandomNumber(1, order.size() - 1));
+  second_index = int(getRandomNumber(1, order.size() - 1));
 
-  std::iter_swap(order.begin() + first_random_index, order.begin() + second_random_index);
+  std::iter_swap(order.begin() + first_index, order.begin() + second_index);
+
+  return order;
+}
+
+std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
+                              boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
+                              std::vector<vertex_descriptor> p, std::vector<double> d)
+{
+  ROS_INFO("Hill climbing is running....\n");
+
+  ros::WallTime startTime = ros::WallTime::now();
+  // Load from Parameter Server
+  int iterations;
+  double goal;
+  nh.param<int>("/hill_climbing/iterations", iterations, 1000);
+  nh.param<double>("/hill_climbing/goal", goal, 80);
+
+  double init_distance = calculateCost(graph, order, weightmap, p, d);
+  double distance = init_distance;
+
+  int iter = 0;
+
+  while (iter < iterations && distance > goal)
+  {
+    ROS_INFO("iteration : %d\n", iter);
+    int first = 0, second = 0;
+    std::vector<int> next_order = getNextOrder(order, first, second);
+
+    double new_distance = calculateCost(graph, next_order, weightmap, p, d);
+    // double new_distance = distance + calculateCostDifference(graph, next_order, weightmap, p, d, first, second);
+
+    if (new_distance < distance)
+    {
+      order = next_order;
+      distance = new_distance;
+    }
+    iter++;
+  }
+
+  double shortest_distance = distance;
+
+  ROS_INFO("Initial VS shortest distance: %f, %f\n", init_distance, shortest_distance);
+  ROS_INFO("%d iterations needed\n", iter);
+
+  double dt = (ros::WallTime::now() - startTime).toSec();
+  ROS_INFO_STREAM("Hill Climbing took " << dt << " seconds.");
+
+  return order;
+}
+
+std::vector<int> simulatedAnnealing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
+                                    boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
+                                    std::vector<vertex_descriptor> p, std::vector<double> d)
+{
+  ROS_INFO("Hill climbing with Simulated Annealing is running....\n");
+
+  ros::WallTime startTime = ros::WallTime::now();
+  // Load from Parameter Server
+  double temperature, cooling_rate, absolute_temperature;
+  nh.param<double>("/simulated_annealing/temperature", temperature, 1000);
+  nh.param<double>("/simulated_annealing/cooling_rate", cooling_rate, 0.999);
+  nh.param<double>("/simulated_annealing/absolute_temperature", absolute_temperature, 0.00001);
+
+  double delta_distance = 0;
+
+  double init_distance = calculateCost(graph, order, weightmap, p, d);
+  double distance;
+
+  while (temperature > absolute_temperature)
+  {
+    ROS_INFO("temperature: %f\n", temperature);
+    int first = 0, second = 0;
+    std::vector<int> next_order = getNextOrder(order, first, second);
+    delta_distance = calculateCost(graph, next_order, weightmap, p, d) - distance;
+    // delta_distance = calculateCostDifference(graph, next_order, weightmap, p, d, first, second);
+    if ((delta_distance < 0) || (distance > 0 && getProbability(delta_distance, temperature) > getRandomNumber(0, 1)))
+    {
+      order = next_order;
+      distance += delta_distance;
+    }
+
+    temperature *= cooling_rate;
+  }
+  double shortest_distance = distance;
+
+  ROS_INFO("Initial VS shortest distance: %f, %f\n", init_distance, shortest_distance);
+
+  double dt = (ros::WallTime::now() - startTime).toSec();
+  ROS_INFO_STREAM("Simulated Annealing took " << dt << " seconds.");
 
   return order;
 }

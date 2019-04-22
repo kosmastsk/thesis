@@ -15,14 +15,21 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/astar_search.hpp>
 
 namespace drone_coverage
 {
+struct found_goal
+{
+};  // exception for termination
+
 // Boost Graph typedefs
 typedef std::pair<int, int> Edge;
 typedef boost::property<boost::edge_weight_t, double> EdgeWeightProperty;
+
 typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, boost::no_property, EdgeWeightProperty>
     Graph;
+typedef boost::property_map<Graph, boost::edge_weight_t>::type WeightMap;
 typedef boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_descriptor;
 
@@ -36,7 +43,14 @@ double calculateCost(Graph graph, std::vector<int> order,
 
 double getRandomNumber(double i, double j);
 double getProbability(double difference, double temperature);
-std::vector<int> getNextOrder(std::vector<int> order);
+std::vector<int> getNextOrder(std::vector<int> order, int& first_index, int& second_index);
+
+std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
+                              boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
+                              std::vector<vertex_descriptor> p, std::vector<double> d);
+std::vector<int> simulatedAnnealing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
+                                    boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
+                                    std::vector<vertex_descriptor> p, std::vector<double> d);
 
 }  // namespace drone_coverage
 
