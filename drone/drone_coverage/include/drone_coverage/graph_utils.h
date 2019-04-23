@@ -40,6 +40,9 @@ std::vector<octomath::Pose6D> reorderPoints(std::vector<octomath::Pose6D> points
 double calculateCost(Graph graph, std::vector<int> order,
                      boost::property_map<Graph, boost::edge_weight_t>::type weightmap, std::vector<vertex_descriptor> p,
                      std::vector<double> d);
+double calculateDiff(Graph graph, std::vector<int> prev_order, std::vector<int> next_order,
+                     boost::property_map<Graph, boost::edge_weight_t>::type weightmap, std::vector<vertex_descriptor> p,
+                     std::vector<double> d, int first, int second);
 
 double getRandomNumber(double i, double j);
 double getProbability(double difference, double temperature);

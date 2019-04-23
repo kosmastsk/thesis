@@ -1,10 +1,11 @@
+# This is the default method
 hill_climbing:
-  run: true
-  iterations: 1000
+  iterations: 5000
   goal: 80
 
+# Change run to true/false, to execute SA or simple Hill Climbing
 simulated_annealing:
-  run: false
-  temperature: 1 # 1000
+  run: true
+  temperature: 1000
   cooling_rate: 0.999
-  absolute_temperature: 0.1 #0.00001
+  absolute_temperature: 0.00001

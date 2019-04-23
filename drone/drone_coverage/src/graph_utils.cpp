@@ -60,7 +60,6 @@ std::vector<octomath::Pose6D> hillClimbing(ros::NodeHandle nh, Graph graph, std:
 
   //  Simulated Annealing algorithm
   // https://www.codeproject.com/Articles/26758/Simulated-Annealing-Solving-the-Travelling-Salesma
-
   bool runSA;
   nh.param<bool>("/simulated_annealing/run", runSA, 0);
   if (runSA)
@@ -104,7 +103,72 @@ double calculateCost(Graph graph, std::vector<int> order, WeightMap weightmap, s
   }
 
   double dt = (ros::WallTime::now() - startTime).toSec();
-  ROS_INFO_STREAM("Calculating cost took " << dt << " seconds.");
+  // ROS_INFO_STREAM("Calculating cost took " << dt << " seconds.");
+  return cost;
+}
+
+double calculateDiff(Graph graph, std::vector<int> prev_order, std::vector<int> next_order, WeightMap weightmap,
+                     std::vector<vertex_descriptor> p, std::vector<double> d, int first, int second)
+{
+  ros::WallTime startTime = ros::WallTime::now();
+
+  // Change calculateCost to calculate the differences and not the whole value
+  // Make it faster
+  double cost = 0;
+  vertex_descriptor start, goal;
+
+  //  Subtract previous weights that do not exist anymore
+  start = boost::vertex(prev_order.at(first - 1), graph);
+  goal = boost::vertex(prev_order.at(first), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost -= d[prev_order.at(first)];
+
+  start = boost::vertex(prev_order.at(first), graph);
+  goal = boost::vertex(prev_order.at(first + 1), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost -= d[prev_order.at(first + 1)];
+
+  start = boost::vertex(prev_order.at(second - 1), graph);
+  goal = boost::vertex(prev_order.at(second), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost -= d[prev_order.at(second)];
+
+  start = boost::vertex(prev_order.at(second), graph);
+  goal = boost::vertex(prev_order.at(second + 1), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost -= d[prev_order.at(second + 1)];
+
+  // Add new values
+  start = boost::vertex(next_order.at(first - 1), graph);
+  goal = boost::vertex(next_order.at(first), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost += d[next_order.at(first)];
+
+  start = boost::vertex(next_order.at(first), graph);
+  goal = boost::vertex(next_order.at(first + 1), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost += d[next_order.at(first + 1)];
+
+  start = boost::vertex(next_order.at(second - 1), graph);
+  goal = boost::vertex(next_order.at(second), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost += d[next_order.at(second)];
+
+  start = boost::vertex(next_order.at(second), graph);
+  goal = boost::vertex(next_order.at(second + 1), graph);
+  boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                           boost::predecessor_map(&p[0]).distance_map(&d[0]));
+  cost += d[next_order.at(second + 1)];
+
+  double dt = (ros::WallTime::now() - startTime).toSec();
+  // ROS_INFO_STREAM("Calculating cost took " << dt << " seconds.");
   return cost;
 }
 
@@ -156,8 +220,7 @@ std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> 
     int first = 0, second = 0;
     std::vector<int> next_order = getNextOrder(order, first, second);
 
-    double new_distance = calculateCost(graph, next_order, weightmap, p, d);
-    // double new_distance = distance + calculateCostDifference(graph, next_order, weightmap, p, d, first, second);
+    double new_distance = distance + calculateDiff(graph, order, next_order, weightmap, p, d, first, second);
 
     if (new_distance < distance)
     {
@@ -194,15 +257,15 @@ std::vector<int> simulatedAnnealing(ros::NodeHandle nh, Graph graph, std::vector
   double delta_distance = 0;
 
   double init_distance = calculateCost(graph, order, weightmap, p, d);
-  double distance;
+  double distance = init_distance;
 
   while (temperature > absolute_temperature)
   {
     ROS_INFO("temperature: %f\n", temperature);
     int first = 0, second = 0;
     std::vector<int> next_order = getNextOrder(order, first, second);
-    delta_distance = calculateCost(graph, next_order, weightmap, p, d) - distance;
-    // delta_distance = calculateCostDifference(graph, next_order, weightmap, p, d, first, second);
+    delta_distance = calculateDiff(graph, order, next_order, weightmap, p, d, first, second);
+
     if ((delta_distance < 0) || (distance > 0 && getProbability(delta_distance, temperature) > getRandomNumber(0, 1)))
     {
       order = next_order;
