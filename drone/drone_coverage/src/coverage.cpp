@@ -17,6 +17,7 @@ Coverage::Coverage()
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/covered_surface", 1);
   _vis_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1000);
+  _waypoints_pub = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/waypoints_smooth", 1000);
 
   // Get initial positions from the Parameter Server
   _nh.param<double>("/x_pos", _init_pose[0], 0);
@@ -84,7 +85,8 @@ Coverage::Coverage()
   _points = hillClimbing(_nh, _graph, _points);
 
   // Publish sensor positions / waypoints
-  Coverage::publishWaypoints();
+  publishWaypoints(_points);
+  visualizeWaypoints(_points);
 
   double dt = (ros::WallTime::now() - startTime).toSec();
   ROS_INFO_STREAM("Coverage took " << dt << " seconds.");
@@ -507,12 +509,12 @@ void Coverage::publishCoveredSurface()
     _covered_pub.publish(msg);
 }
 
-void Coverage::publishWaypoints()
+void Coverage::visualizeWaypoints(std::vector<octomath::Pose6D> points)
 {
-  ROS_INFO("Publishing waypoints..\n");
+  ROS_INFO("Visualizing waypoints..\n");
   // Publish path as markers
 
-  for (std::size_t idx = 0; idx < _points.size(); idx++)
+  for (std::size_t idx = 0; idx < points.size(); idx++)
   {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "/map";
@@ -525,16 +527,16 @@ void Coverage::publishWaypoints()
     // marker.type = visualization_msgs::Marker::MESH_RESOURCE;
     // marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
     marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = _points.at(idx).x();
-    marker.pose.position.y = _points.at(idx).y();
-    marker.pose.position.z = _points.at(idx).z();
-    marker.pose.orientation.x = _points.at(idx).rot().x();
-    marker.pose.orientation.y = _points.at(idx).rot().y();
-    marker.pose.orientation.z = _points.at(idx).rot().z();
-    marker.pose.orientation.w = _points.at(idx).rot().u();
+    marker.pose.position.x = points.at(idx).x();
+    marker.pose.position.y = points.at(idx).y();
+    marker.pose.position.z = points.at(idx).z();
+    marker.pose.orientation.x = points.at(idx).rot().x();
+    marker.pose.orientation.y = points.at(idx).rot().y();
+    marker.pose.orientation.z = points.at(idx).rot().z();
+    marker.pose.orientation.w = points.at(idx).rot().u();
     // marker.scale.x = 1;  // 0.3;
     // marker.scale.y = 1;  // 0.1;
-    marker.scale.z = 0.5;  // 0.1;
+    marker.scale.z = 0.4;  // 0.1;
     marker.color.a = 1.0;
     marker.color.r = 0;
     marker.color.g = 0;
@@ -544,6 +546,37 @@ void Coverage::publishWaypoints()
   }
 
   ROS_INFO("Finished!\n");
+}
+
+void Coverage::publishWaypoints(std::vector<octomath::Pose6D> points)
+{
+  ROS_INFO("Publishing waypoints..\n");
+  trajectory_msgs::MultiDOFJointTrajectory msg;
+  // Header
+  msg.header.stamp = ros::Time::now();
+  msg.header.frame_id = "map";
+
+  // joint names
+  // Blank
+
+  // points
+  msg.points.resize(points.size());
+  for (int i = 0; i < points.size(); i++)
+  {
+    msg.points[i].transforms.resize(1);
+    // Translation
+    msg.points[i].transforms[0].translation.x = points.at(i).x();
+    msg.points[i].transforms[0].translation.y = points.at(i).y();
+    msg.points[i].transforms[0].translation.z = points.at(i).z();
+
+    // Orientation
+    msg.points[i].transforms[0].rotation.x = points.at(i).rot().x();
+    msg.points[i].transforms[0].rotation.y = points.at(i).rot().y();
+    msg.points[i].transforms[0].rotation.z = points.at(i).rot().z();
+    msg.points[i].transforms[0].rotation.w = points.at(i).rot().u();
+  }
+
+  _waypoints_pub.publish(msg);
 }
 
 }  // namespace drone_coverage

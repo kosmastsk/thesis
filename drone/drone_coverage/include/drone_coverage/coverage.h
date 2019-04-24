@@ -17,6 +17,7 @@
 
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
 #include "visualization_msgs/Marker.h"
 
@@ -33,6 +34,7 @@ private:
   ros::Subscriber _ogm_sub;
   ros::Publisher _covered_pub;
   ros::Publisher _vis_pub;
+  ros::Publisher _waypoints_pub;
 
   // The pre-loaded octomap and the collection of 3d points
   octomap::OcTree* _octomap;
@@ -87,7 +89,8 @@ public:
   double proceedOneStep(double coord);
 
   void publishCoveredSurface();
-  void publishWaypoints();
+  void visualizeWaypoints(std::vector<octomath::Pose6D> points);
+  void publishWaypoints(std::vector<octomath::Pose6D> points);
 };
 
 }  // namespace drone_coverage
