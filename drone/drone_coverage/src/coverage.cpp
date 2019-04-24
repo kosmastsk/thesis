@@ -59,7 +59,7 @@ Coverage::Coverage()
   _init_pose[2] = _min_bounds[2] + _min_obstacle_height + _rfid_range * tan(_rfid_vfov / 2);
 
   // Reset some variables that will be filled later
-  _walls = new octomap::OcTree(_octomap_resolution);
+  _covered = new octomap::OcTree(_octomap_resolution);
 
   // The initial position of the sensor/drone is not ON the bounds, but we start with an offset that allows the sensor
   // to ray around
@@ -68,13 +68,16 @@ Coverage::Coverage()
   _sensor_position.z() = _init_pose[2];
 
   // Find the best points for the drone to be, that ensure max coverage
-  Coverage::calculateWaypoints();
+  calculateWaypoints();
 
   // Find the covered surface of the waypoints left after post process
-  Coverage::calculateCoverage();
+  calculateCoverage();
+
+  // Find the covered surface of the waypoints left after post process
+  ROS_INFO("%f%% of the surface will be covered\n", evaluateCoverage(_octomap, _covered));
 
   // Publish the points as an Octomap
-  Coverage::publishCoveredSurface();
+  publishCoveredSurface();
 
   ROS_INFO("Waiting to publish the ordered waypoints....\n");
 
@@ -82,7 +85,7 @@ Coverage::Coverage()
   _graph = generateGraph(_nh, _points);
 
   // Apply a hill-climbing algorithm to find the best combination of the waypoints
-  _points = hillClimbing(_nh, _graph, _points);
+  _points = hillClimbingBase(_nh, _graph, _points);
 
   // Publish sensor positions / waypoints
   publishWaypoints(_points);
@@ -96,8 +99,8 @@ Coverage::~Coverage()
 {
   if (_octomap != NULL)
     delete _octomap;
-  if (_walls != NULL)
-    delete _walls;
+  if (_covered != NULL)
+    delete _covered;
   if (_ogm != NULL)
     delete _ogm;
 }
@@ -265,6 +268,7 @@ void Coverage::calculateWaypoints()
   std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);
 
   int undiscovered_nodes = _points.size();
+
   for (int root = 0; root < _points.size(); root++)
   {
     _discovered_nodes.at(root) = 1;
@@ -274,10 +278,12 @@ void Coverage::calculateWaypoints()
     undiscovered_nodes = std::count(_discovered_nodes.begin(), _discovered_nodes.end(), 0);
 
     // We are satisfied with the number of nodes discoveres, so continue with the rest of the coverage utilities
-    if (undiscovered_nodes < 0.1 * _points.size())
-      break;
-    else
+
+    // If more than 90% of the nodes are undiscovered, restart the process
+    if (undiscovered_nodes > 0.90 * _points.size())
       std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);  // Revert the discovered nodes
+    else
+      break;
   }
 
   ROS_INFO("%d nodes have been undiscovered\n", undiscovered_nodes);
@@ -290,6 +296,9 @@ void Coverage::calculateWaypoints()
       final_points.push_back(_points.at(i));
     }
   }
+
+  // Make sure the size of the final points is positive, Otherwise something is wrong
+  ROS_ASSERT(final_points.size() > 0);
 
   ROS_INFO("Number of points before : %zu\n", _points.size());
   ROS_INFO("Number of points after : %zu\n", final_points.size());
@@ -327,12 +336,27 @@ void Coverage::calculateCoverage()
 
         if (ray_success)
         {
-          _walls->insertRay(_points.at(i).trans(), wall_point, _rfid_range);
+          _covered->insertRay(_points.at(i).trans(), wall_point, _rfid_range);
         }
       }  // vertical loop
 
     }  // horizontal loop
   }
+}
+
+float Coverage::evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* covered)
+{
+  covered->toMaxLikelihood();
+  covered->prune();
+
+  // Use floats to make the division work later on
+  float octomap_leafs = float(octomap->getNumLeafNodes());
+  float covered_leafs = float(covered->getNumLeafNodes());
+  ROS_INFO("[Number of leafs] octomap %f : covered %f\n", octomap_leafs, covered_leafs);
+
+  float percentage = 100 * (covered_leafs / octomap_leafs);
+
+  return percentage;
 }
 
 void Coverage::findNeighbors(int root)
@@ -496,16 +520,16 @@ double Coverage::proceedOneStep(double coord)
 void Coverage::publishCoveredSurface()
 {
   ROS_INFO("Publishing covered surface. Use RViz to visualize it..\n");
-  _walls->toMaxLikelihood();
-  _walls->prune();
+  _covered->toMaxLikelihood();
+  _covered->prune();
   octomap_msgs::Octomap msg;
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "/map";
   msg.binary = true;
-  msg.id = _walls->getTreeType();
+  msg.id = _covered->getTreeType();
   ROS_DEBUG("Tree class type: %s", msg.id.c_str());
   msg.resolution = _octomap_resolution;
-  if (octomap_msgs::binaryMapToMsg(*_walls, msg))
+  if (octomap_msgs::binaryMapToMsg(*_covered, msg))
     _covered_pub.publish(msg);
 }
 

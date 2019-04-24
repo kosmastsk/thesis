@@ -38,7 +38,7 @@ private:
 
   // The pre-loaded octomap and the collection of 3d points
   octomap::OcTree* _octomap;
-  octomap::OcTree* _walls;
+  octomap::OcTree* _covered;
   double _octomap_resolution;
 
   // The pre-loaded OGM
@@ -79,6 +79,7 @@ public:
 
   void calculateWaypoints();
   void calculateCoverage();
+  float evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* covered);
 
   void findNeighbors(int root);
   bool safeCheckFrom2D(octomap::point3d sensor_position);

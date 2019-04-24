@@ -39,11 +39,12 @@ Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points)
   return g;
 }
 
-std::vector<octomath::Pose6D> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points)
+std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points)
 {
   // Better use int vector, than Pose6D
   std::vector<int> order;
   order.resize(points.size());
+
   for (std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it)
     order.at(it - order.begin()) = it - order.begin();
 
@@ -88,20 +89,19 @@ double calculateCost(Graph graph, std::vector<int> order, WeightMap weightmap, s
                      std::vector<double> d)
 {
   ros::WallTime startTime = ros::WallTime::now();
-
   double cost = 0;
 
   for (int i = 0; i < order.size() - 1; i++)
   {
     // Source vertex
     vertex_descriptor start = boost::vertex(order.at(i), graph);
+
     vertex_descriptor goal = boost::vertex(order.at(i + 1), graph);
     boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
                              boost::predecessor_map(&p[0]).distance_map(&d[0]));
 
     cost += d[order.at(i + 1)];
   }
-
   double dt = (ros::WallTime::now() - startTime).toSec();
   // ROS_INFO_STREAM("Calculating cost took " << dt << " seconds.");
   return cost;
@@ -213,7 +213,6 @@ std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> 
   double distance = init_distance;
 
   int iter = 0;
-
   while (iter < iterations && distance > goal)
   {
     ROS_INFO("iteration : %d\n", iter);
