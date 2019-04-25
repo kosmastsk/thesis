@@ -78,6 +78,9 @@ public:
   ~Coverage();
 
   void calculateWaypoints();
+  void postprocessWaypoints();
+  void removeNonVisibleWaypoints();
+
   void calculateCoverage();
   float evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* covered);
 

@@ -70,6 +70,8 @@ Coverage::Coverage()
   // Find the best points for the drone to be, that ensure max coverage
   calculateWaypoints();
 
+  postprocessWaypoints();
+
   // Find the covered surface of the waypoints left after post process
   calculateCoverage();
 
@@ -167,9 +169,9 @@ void Coverage::calculateWaypoints()
   // If someone wants to start scanning from a different position, more checks need to be done
   while (_sensor_position.z() <= _max_bounds[2] - _uav_safety_offset)
   {
-    while (_sensor_position.x() <= _max_bounds[0] - _uav_safety_offset)
+    while (_sensor_position.y() <= _max_bounds[1] - _uav_safety_offset)
     {
-      while (_sensor_position.y() <= _max_bounds[1] - _uav_safety_offset)
+      while (_sensor_position.x() <= _max_bounds[0] - _uav_safety_offset)
       {
         /*
         * Necessary checks for obstacles and points that should not be waypoints
@@ -181,8 +183,8 @@ void Coverage::calculateWaypoints()
         octomap::OcTreeNode* node = _octomap->search(_sensor_position);
         if (node != NULL && _octomap->isNodeOccupied(node))
         {
-          // Next point in y
-          _sensor_position.y() = proceedOneStep(_sensor_position.y());
+          // Next point in x
+          _sensor_position.x() = proceedOneStep(_sensor_position.x());
           continue;
         }
 
@@ -203,8 +205,8 @@ void Coverage::calculateWaypoints()
 
         if (obstacle_found)
         {
-          // Next point in y
-          _sensor_position.y() = proceedOneStep(_sensor_position.y());
+          // Next point in x
+          _sensor_position.x() = proceedOneStep(_sensor_position.x());
           continue;
         }
 
@@ -212,8 +214,8 @@ void Coverage::calculateWaypoints()
         // https://github.com/OctoMap/octomap/issues/42
         if (!safeCheckFrom2D(_sensor_position))
         {
-          // Next point in y
-          _sensor_position.y() = proceedOneStep(_sensor_position.y());
+          // Next point in x
+          _sensor_position.x() = proceedOneStep(_sensor_position.x());
           continue;
         }
 
@@ -225,8 +227,8 @@ void Coverage::calculateWaypoints()
         // Otherwise, give the yaw with the best view
         if (!findBestYaw(_sensor_position, best_yaw))
         {
-          // Next point in y
-          _sensor_position.y() = proceedOneStep(_sensor_position.y());
+          // Next point in x
+          _sensor_position.x() = proceedOneStep(_sensor_position.x());
           continue;
         }
 
@@ -235,31 +237,39 @@ void Coverage::calculateWaypoints()
         octomath::Pose6D pose(_sensor_position.x(), _sensor_position.y(), _sensor_position.z(), 0, 0, best_yaw);
         _points.push_back(pose);
 
-        // Next point in y
-        _sensor_position.y() = proceedOneStep(_sensor_position.y());
+        // Next point in x
+        _sensor_position.x() = proceedOneStep(_sensor_position.x());
       }
+      // Next point in y
+      _sensor_position.y() = proceedOneStep(_sensor_position.y());
 
-      // Next point in x
-      _sensor_position.x() = proceedOneStep(_sensor_position.x());
-
-      // Reinitialize z position
-      _sensor_position.y() = _init_pose[1];
+      // Reinitialize x position
+      _sensor_position.x() = _init_pose[0];
     }
 
-    // Next point in z
-    // Using triangle geometry, we increase the height of the drone, so that the vfov allows us to cover every point on
-    // the wall at least twice
+    // Next point in z Using triangle geometry, we increase the height of the drone, so that the vfov allows us to cover
+    // every point on the wall at least twice
     _sensor_position.z() += _rfid_range * tan(_rfid_vfov / 2);
-    // ROS_INFO("Setting z to %f\n", _sensor_position.z());
+    ROS_INFO("Setting z to %f\n", _sensor_position.z());
 
     // Reinitialize x and y position
     _sensor_position.x() = _init_pose[0];
     _sensor_position.y() = _init_pose[1];
   }
+}
 
+void Coverage::postprocessWaypoints()
+{
   // Post-process the waypoints to remove noise and outliers
   ROS_INFO("Waypoints post-processing...\n");
 
+  // Remove the waypoints that are inside obstacles and cannot be remove with octomap functions
+  removeNonVisibleWaypoints();
+}
+
+void Coverage::removeNonVisibleWaypoints()
+{
+  ROS_INFO("Removing non-visible waypoints....\n");
   // Start a recursive method to find neighbors of all points
   std::vector<octomath::Pose6D> final_points;
 
@@ -285,8 +295,6 @@ void Coverage::calculateWaypoints()
     else
       break;
   }
-
-  ROS_INFO("%d nodes have been undiscovered\n", undiscovered_nodes);
 
   // Copy the points that are visible to the final vector
   for (int i = 0; i < _points.size(); i++)
