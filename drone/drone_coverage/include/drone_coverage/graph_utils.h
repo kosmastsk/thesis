@@ -37,22 +37,19 @@ typedef boost::graph_traits<Graph>::edge_descriptor edge_descriptor;
 Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points);
 std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points);
 std::vector<octomath::Pose6D> reorderPoints(std::vector<octomath::Pose6D> points, std::vector<int> order);
-double calculateCost(Graph graph, std::vector<int> order,
-                     boost::property_map<Graph, boost::edge_weight_t>::type weightmap, std::vector<vertex_descriptor> p,
-                     std::vector<double> d);
+double calculateCost(Graph graph, std::vector<int> order, std::vector<vertex_descriptor> p, std::vector<double> d);
+double calculateWeight(Graph graph, std::vector<int> order, int index, std::vector<vertex_descriptor> p,
+                       std::vector<double> d);
 double calculateDiff(Graph graph, std::vector<int> prev_order, std::vector<int> next_order,
-                     boost::property_map<Graph, boost::edge_weight_t>::type weightmap, std::vector<vertex_descriptor> p,
-                     std::vector<double> d, int first, int second);
+                     std::vector<vertex_descriptor> p, std::vector<double> d, int first, int second);
 
 double getRandomNumber(double i, double j);
 double getProbability(double difference, double temperature);
 std::vector<int> getNextOrder(std::vector<int> order, int& first_index, int& second_index);
 
-std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
-                              boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
-                              std::vector<vertex_descriptor> p, std::vector<double> d);
+std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> order, std::vector<vertex_descriptor> p,
+                              std::vector<double> d);
 std::vector<int> simulatedAnnealing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
-                                    boost::property_map<Graph, boost::edge_weight_t>::type weightmap,
                                     std::vector<vertex_descriptor> p, std::vector<double> d);
 
 }  // namespace drone_coverage
