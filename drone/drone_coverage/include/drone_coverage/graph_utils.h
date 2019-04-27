@@ -45,13 +45,13 @@ double calculateDiff(Graph graph, std::vector<int> prev_order, std::vector<int> 
 
 double getRandomNumber(double i, double j);
 double getProbability(double difference, double temperature);
-std::vector<int> getNextOrder(std::vector<int> order, int& first_index, int& second_index);
-
+std::vector<int> getNextOrder(std::vector<int> order, int first_index, int second_index);
+/*
 std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> order, std::vector<vertex_descriptor> p,
                               std::vector<double> d);
 std::vector<int> simulatedAnnealing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
                                     std::vector<vertex_descriptor> p, std::vector<double> d);
-
+*/
 }  // namespace drone_coverage
 
 #endif

@@ -1,7 +1,8 @@
 # This is the default method
 hill_climbing:
-  iterations: 500
-  goal: 80
+  iterations: 400
+  desired distance: 1.1
+  restarts: 5
 
 # Change run to true/false, to execute SA or simple Hill Climbing
 simulated_annealing:
