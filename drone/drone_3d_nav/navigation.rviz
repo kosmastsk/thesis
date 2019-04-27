@@ -149,6 +149,18 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: octomap_rviz_plugin/ColorOccupancyGrid
+      Enabled: true
+      Max. Height Display: inf
+      Max. Octree Depth: 16
+      Min. Height Display: -inf
+      Name: Covered surface
+      Octomap Topic: /octomap_covered
+      Queue Size: 5
+      Value: true
+      Voxel Alpha: 1
+      Voxel Coloring: Z-Axis
+      Voxel Rendering: Occupied Voxels
+    - Class: octomap_rviz_plugin/ColorOccupancyGrid
       Enabled: false
       Max. Height Display: 3.40282347e+38
       Max. Octree Depth: 16
@@ -404,5 +416,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 1280
+  X: 0
   Y: 24

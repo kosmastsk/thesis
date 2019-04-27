@@ -66,7 +66,13 @@ target_link_libraries(graph_utils
   ${catkin_LIBRARIES}
 )
 
-
+# Online Coverage library
+add_library(online_coverage
+  src/online_coverage.cpp
+)
+target_link_libraries(online_coverage
+  ${catkin_LIBRARIES}
+)
 
 # Main executable
 add_executable(drone_coverage
@@ -75,4 +81,12 @@ target_link_libraries(drone_coverage
   ${catkin_LIBRARIES}
   coverage
   graph_utils
+)
+
+# Main executable
+add_executable(online_coverage_node
+  src/online_coverage_node.cpp)
+target_link_libraries(online_coverage_node
+  ${catkin_LIBRARIES}
+  online_coverage
 )

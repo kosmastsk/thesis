@@ -4,7 +4,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "drone_coverage_node");
 
-  drone_coverage::Coverage finder;
+  drone_coverage::Coverage coverage;
 
   ros::spin();
   return 0;

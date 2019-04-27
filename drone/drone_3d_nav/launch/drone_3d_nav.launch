@@ -39,6 +39,8 @@
   <!-- Create paths from amcl pose and ground_truth state -->
   <node name="path_visualizer" type="path_visualizer.py" pkg="drone_3d_nav" />
 
+  <include file="$(find drone_coverage)/launch/online_coverage.launch"/>
+
   <!-- VISUALIZATION -->
   <!-- Launch Rviz with pre loaded configuration-->
    <node name="rviz" type="rviz" pkg="rviz" args="-d $(find drone_3d_nav)/navigation.rviz" />
