@@ -87,7 +87,7 @@ Coverage::Coverage()
   _graph = generateGraph(_nh, _points);
 
   // Apply a hill-climbing algorithm to find the best combination of the waypoints
-  _points = hillClimbingBase(_nh, _graph, _points);
+  _points = hillClimbingBase(_nh, _graph, _points, _octomap);
 
   // Publish sensor positions / waypoints
   publishWaypoints(_points);
@@ -173,11 +173,10 @@ void Coverage::calculateWaypoints()
     {
       while (_sensor_position.x() <= _max_bounds[0] - _uav_safety_offset)
       {
-        /*
-        * Necessary checks for obstacles and points that should not be waypoints
-        * Each one, checks the same with the different way, to exclude as many points as possible that should be
-        * excluded
-        */
+        // /*
+        // * Necessary checks for obstacles and points that should not be waypoints
+        // * Each one, checks the same with the different way, to exclude as many points as possible that should be
+        // *excluded* /
 
         // Check if is occupied node in octomap
         octomap::OcTreeNode* node = _octomap->search(_sensor_position);
@@ -385,7 +384,7 @@ void Coverage::findNeighbors(int root)
       if (distance < 0.75 * _rfid_range)
       {
         // Check visibility
-        if (getVisibility(_points.at(root).trans(), _points.at(i).trans()))
+        if (checkIfVisible(_points.at(root).trans(), _points.at(i).trans(), _octomap))
         {
           _discovered_nodes.at(i) = 1;
           // Call the funcion recursively
@@ -496,30 +495,6 @@ double Coverage::findCoverage(const octomap::point3d& wall_point, const octomap:
   return fabs(coverage);
 }
 
-bool Coverage::getVisibility(const octomap::point3d view_point, const octomap::point3d point_to_test)
-{
-  // Get all nodes in a line
-  octomap::KeyRay key_ray;
-
-  _octomap->computeRayKeys(view_point, point_to_test, key_ray);
-
-  const octomap::OcTreeKey& point_to_test_key = _octomap->coordToKey(point_to_test);
-
-  // Now check if there are any unknown or occupied nodes in the ray,
-  // except for the point_to_test key.
-  for (octomap::OcTreeKey key : key_ray)
-  {
-    if (key != point_to_test_key)
-    {
-      octomap::OcTreeNode* node = _octomap->search(key);
-
-      if (node != NULL && _octomap->isNodeOccupied(node))
-        return false;
-    }
-  }
-  return true;
-}
-
 double Coverage::proceedOneStep(double coord)
 {
   return coord + 0.5 * _rfid_range;
@@ -553,11 +528,8 @@ void Coverage::visualizeWaypoints(std::vector<octomath::Pose6D> points)
     marker.header.stamp = ros::Time();
     marker.ns = "coverage_path_planning";
     marker.id = idx;
-    // marker.type = visualization_msgs::Marker::ARROW;
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.text = std::to_string(idx);
-    // marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-    // marker.mesh_resource = "package://drone_description/meshes/quadrotor/quadrotor_base.dae";
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position.x = points.at(idx).x();
     marker.pose.position.y = points.at(idx).y();
@@ -566,9 +538,7 @@ void Coverage::visualizeWaypoints(std::vector<octomath::Pose6D> points)
     marker.pose.orientation.y = points.at(idx).rot().y();
     marker.pose.orientation.z = points.at(idx).rot().z();
     marker.pose.orientation.w = points.at(idx).rot().u();
-    // marker.scale.x = 1;  // 0.3;
-    // marker.scale.y = 1;  // 0.1;
-    marker.scale.z = 0.4;  // 0.1;
+    marker.scale.z = 0.4;
     marker.color.a = 1.0;
     marker.color.r = 0;
     marker.color.g = 0;

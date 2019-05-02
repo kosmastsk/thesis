@@ -82,9 +82,8 @@ void OnlineCoverage::calculateCoverage(const geometry_msgs::Pose pose)
   octomath::Quaternion orientation(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
 
   double yaw = orientation.toEuler().yaw();
-  //
-  Horizontal FOV degrees for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2;
-                              horizontal += DEGREE)
+  // Horizontal FOV degrees
+  for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
   {
     // Vertical FOV degrees
     for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)

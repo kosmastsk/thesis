@@ -88,7 +88,6 @@ public:
   bool safeCheckFrom2D(octomap::point3d sensor_position);
   bool findBestYaw(octomap::point3d sensor_position, double& yaw);
   double findCoverage(const octomap::point3d& wall_point, const octomap::point3d& direction);
-  bool getVisibility(const octomap::point3d view_point, const octomap::point3d point_to_test);
 
   double proceedOneStep(double coord);
 

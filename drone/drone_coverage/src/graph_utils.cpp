@@ -39,11 +39,12 @@ Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points)
   return g;
 }
 
-std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points)
+std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points,
+                                               octomap::OcTree* octomap)
 {
   ROS_INFO("Hill climbing is running....\n");
   // Better use int vector, than Pose6D
-  std::vector<int> order, new_order;
+  std::vector<int> order, new_order, best_order;
   order.resize(points.size());
 
   // Fill in the vector
@@ -55,13 +56,13 @@ std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, 
   std::vector<vertex_descriptor> p(boost::num_vertices(graph));
   std::vector<double> d(boost::num_vertices(graph));
 
-  double init_distance = calculateCost(graph, order, p, d);
-  ROS_INFO("Initial distance is %f\n", init_distance);
+  double total_distance = calculateCost(graph, order, p, d);
+  ROS_INFO("Initial distance is %f\n", total_distance);
 
-  double best_distance = init_distance;
-  std::vector<int> best_order = order;
+  best_order = order;
+  double best_distance = total_distance;
 
-  int current_node, next_node;
+  int current_node;
 
   int iterations, restarts;
   double desired_distance;
@@ -72,126 +73,107 @@ std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, 
   // Restarts
   for (int rs = 0; rs < restarts; rs++)
   {
-    current_node = 0;  //    getRandomNumber(0, order.size() - 1);
+    current_node = 0;
 
-    // Order must contain more than 2 points to make a comparison
+    // vector order must contain more than 2 points to make a comparison
     while (order.size() > 2)
     {
       ROS_DEBUG("Current node %d", current_node);
       // Find where in order are the current and the next goal
       std::vector<int>::iterator it = std::find(order.begin(), order.end(), current_node);
       int current_index = std::distance(order.begin(), it);
-      int next_index;
 
       new_order.push_back(current_node);
       order.erase(order.begin() + current_index);
 
       // [....., max index that makes this condition true , size()-2 , size()-1]
-      if (current_index < order.size() - 2)
+      vertex_descriptor start;
+
+      // Check the next node
+      if (std::find(order.begin(), order.end(), current_node + 1) != order.end())
       {
-        next_index = current_index;
-        // We have erased the current node from order, so the size becomes one less, and the index is the same
-      }
-      else
-        next_index = getRandomNumber(0, order.size() - 1);
+        start = boost::vertex(current_node, graph);
+        boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                                 boost::predecessor_map(&p[0]).distance_map(&d[0]));
+        double near_distance = d[current_node + 1];
 
-      next_node = order.at(next_index);
-
-      vertex_descriptor start, goal;
-      start = boost::vertex(current_node, graph);
-      goal = boost::vertex(next_node, graph);
-      boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
-                               boost::predecessor_map(&p[0]).distance_map(&d[0]));
-      double distance = d[next_node];
-
-      if (distance > desired_distance)
-      {
-        // Apply hill climbing to the next node to find a best solution
-        // Swap next index with a random index
-        int iter = 0;
-        do
+        if (near_distance < desired_distance &&
+            checkIfVisible(points.at(current_node).trans(), points.at(current_node + 1).trans(), octomap))
         {
-          iter++;
-          int random_node = order.at(int(getRandomNumber(0, order.size() - 1)));
-          if (random_node == current_node || random_node == next_node)
-            continue;
-
-          vertex_descriptor start, goal;
-          start = boost::vertex(current_node, graph);
-          goal = boost::vertex(random_node, graph);
-          boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
-                                   boost::predecessor_map(&p[0]).distance_map(&d[0]));
-          double new_distance = d[random_node];
-
-          if (new_distance < distance)
-          {
-            distance = new_distance;
-            next_node = random_node;
-          }
-          if (new_distance < desired_distance)
-            break;
-
-        } while (iter < iterations && distance > desired_distance);
+          current_node = current_node + 1;
+          continue;
+        }
       }
+
+      // Check the previous node
+      if (std::find(order.begin(), order.end(), current_node - 1) != order.end())
+      {
+        start = boost::vertex(current_node, graph);
+        boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                                 boost::predecessor_map(&p[0]).distance_map(&d[0]));
+        double near_distance = d[current_node - 1];
+
+        if (near_distance < desired_distance &&
+            checkIfVisible(points.at(current_node).trans(), points.at(current_node - 1).trans(), octomap))
+        {
+          current_node = current_node - 1;
+          continue;
+        }
+      }
+
+      // If none of the previous if statements continued......
+      // Apply hill climbing to the next node to find a best solution
+      // Swap next index with a random index
+      int iter = 0;
+      double distance = DBL_MAX;
+      // provide a value, in case none of the points satisfies the conditions needed do
+      int next_node = order.at(int(getRandomNumber(0, order.size() - 1)));
+      do
+      {
+        int random_node = order.at(int(getRandomNumber(0, order.size() - 1)));
+        if (random_node == current_node)
+          continue;
+
+        start = boost::vertex(current_node, graph);
+        boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
+                                 boost::predecessor_map(&p[0]).distance_map(&d[0]));
+        double new_distance = d[random_node];
+
+        if (new_distance < distance &&
+            checkIfVisible(points.at(current_node).trans(), points.at(random_node).trans(), octomap))
+        {
+          distance = new_distance;
+          next_node = random_node;
+        }
+        iter++;
+      } while (iter < iterations && distance > desired_distance);
 
       current_node = next_node;
     }
+
     // Add the last two points
-    new_order.push_back(order.back());
     new_order.push_back(order.front());
+    new_order.push_back(order.back());
 
-    order.resize(new_order.size());
-    order.swap(new_order);
-    new_order.clear();
-
-    double total_distance = calculateCost(graph, order, p, d);
-    ROS_INFO("distance for restart #%d : %f\n", rs, total_distance);
+    total_distance = calculateCost(graph, new_order, p, d);
+    ROS_INFO("distance for restart #%d : %f\n", rs + 1, total_distance);
 
     if (total_distance < best_distance)
     {
       best_distance = total_distance;
-      best_order = order;
+      best_order = new_order;
     }
+
+    // Keeping always the order with the lowest cost, in the beginning of each restart
+    order = best_order;
+    new_order.clear();
+
   }  // rs
 
   // Order the Pose6D points according ot the order vector
-  ROS_INFO("Keeping the order with the lowest total distance...\n");
+  ROS_INFO("Keeping the order with the lowest total distance: %f...\n", best_distance);
   return reorderPoints(points, best_order);
 }
-/*
-std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points)
-{
-  // Better use int vector, than Pose6D
-  std::vector<int> order;
-  order.resize(points.size());
-
-  for (std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it)
-    order.at(it - order.begin()) = it - order.begin();
-
-  // Generate a random solution
-  // Shuffle points except the first point
-  // ROS_INFO("Shuffling points....\n");
-  // std::random_shuffle(++order.begin(), order.end());
-
-  // https://www.boost.org/doc/libs/1_42_0/libs/graph/example/dijkstra-example.cpp
-  // Create a property map for the graph
-  boost::property_map<Graph, boost::edge_weight_t>::type weightmap = get(boost::edge_weight, graph);
-  std::vector<vertex_descriptor> p(boost::num_vertices(graph));
-  std::vector<double> d(boost::num_vertices(graph));
-
-  //  Simulated Annealing algorithm
-  // https://www.codeproject.com/Articles/26758/Simulated-Annealing-Solving-the-Travelling-Salesma
-  bool runSA;
-  nh.param<bool>("/simulated_annealing/run", runSA, 0);
-  if (runSA)
-    order = simulatedAnnealing(nh, graph, order, p, d);
-  else
-    order = hillClimbing(nh, graph, order, p, d);
-
-  // Order the Pose6D points according ot the order vector
-  return reorderPoints(points, order);
-}
-*/
 
 std::vector<octomath::Pose6D> reorderPoints(std::vector<octomath::Pose6D> points, std::vector<int> order)
 {
@@ -216,7 +198,6 @@ double calculateCost(Graph graph, std::vector<int> order, std::vector<vertex_des
     // Source vertex
     vertex_descriptor start = boost::vertex(order.at(i), graph);
 
-    vertex_descriptor goal = boost::vertex(order.at(i + 1), graph);
     boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
                              boost::predecessor_map(&p[0]).distance_map(&d[0]));
 
@@ -227,43 +208,6 @@ double calculateCost(Graph graph, std::vector<int> order, std::vector<vertex_des
   return cost;
 }
 
-double calculateWeight(Graph graph, std::vector<int> order, int index, std::vector<vertex_descriptor> p,
-                       std::vector<double> d)
-{
-  double cost = 0;
-  vertex_descriptor start, goal;
-  for (int i = -1; i < 1; i++)
-  {
-    start = boost::vertex(order.at(index + i), graph);
-    goal = boost::vertex(order.at(index + i + 1), graph);
-    boost::astar_search_tree(graph, start, boost::astar_heuristic<Graph, double>(),
-                             boost::predecessor_map(&p[0]).distance_map(&d[0]));
-    cost += d[order.at(index + i + 1)];
-  }
-
-  return cost;
-}
-
-double calculateDiff(Graph graph, std::vector<int> prev_order, std::vector<int> next_order,
-                     std::vector<vertex_descriptor> p, std::vector<double> d, int first, int second)
-{
-  // ros::WallTime startTime = ros::WallTime::now();
-  // Change calculateCost to calculate the differences and not the whole value
-  double diff = 0;
-
-  //  Subtract previous weights that do not exist anymore
-  diff -= calculateWeight(graph, prev_order, first, p, d);
-  diff -= calculateWeight(graph, prev_order, second, p, d);
-
-  // Add new values
-  diff += calculateWeight(graph, next_order, first, p, d);
-  diff += calculateWeight(graph, next_order, second, p, d);
-
-  // double dt = (ros::WallTime::now() - startTime).toSec();
-  // ROS_INFO_STREAM("Calculating cost took " << dt << " seconds.");
-  return diff;
-}
-
 double getRandomNumber(double i, double j)  // This function generates a random number between
 {
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -272,108 +216,34 @@ double getRandomNumber(double i, double j)  // This function generates a random 
   return double(distribution(generator));
 }
 
-double getProbability(double difference, double temperature)
-// This function finds the probability of how bad the new solution is
-{
-  return exp(-1 * difference / temperature);
-}
-
 std::vector<int> getNextOrder(std::vector<int> order, int first_index, int second_index)
 {
   std::iter_swap(order.begin() + first_index, order.begin() + second_index);
-
   return order;
 }
 
-/*
-std::vector<int> hillClimbing(ros::NodeHandle nh, Graph graph, std::vector<int> order, std::vector<vertex_descriptor> p,
-                              std::vector<double> d)
+bool checkIfVisible(const octomap::point3d view_point, const octomap::point3d point_to_test, octomap::OcTree* octomap)
 {
-  ROS_INFO("Hill climbing is running....\n");
+  // Get all nodes in a line
+  octomap::KeyRay key_ray;
 
-  ros::WallTime startTime = ros::WallTime::now();
-  // Load from Parameter Server
-  int iterations;
-  double goal;
-  nh.param<int>("/hill_climbing/iterations", iterations, 1000);
-  nh.param<double>("/hill_climbing/goal", goal, 80);
+  octomap->computeRayKeys(view_point, point_to_test, key_ray);
 
-  double init_distance = calculateCost(graph, order, p, d);
-  double distance = init_distance;
+  const octomap::OcTreeKey& point_to_test_key = octomap->coordToKey(point_to_test);
 
-  int iter = 0;
-  while (iter < iterations && distance > goal)
+  // Now check if there are any unknown or occupied nodes in the ray,
+  // except for the point_to_test key.
+  for (octomap::OcTreeKey key : key_ray)
   {
-    int first = int(getRandomNumber(1, order.size() - 1));
-    int second = int(getRandomNumber(1, order.size() - 1));
-    std::vector<int> next_order = getNextOrder(order, first, second);
-    // adjacent_difference
-    // IDEA
-    double new_distance = distance + calculateDiff(graph, order, next_order, p, d, first, second);
-
-    if (new_distance < distance)
+    if (key != point_to_test_key)
     {
-      order = next_order;
-      distance = new_distance;
-      iter++;
-      std::cout << "swapping " << first << " with " << second << std::endl;
-      ROS_INFO("iteration : %d\n", iter);
+      octomap::OcTreeNode* node = octomap->search(key);
+
+      if (node != NULL && octomap->isNodeOccupied(node))
+        return false;
     }
   }
-
-  double shortest_distance = distance;
-
-  ROS_INFO("Initial VS shortest distance: %f, %f\n", init_distance, shortest_distance);
-  ROS_INFO("%d iterations needed\n", iter);
-
-  double dt = (ros::WallTime::now() - startTime).toSec();
-  ROS_INFO_STREAM("Hill Climbing took " << dt << " seconds.");
-
-  return order;
+  return true;
 }
-
-std::vector<int> simulatedAnnealing(ros::NodeHandle nh, Graph graph, std::vector<int> order,
-                                    std::vector<vertex_descriptor> p, std::vector<double> d)
-{
-  ROS_INFO("Hill climbing with Simulated Annealing is running....\n");
-
-  ros::WallTime startTime = ros::WallTime::now();
-  // Load from Parameter Server
-  double temperature, cooling_rate, absolute_temperature;
-  nh.param<double>("/simulated_annealing/temperature", temperature, 1000);
-  nh.param<double>("/simulated_annealing/cooling_rate", cooling_rate, 0.999);
-  nh.param<double>("/simulated_annealing/absolute_temperature", absolute_temperature, 0.00001);
-
-  double delta_distance = 0;
-
-  double init_distance = calculateCost(graph, order, p, d);
-  double distance = init_distance;
-
-  while (temperature > absolute_temperature)
-  {
-    ROS_INFO("temperature: %f\n", temperature);
-    int first = int(getRandomNumber(1, order.size() - 1));
-    int second = int(getRandomNumber(1, order.size() - 1));
-    std::vector<int> next_order = getNextOrder(order, first, second);
-    delta_distance = calculateDiff(graph, order, next_order, p, d, first, second);
-
-    if ((delta_distance < 0) || (distance > 0 && getProbability(delta_distance, temperature) > getRandomNumber(0, 1)))
-    {
-      order = next_order;
-      distance += delta_distance;
-    }
-
-    temperature *= cooling_rate;
-  }
-  double shortest_distance = distance;
-
-  ROS_INFO("Initial VS shortest distance: %f, %f\n", init_distance, shortest_distance);
-
-  double dt = (ros::WallTime::now() - startTime).toSec();
-  ROS_INFO_STREAM("Simulated Annealing took " << dt << " seconds.");
-
-  return order;
-}
-*/
 
 }  // namespace drone_coverage
