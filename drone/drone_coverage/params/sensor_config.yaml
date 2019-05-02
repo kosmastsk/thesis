@@ -1,5 +1,6 @@
 #####
 rfid:
+  shape: orthogonal #circular
   range: 2 # in metres
   hfov: 60 # degrees
   vfov: 30 # degrees

@@ -80,8 +80,10 @@ public:
   void calculateWaypoints();
   void postprocessWaypoints();
   void removeNonVisibleWaypoints();
+  void reduceDimensionality();
 
-  void calculateCoverage();
+  void calculateOrthogonalCoverage();
+  void calculateCircularCoverage();
   float evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* covered);
 
   void findNeighbors(int root);

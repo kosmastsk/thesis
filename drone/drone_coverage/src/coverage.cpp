@@ -73,7 +73,17 @@ Coverage::Coverage()
   postprocessWaypoints();
 
   // Find the covered surface of the waypoints left after post process
-  calculateCoverage();
+  std::string sensor_shape;
+  _nh.param<std::string>("/rfid/shape", sensor_shape, "orthogonal");
+  if (sensor_shape == "orthogonal")
+  {
+    calculateOrthogonalCoverage();
+  }
+  else
+  {
+    // TODO
+    // calculateCircularCoverage();
+  }
 
   // Find the covered surface of the waypoints left after post process
   ROS_INFO("%f%% of the surface will be covered\n", evaluateCoverage(_octomap, _covered));
@@ -264,6 +274,8 @@ void Coverage::postprocessWaypoints()
 
   // Remove the waypoints that are inside obstacles and cannot be remove with octomap functions
   removeNonVisibleWaypoints();
+
+  reduceDimensionality();
 }
 
 void Coverage::removeNonVisibleWaypoints()
@@ -315,9 +327,13 @@ void Coverage::removeNonVisibleWaypoints()
   _points = final_points;
 }
 
-void Coverage::calculateCoverage()
+void Coverage::reduceDimensionality()
 {
-  ROS_INFO("Calculating coverage...\n");
+}
+
+void Coverage::calculateOrthogonalCoverage()
+{
+  ROS_INFO("Calculating orthogonal coverage...\n");
   octomap::point3d wall_point;
   // For each one of the points, calculate coverage
   for (int i = 0; i < _points.size(); i++)
@@ -348,6 +364,45 @@ void Coverage::calculateCoverage()
       }  // vertical loop
 
     }  // horizontal loop
+  }
+}
+
+void Coverage::calculateCircularCoverage()
+{
+  ROS_INFO("Calculating circular coverage...\n");
+  octomap::point3d wall_point;
+  // For each one of the points, calculate coverage
+  for (int i = 0; i < _points.size(); i++)
+  {
+    double yaw = _points.at(i).yaw();
+    // For the best view, specific yaw, calculate the covered surface by the sensor and add it to the octomap
+    // Horizontal FOV degrees
+    // TODO
+    // Adapt the for limits
+    /*  for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
+      {
+        // Vertical FOV degrees
+        for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
+        {
+          // direction at which we are facing the point
+          octomap::point3d direction(1, 0, 0);
+
+          // Get every point on the direction vector that belongs to the FOV
+          bool ray_success = _octomap->castRay(_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
+                                               wall_point, true, _rfid_range);
+
+          // Ground elimination
+          if (wall_point.z() < _min_obstacle_height)
+            continue;
+
+          if (ray_success)
+          {
+            _covered->insertRay(_points.at(i).trans(), wall_point, _rfid_range);
+          }
+        }  // vertical loop
+
+      }  // horizontal loop
+      */
   }
 }
 
