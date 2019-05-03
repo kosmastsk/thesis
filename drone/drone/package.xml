@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>drone</name>
+  <version>0.0.0</version>
+  <description>The drone package</description>
+
+  <maintainer email="kosmastsk@gmail.com">kosmastsk</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+   <!-- Dependencies needed after this package is compiled. -->
+   <exec_depend>drone_gazebo</exec_depend>
+   <exec_depend>drone_3d_nav</exec_depend>
+   <exec_depend>drone_2d_nav</exec_depend>
+   <exec_depend>drone_coverage</exec_depend>
+   <exec_depend>drone_description</exec_depend>
+   <exec_depend>particle_filter</exec_depend>
+   <exec_depend>path_planning</exec_depend>
+
+</package>

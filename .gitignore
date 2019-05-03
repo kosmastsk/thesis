@@ -1,5 +1,5 @@
 # ROS bags are usually large. ignore them
-*.bag
+
 
 # LaTeX generated files
 *.aux

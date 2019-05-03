@@ -1,5 +1,5 @@
 # This is the default method
 hill_climbing:
-  iterations: 500
+  iterations: 700
   desired distance: 1.1 # min distance between points is 1
-  restarts: 5
+  restarts: 8
