@@ -20,9 +20,6 @@ OnlineCoverage::OnlineCoverage()
   // Adjust values
   _rfid_hfov = (_rfid_hfov / 180.0) * M_PI;
   _rfid_vfov = (_rfid_vfov / 180.0) * M_PI;
-
-  // Reset some variables that will be filled later
-  _covered = new octomap::ColorOcTree(_octomap_resolution);
 }
 
 OnlineCoverage::~OnlineCoverage()
@@ -60,6 +57,9 @@ void OnlineCoverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
   }
 
   _octomap_resolution = _octomap->getResolution();
+
+  // Now that we have the resolution we can initialize the new octomap
+  _covered = new octomap::ColorOcTree(_octomap_resolution);
 
   _octomap_loaded = 1;
 }
@@ -110,10 +110,10 @@ void OnlineCoverage::publishCoveredSurface()
   _covered->prune();
   octomap_msgs::Octomap msg;
   msg.header.stamp = ros::Time::now();
-  msg.header.frame_id = "/map";
+  msg.header.frame_id = "map";
   msg.binary = false;
   msg.id = _covered->getTreeType();
-  msg.resolution = _octomap_resolution;
+  msg.resolution = _covered->getResolution();
   if (octomap_msgs::fullMapToMsg(*_covered, msg))
     _covered_pub.publish(msg);
 }
