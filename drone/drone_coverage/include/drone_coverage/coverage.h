@@ -47,6 +47,10 @@ private:
   // Keep all points in a vector
   std::vector<octomath::Pose6D> _points;
 
+  typedef std::pair<double, double> Point_xy;
+  std::vector<Point_xy> _xy_points;
+  std::vector<std::vector<octomath::Pose6D>> _xyzrpy_points;
+
   double _min_bounds[3];
   double _max_bounds[3];
   double _init_pose[3];
@@ -96,6 +100,9 @@ public:
   void publishCoveredSurface();
   void visualizeWaypoints(std::vector<octomath::Pose6D> points);
   void publishWaypoints(std::vector<octomath::Pose6D> points);
+
+  std::vector<octomath::Pose6D> revertTo6D(std::vector<Point_xy> xy_points,
+                                           std::vector<std::vector<octomath::Pose6D>> _xyzrpy_points);
 };
 
 }  // namespace drone_coverage

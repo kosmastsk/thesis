@@ -2,7 +2,14 @@
 
 namespace drone_coverage
 {
-Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points)
+double distanceXY(const Point_xy i, const Point_xy j)
+{
+  double dist_x = i.first - j.first;
+  double dist_y = i.second - j.second;
+  return sqrt(dist_x * dist_x + dist_y * dist_y);
+}
+
+Graph generateGraph(ros::NodeHandle nh, std::vector<Point_xy> points)
 {
   ROS_INFO("Generating graph...\n");
   // https://www.technical-recipes.com/2015/getting-started-with-the-boost-graph-library/
@@ -23,7 +30,7 @@ Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points)
         continue;  // point with itself
 
       // Check distance
-      double distance = points.at(i).distance(points.at(j));
+      double distance = distanceXY(points.at(i), points.at(j));
 
       if (distance < 0.75 * rfid_range)
       {
@@ -39,8 +46,8 @@ Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points)
   return g;
 }
 
-std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points,
-                                               octomap::OcTree* octomap)
+std::vector<Point_xy> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<Point_xy> points,
+                                       octomap::OcTree* octomap)
 {
   ROS_INFO("Hill climbing is running....\n");
   // Better use int vector, than Pose6D
@@ -97,8 +104,10 @@ std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, 
                                  boost::predecessor_map(&p[0]).distance_map(&d[0]));
         double near_distance = d[current_node + 1];
 
-        if (near_distance < desired_distance &&
-            checkIfVisible(points.at(current_node).trans(), points.at(current_node + 1).trans(), octomap))
+        octomath::Vector3 view_point(points.at(current_node).first, points.at(current_node).second, 1);
+        octomath::Vector3 point_to_test(points.at(current_node + 1).first, points.at(current_node + 1).second, 1);
+
+        if (near_distance < desired_distance && checkIfVisible(view_point, point_to_test, octomap))
         {
           current_node = current_node + 1;
           continue;
@@ -113,8 +122,10 @@ std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, 
                                  boost::predecessor_map(&p[0]).distance_map(&d[0]));
         double near_distance = d[current_node - 1];
 
-        if (near_distance < desired_distance &&
-            checkIfVisible(points.at(current_node).trans(), points.at(current_node - 1).trans(), octomap))
+        octomath::Vector3 view_point(points.at(current_node).first, points.at(current_node).second, 1);
+        octomath::Vector3 point_to_test(points.at(current_node - 1).first, points.at(current_node - 1).second, 1);
+
+        if (near_distance < desired_distance && checkIfVisible(view_point, point_to_test, octomap))
         {
           current_node = current_node - 1;
           continue;
@@ -139,8 +150,10 @@ std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, 
                                  boost::predecessor_map(&p[0]).distance_map(&d[0]));
         double new_distance = d[random_node];
 
-        if (new_distance < distance &&
-            checkIfVisible(points.at(current_node).trans(), points.at(random_node).trans(), octomap))
+        octomath::Vector3 view_point(points.at(current_node).first, points.at(current_node).second, 1);
+        octomath::Vector3 point_to_test(points.at(random_node).first, points.at(random_node).second, 1);
+
+        if (new_distance < distance && checkIfVisible(view_point, point_to_test, octomap))
         {
           distance = new_distance;
           next_node = random_node;
@@ -156,7 +169,7 @@ std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, 
     new_order.push_back(order.back());
 
     total_distance = calculateCost(graph, new_order, p, d);
-    ROS_INFO("distance for restart #%d : %f\n", rs + 1, total_distance);
+    ROS_INFO("distance for restart %d/%d : %f \n", rs + 1, restarts, total_distance);
 
     if (total_distance < best_distance)
     {
@@ -175,15 +188,13 @@ std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, 
   return reorderPoints(points, best_order);
 }
 
-std::vector<octomath::Pose6D> reorderPoints(std::vector<octomath::Pose6D> points, std::vector<int> order)
+std::vector<Point_xy> reorderPoints(std::vector<Point_xy> points, std::vector<int> order)
 {
-  std::vector<octomath::Pose6D> ordered_points;
+  std::vector<Point_xy> ordered_points;
   for (int i = 0; i < order.size(); i++)
   {
     ordered_points.push_back(points.at(order.at(i)));
   }
-
-  points = ordered_points;
 
   return ordered_points;
 }

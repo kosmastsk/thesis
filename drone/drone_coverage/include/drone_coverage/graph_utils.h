@@ -19,10 +19,6 @@
 
 namespace drone_coverage
 {
-struct found_goal
-{
-};  // exception for termination
-
 // Boost Graph typedefs
 typedef std::pair<int, int> Edge;
 typedef boost::property<boost::edge_weight_t, double> EdgeWeightProperty;
@@ -33,11 +29,13 @@ typedef boost::property_map<Graph, boost::edge_weight_t>::type WeightMap;
 typedef boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_descriptor;
 
+typedef std::pair<double, double> Point_xy;
+
 // Functions
-Graph generateGraph(ros::NodeHandle nh, std::vector<octomath::Pose6D> points);
-std::vector<octomath::Pose6D> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<octomath::Pose6D> points,
-                                               octomap::OcTree* octomap);
-std::vector<octomath::Pose6D> reorderPoints(std::vector<octomath::Pose6D> points, std::vector<int> order);
+Graph generateGraph(ros::NodeHandle nh, std::vector<Point_xy> points);
+std::vector<Point_xy> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<Point_xy> points,
+                                       octomap::OcTree* octomap);
+std::vector<Point_xy> reorderPoints(std::vector<Point_xy> points, std::vector<int> order);
 double calculateCost(Graph graph, std::vector<int> order, std::vector<vertex_descriptor> p, std::vector<double> d);
 
 double getRandomNumber(double i, double j);
@@ -45,6 +43,8 @@ double getProbability(double difference, double temperature);
 std::vector<int> getNextOrder(std::vector<int> order, int first_index, int second_index);
 
 bool checkIfVisible(const octomap::point3d view_point, const octomap::point3d point_to_test, octomap::OcTree* octomap);
+
+double distanceXY(const Point_xy i, const Point_xy j);
 
 }  // namespace drone_coverage
 

@@ -6,7 +6,7 @@ Coverage::Coverage()
 {
   ros::WallTime startTime = ros::WallTime::now();
 
-  ROS_INFO("Coverage object created\n");
+  ROS_DEBUG("Coverage object created\n");
   _octomap_loaded = 0;
   _ogm_loaded = 0;
 
@@ -94,10 +94,13 @@ Coverage::Coverage()
   ROS_INFO("Waiting to publish the ordered waypoints....\n");
 
   // Create a graph with all points
-  _graph = generateGraph(_nh, _points);
+  _graph = generateGraph(_nh, _xy_points);
 
   // Apply a hill-climbing algorithm to find the best combination of the waypoints
-  _points = hillClimbingBase(_nh, _graph, _points, _octomap);
+  _xy_points = hillClimbingBase(_nh, _graph, _xy_points, _octomap);
+
+  // Go back from Point_xy to Pose6D elements
+  _points = revertTo6D(_xy_points, _xyzrpy_points);
 
   // Publish sensor positions / waypoints
   publishWaypoints(_points);
@@ -147,12 +150,9 @@ void Coverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
   _octomap->getMetricMax(_max_bounds[0], _max_bounds[1], _max_bounds[2]);
   _octomap_resolution = _octomap->getResolution();
 
-  // We don't want points that are under the ground --> bound < 0 -->convert them to 0
-  // _min_bounds[2] = (_min_bounds[2] < 0) ? 0 : _min_bounds[2];
-
   _octomap_loaded = 1;
 
-  ROS_INFO("Octomap bounds are (x,y,z) : \n [min]  %f, %f, %f\n [max]  %f, %f, %f", _min_bounds[0], _min_bounds[1],
+  ROS_INFO("Octomap bounds are (x,y,z) : \n [min]  %f, %f, %f\n [max]  %f, %f, %f\n", _min_bounds[0], _min_bounds[1],
            _min_bounds[2], _max_bounds[0], _max_bounds[1], _max_bounds[2]);
 }
 
@@ -275,6 +275,7 @@ void Coverage::postprocessWaypoints()
   // Remove the waypoints that are inside obstacles and cannot be remove with octomap functions
   removeNonVisibleWaypoints();
 
+  // Create the vector of x,y points that must be provided in the graph to calculate the optimal path
   reduceDimensionality();
 }
 
@@ -329,6 +330,24 @@ void Coverage::removeNonVisibleWaypoints()
 
 void Coverage::reduceDimensionality()
 {
+  ROS_INFO("Reducing dimensionality...\n");
+  for (int i = 0; i < _points.size(); i++)
+  {
+    Point_xy xy;
+    xy = std::make_pair(_points.at(i).x(), _points.at(i).y());
+    std::vector<Point_xy>::iterator it = std::find(_xy_points.begin(), _xy_points.end(), xy);
+
+    if (it == _xy_points.end())
+    {  // does not exist
+      _xy_points.push_back(xy);
+      _xyzrpy_points.resize(_xy_points.size());
+    }
+    it = std::find(_xy_points.begin(), _xy_points.end(), xy);
+    int index = std::distance(_xy_points.begin(), it);
+    _xyzrpy_points.at(index).push_back(_points.at(i));
+  }
+
+  ROS_INFO("%zu points will be used to generate the path...\n", _xy_points.size());
 }
 
 void Coverage::calculateOrthogonalCoverage()
@@ -414,7 +433,7 @@ float Coverage::evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* cove
   // Use floats to make the division work later on
   float octomap_leafs = float(octomap->getNumLeafNodes());
   float covered_leafs = float(covered->getNumLeafNodes());
-  ROS_INFO("[Number of leafs] octomap %f : covered %f\n", octomap_leafs, covered_leafs);
+  ROS_INFO("[Number of leafs] total %f : covered %f\n", octomap_leafs, covered_leafs);
 
   float percentage = 100 * (covered_leafs / octomap_leafs);
 
@@ -548,6 +567,51 @@ double Coverage::findCoverage(const octomap::point3d& wall_point, const octomap:
 
   // Return the absolute value of the coverage metric
   return fabs(coverage);
+}
+
+std::vector<octomath::Pose6D> Coverage::revertTo6D(std::vector<Point_xy> xy_points,
+                                                   std::vector<std::vector<octomath::Pose6D>> _xyzrpy_points)
+{
+  ROS_INFO("Converting back to 6D....\n");
+  bool is_low = 1;
+  std::vector<octomath::Pose6D> output;
+
+  for (int i = 0; i < xy_points.size(); i++)
+  {
+    // Find the index where the i-th (x,y) point is in the _xyzrpy_points
+    Point_xy xy = _xy_points.at(i);
+    int index;
+    for (int k = 0; k < _xy_points.size(); k++)
+    {
+      // Getting the (x,y) from the 0 place is enough, the rest are the same
+      Point_xy tmp = std::make_pair(_xyzrpy_points.at(k).at(0).x(), _xyzrpy_points.at(k).at(0).y());
+      if (xy == tmp)
+      {
+        index = k;
+        break;
+      }
+    }
+
+    int j;
+    if (is_low)
+    {
+      for (j = 0; j < _xyzrpy_points.at(index).size(); j++)
+      {
+        output.push_back(_xyzrpy_points.at(index).at(j));
+      }
+      is_low = 0;
+    }
+    else
+    {
+      for (j = _xyzrpy_points.at(index).size() - 1; j >= 0; j--)
+      {
+        output.push_back(_xyzrpy_points.at(index).at(j));
+      }
+      is_low = 1;
+    }
+  }
+
+  return output;
 }
 
 double Coverage::proceedOneStep(double coord)
