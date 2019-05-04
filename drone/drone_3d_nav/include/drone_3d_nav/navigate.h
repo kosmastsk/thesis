@@ -6,6 +6,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Transform.h>
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/Bool.h>
 
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
@@ -27,6 +28,7 @@ private:
 
   ros::Publisher _vel_pub;
   ros::Publisher _stamped_vel_pub;
+  ros::Publisher _goal_reached_pub;
 
   ros::Subscriber _waypoints_sub;
   ros::Subscriber _pose_sub;
@@ -41,6 +43,7 @@ private:
   geometry_msgs::Transform _current_goal;
 
   float _tolerance;
+  float _yaw_tolerance;
   float _max_speed;
   double _dt;
 

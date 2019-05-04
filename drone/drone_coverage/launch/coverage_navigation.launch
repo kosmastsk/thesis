@@ -6,13 +6,12 @@
   <arg name="map" default="$(find drone_gazebo)/maps/warehouse.ot"/>
 
   <!-- ROSbag with coverage waypoints -->
-  <arg name="rosbag_provided" default="true"/>
+  <!--<arg name="rosbag_provided" default="true"/>
   <arg name="path" default="$(find drone_coverage)" />
-  <arg name="file_1" default="waypoints" />
+  <arg name="file_1" default="waypoints" /> -->
 
   <!-- Parameters -->
   <rosparam command="load" file="$(find drone_coverage)/params/sensor_config.yaml" />
-  <rosparam command="load" file="$(find drone_coverage)/params/hill_climbing_config.yaml" />
 
   <include file="$(find drone_3d_nav)/launch/drone_3d_nav.launch">
     <arg name="map" value="$(arg map)" />
@@ -20,9 +19,12 @@
 
   <node name="online_coverage_node" type="online_coverage_node" pkg="drone_coverage"/>
 
+  <!-- Node that transforms the data from /coverage/waypoints to the /clicked_point that path planning requires -->
+  <node name="waypoint_publisher" type="waypoint_publisher" pkg="drone_coverage"/>
+
   <!-- Coverage waypoints -->
-  <node unless="$(arg rosbag_provided)" name="drone_coverage_node" type="drone_coverage" pkg="drone_coverage" output="screen"/>
+<!--  <node unless="$(arg rosbag_provided)" name="drone_coverage_node" type="drone_coverage" pkg="drone_coverage" output="screen"/> -->
   <!-- OR provide a ROSbag with the waypoints-->
-  <node if="$(arg rosbag_provided)" pkg="rosbag" type="play" name="player" output="screen" args="$(arg path)/$(arg file_1).bag"/>
+<!--  <node if="$(arg rosbag_provided)" pkg="rosbag" type="play" name="player" output="screen" args="$(arg path)/$(arg file_1).bag"/> -->
 
 </launch>

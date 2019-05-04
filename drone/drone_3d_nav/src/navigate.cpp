@@ -60,6 +60,7 @@ Navigator::Navigator()
 
   _vel_pub = _nh.advertise<geometry_msgs::Twist>("/cmd_vel", 5);
   _stamped_vel_pub = _nh.advertise<geometry_msgs::TwistStamped>("/cmd_vel/stamped", 5);
+  _goal_reached_pub = _nh.advertise<std_msgs::Bool>("/goal_reached", 1);
 
   // amcl_pose
   _pose_sub = _nh.subscribe("/amcl_pose", 5, &Navigator::poseCallback, this);
@@ -93,6 +94,7 @@ void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryC
   _must_exit = false;
   // If this is not the first time, that waypoints are sent, we need to restore tolerance value
   _nh.param<float>("/tolerance", _tolerance, 0.15);
+  _nh.param<float>("yaw_tolerance", _yaw_tolerance, 0.05);
 }
 
 void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -174,13 +176,18 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
     ROS_INFO("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
   */
   // Ensure that the drone's position is in accepted range error
-  if ((fabs(_error_x) <= _tolerance) && (fabs(_error_y) <= _tolerance) && (fabs(_error_z) <= _tolerance))
+  if ((fabs(_error_x) <= _tolerance) && (fabs(_error_y) <= _tolerance) && (fabs(_error_z) <= _tolerance) &&
+      (fabs(_error_yaw) <= _yaw_tolerance))
   {
     if (_must_exit == true)
     {
       ROS_INFO("Final waypoint reached. Hovering...\n");
       _hovering = true;
       _waypoints_received = false;  // Set it to false again, so to wait for new waypoints to serve
+      std_msgs::Bool feedback;
+      feedback.data = true;
+      // Provide feedback for the next waypoint to reach
+      _goal_reached_pub.publish(feedback);
     }
     else
     {

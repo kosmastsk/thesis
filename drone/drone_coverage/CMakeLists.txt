@@ -90,3 +90,10 @@ target_link_libraries(online_coverage_node
   ${catkin_LIBRARIES}
   online_coverage
 )
+
+# Main executable
+add_executable(waypoint_publisher
+  src/waypoint_publisher.cpp)
+target_link_libraries(waypoint_publisher
+  ${catkin_LIBRARIES}
+)

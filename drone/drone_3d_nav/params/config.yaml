@@ -23,6 +23,7 @@ yaw_kd: 0.00005
 
 # Tolerance of the distance from the waypoints, to be accepted
 tolerance: 0.25
+yaw_tolerance: 0.1
 
 # Max speed allowed for the drone to move in x,y,z,yaw (m/s)
 max_speed: 1.5

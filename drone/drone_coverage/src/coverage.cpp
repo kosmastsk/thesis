@@ -17,7 +17,7 @@ Coverage::Coverage()
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/covered_surface", 1);
   _vis_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1000);
-  _waypoints_pub = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/waypoints_smooth", 1000);
+  _waypoints_pub = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/coverage/waypoints", 1000);
 
   // Get initial positions from the Parameter Server
   _nh.param<double>("/x_pos", _init_pose[0], 0);
