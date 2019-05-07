@@ -82,7 +82,7 @@ void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryC
     _waypoints.pop();
   }
 
-  ROS_INFO("%d waypoints received\n", _number_of_waypoints);
+  ROS_INFO("[Navigate] %d waypoints received\n", _number_of_waypoints);
   for (unsigned int i = 0; i < _number_of_waypoints; i++)
   {
     _waypoints.push(msg->points[i].transforms[0]);
@@ -92,6 +92,7 @@ void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryC
   _waypoints.pop();  // Remove this element from the queue
   _waypoints_received = true;
   _must_exit = false;
+  _hovering = false;
   // If this is not the first time, that waypoints are sent, we need to restore tolerance value
   _nh.param<float>("/tolerance", _tolerance, 0.15);
   _nh.param<float>("yaw_tolerance", _yaw_tolerance, 0.05);
@@ -102,7 +103,7 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   // If the waypoints have not received, we cannot proceed with the navigation.
   if (!_waypoints_received && !_hovering)
   {
-    ROS_WARN_ONCE("Waypoints not received. Skipping current pose...\n");
+    ROS_WARN_ONCE("[Navigate] Waypoints not received. Skipping current pose...\n");
     return;
   }
 
@@ -155,14 +156,14 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _action_yaw = _proportional_yaw + _integral_yaw + _derivative_yaw;
 
   // converting from world frame to drone frame
-  _action_x = _action_x * cos(pose_yaw) - _action_y * sin(pose_yaw);
-  _action_y = _action_y * cos(pose_yaw) + _action_x * sin(pose_yaw);
+  // _action_x = _action_x * cos(pose_yaw) - _action_y * sin(pose_yaw);
+  // _action_y = _action_y * cos(pose_yaw) + _action_x * sin(pose_yaw);
 
   // Clamp the velocities
-  Navigator::clamp(_action_x, _max_speed);
-  Navigator::clamp(_action_y, _max_speed);
-  Navigator::clamp(_action_z, _max_speed);
-  Navigator::clamp(_action_yaw, _max_speed);
+  clamp(_action_x, _max_speed);
+  clamp(_action_y, _max_speed);
+  clamp(_action_z, _max_speed);
+  clamp(_action_yaw, _max_speed);
 
   _twist.linear.x = _action_x;
   _twist.linear.y = _action_y;
@@ -176,12 +177,11 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
     ROS_INFO("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
   */
   // Ensure that the drone's position is in accepted range error
-  if ((fabs(_error_x) <= _tolerance) && (fabs(_error_y) <= _tolerance) && (fabs(_error_z) <= _tolerance) &&
-      (fabs(_error_yaw) <= _yaw_tolerance))
+  if ((fabs(_error_x) <= _tolerance) && (fabs(_error_y) <= _tolerance) && (fabs(_error_z) <= _tolerance))
   {
-    if (_must_exit == true)
+    if (_must_exit == true && !_hovering)
     {
-      ROS_INFO("Final waypoint reached. Hovering...\n");
+      ROS_INFO("[Navigate] Final waypoint reached. Hovering...\n");
       _hovering = true;
       _waypoints_received = false;  // Set it to false again, so to wait for new waypoints to serve
       std_msgs::Bool feedback;
@@ -189,16 +189,18 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
       // Provide feedback for the next waypoint to reach
       _goal_reached_pub.publish(feedback);
     }
+    else if (_must_exit == true && _hovering)
+      return;
     else
     {
-      ROS_INFO("Error in accepted range. Next waypoint.\n");
+      ROS_INFO("[Navigate] Error in accepted range. Next waypoint.\n");
       _current_goal = _waypoints.front();
       _waypoints.pop();  // Remove the element from the queue
       _waypoint_number += 1;
       _rise += 1;
 
-      ROS_INFO("Next goal %d\n", _waypoint_number + 1);
-      ROS_INFO("Coordinates (x,y,z, yaw) : (%f, %f, %f, %f)\n", _current_goal.translation.x,
+      ROS_INFO("[Navigate] Next goal %d\n", _waypoint_number);
+      ROS_INFO("[Navigate] Coordinates (x,y,z, yaw) : (%f, %f, %f, %f)\n", _current_goal.translation.x,
                _current_goal.translation.y, _current_goal.translation.z, current_goal_yaw);
       // Do not publish twist that are related to the waypoint, since we can now proceed to waypoint + 1
       return;

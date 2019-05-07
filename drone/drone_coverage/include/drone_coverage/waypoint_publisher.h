@@ -9,6 +9,7 @@
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <visualization_msgs/Marker.h>
 
 namespace drone_coverage
 {
@@ -20,6 +21,7 @@ private:
   ros::Subscriber _waypoints_sub;
   ros::Subscriber _feedback_sub;
   ros::Publisher _goal_pub;
+  ros::Publisher _vis_pub;
 
   bool _goal_reached;
 
@@ -30,6 +32,7 @@ private:
   // Callbacks
   void waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
   void feedbackCallback(const std_msgs::BoolConstPtr& msg);
+  void publish_in_rviz(geometry_msgs::TransformStamped next_goal);
 
 public:
   WaypointPublisher();

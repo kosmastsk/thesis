@@ -20,7 +20,7 @@
   <node name="online_coverage_node" type="online_coverage_node" pkg="drone_coverage"/>
 
   <!-- Node that transforms the data from /coverage/waypoints to the /clicked_point that path planning requires -->
-  <node name="waypoint_publisher" type="waypoint_publisher" pkg="drone_coverage"/>
+  <node name="waypoint_publisher" type="waypoint_publisher" pkg="drone_coverage" output="screen"/>
 
   <!-- Coverage waypoints -->
 <!--  <node unless="$(arg rosbag_provided)" name="drone_coverage_node" type="drone_coverage" pkg="drone_coverage" output="screen"/> -->

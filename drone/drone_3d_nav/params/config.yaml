@@ -17,7 +17,7 @@ z_ki: 0
 z_kd: 0.00025
 
 # yaw
-yaw_kp: 0.01
+yaw_kp: 0.1
 yaw_ki: 0
 yaw_kd: 0.00005
 
