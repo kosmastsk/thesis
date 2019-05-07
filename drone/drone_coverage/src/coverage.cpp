@@ -81,8 +81,7 @@ Coverage::Coverage()
   }
   else
   {
-    // TODO
-    // calculateCircularCoverage();
+    calculateCircularCoverage();
   }
 
   // Find the covered surface of the waypoints left after post process
@@ -398,30 +397,33 @@ void Coverage::calculateCircularCoverage()
     // Horizontal FOV degrees
     // TODO
     // Adapt the for limits
-    /*  for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
+    for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
+    {
+      // Vertical FOV degrees
+      for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
       {
-        // Vertical FOV degrees
-        for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
+        // direction at which we are facing the point
+        octomap::point3d direction(1, 0, 0);
+
+        // Get every point on the direction vector that belongs to the FOV
+        bool ray_success = _octomap->castRay(_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
+                                             wall_point, true, _rfid_range);
+
+        // Make the coverage circular, cut the points that are larger than the range==radius
+        if (_points.at(i).trans().distanceXY(wall_point) > _rfid_range)
+          continue;
+
+        // Ground elimination
+        if (wall_point.z() < _min_obstacle_height)
+          continue;
+
+        if (ray_success)
         {
-          // direction at which we are facing the point
-          octomap::point3d direction(1, 0, 0);
+          _covered->insertRay(_points.at(i).trans(), wall_point, _rfid_range);
+        }
+      }  // vertical loop
 
-          // Get every point on the direction vector that belongs to the FOV
-          bool ray_success = _octomap->castRay(_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
-                                               wall_point, true, _rfid_range);
-
-          // Ground elimination
-          if (wall_point.z() < _min_obstacle_height)
-            continue;
-
-          if (ray_success)
-          {
-            _covered->insertRay(_points.at(i).trans(), wall_point, _rfid_range);
-          }
-        }  // vertical loop
-
-      }  // horizontal loop
-      */
+    }  // horizontal loop
   }
 }
 

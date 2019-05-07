@@ -213,7 +213,7 @@ void Particles::scanCallback(const sensor_msgs::LaserScanConstPtr& msg)
       // run one filter step
       _pf->filter(dt);
       double tdiff = (ros::Time::now() - start).toSec();
-      ROS_INFO("Laser filter done in %f s", tdiff);
+      ROS_DEBUG("Laser filter done in %f s", tdiff);
 
       if (_publishUpdated)
         publishPoseEstimate(msg->header.stamp);
@@ -523,7 +523,7 @@ void Particles::prepareLaserPointCloud(const sensor_msgs::LaserScanConstPtr& sca
   }
   ranges = rangesSparse;
 
-  ROS_INFO("Laser PointCloud: (%u out of valid range)", numBeamsSkipped);
+  ROS_DEBUG("Laser PointCloud: (%u out of valid range)", numBeamsSkipped);
 }
 
 /******************************/

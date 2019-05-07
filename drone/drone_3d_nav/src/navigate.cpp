@@ -155,8 +155,8 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _action_yaw = _proportional_yaw + _integral_yaw + _derivative_yaw;
 
   // converting from world frame to drone frame
-  _action_x = _action_x * cos(_error_yaw) + _action_y * sin(_error_yaw);
-  _action_y = _action_y * cos(_error_yaw) + _action_x * sin(_error_yaw);
+  _action_x = _action_x * cos(pose_yaw) - _action_y * sin(pose_yaw);
+  _action_y = _action_y * cos(pose_yaw) + _action_x * sin(pose_yaw);
 
   // Clamp the velocities
   Navigator::clamp(_action_x, _max_speed);

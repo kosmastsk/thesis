@@ -12,6 +12,8 @@ OnlineCoverage::OnlineCoverage()
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/octomap_covered", 1000);
 
+  _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
+
   // Get configurations
   _nh.param<double>("/rfid/range", _rfid_range, 1);
   _nh.param<double>("/rfid/hfov", _rfid_hfov, 60);
@@ -69,12 +71,22 @@ void OnlineCoverage::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   if (!_octomap_loaded)
     return;
 
-  calculateCoverage(msg->pose);
+  // Find the covered surface of the waypoints left after post process
+  std::string sensor_shape;
+  _nh.param<std::string>("/rfid/shape", sensor_shape, "orthogonal");
+  if (sensor_shape == "orthogonal")
+  {
+    calculateOrthogonalCoverage(msg->pose);
+  }
+  else
+  {
+    calculateCircularCoverage(msg->pose);
+  }
 
   publishCoveredSurface();
 }
 
-void OnlineCoverage::calculateCoverage(const geometry_msgs::Pose pose)
+void OnlineCoverage::calculateOrthogonalCoverage(const geometry_msgs::Pose pose)
 {
   octomap::point3d wall_point;
 
@@ -93,6 +105,48 @@ void OnlineCoverage::calculateCoverage(const geometry_msgs::Pose pose)
 
       if (_octomap->castRay(position, direction.rotate_IP(0, vertical, horizontal), wall_point, true, _rfid_range))
       {
+        // Ground elimination
+        if (wall_point.z() < _min_obstacle_height)
+          continue;
+
+        if (_covered->insertRay(position, wall_point, _rfid_range))
+        {
+          octomap::ColorOcTreeNode* node = _covered->search(wall_point);
+          if (node != NULL)
+            node->setColor(0.5, 0.5, 0.5);
+        }
+      }
+    }  // vertical loop
+  }    // horizontal loop
+}
+
+void OnlineCoverage::calculateCircularCoverage(const geometry_msgs::Pose pose)
+{
+  octomap::point3d wall_point;
+
+  octomath::Vector3 position(pose.position.x, pose.position.y, pose.position.z);
+  octomath::Quaternion orientation(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
+
+  double yaw = orientation.toEuler().yaw();
+  // Horizontal FOV degrees
+  for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
+  {
+    // Vertical FOV degrees
+    for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
+    {
+      // direction at which we are facing the point
+      octomap::point3d direction(1, 0, 0);
+
+      if (_octomap->castRay(position, direction.rotate_IP(0, vertical, horizontal), wall_point, true, _rfid_range))
+      {
+        // Ground elimination
+        if (wall_point.z() < _min_obstacle_height)
+          continue;
+
+        // Make the coverage circular, cut the points that are larger than the range==radius
+        if (position.distanceXY(wall_point) > _rfid_range)
+          continue;
+
         if (_covered->insertRay(position, wall_point, _rfid_range))
         {
           octomap::ColorOcTreeNode* node = _covered->search(wall_point);

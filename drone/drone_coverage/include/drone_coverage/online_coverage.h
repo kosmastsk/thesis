@@ -38,6 +38,8 @@ private:
   double _rfid_hfov;
   double _rfid_vfov;
 
+  double _min_obstacle_height;
+
   bool _octomap_loaded;
 
   // Callbacks
@@ -48,7 +50,8 @@ public:
   OnlineCoverage();
   ~OnlineCoverage();
 
-  void calculateCoverage(const geometry_msgs::Pose);
+  void calculateOrthogonalCoverage(const geometry_msgs::Pose);
+  void calculateCircularCoverage(const geometry_msgs::Pose);
 
   void publishCoveredSurface();
 };
