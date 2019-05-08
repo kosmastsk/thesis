@@ -156,7 +156,7 @@ Visualization Manager:
       Queue Size: 5
       Value: true
       Voxel Alpha: 1
-      Voxel Coloring: Cell Color
+      Voxel Coloring: Cell Probability
       Voxel Rendering: Occupied Voxels
     - Class: octomap_rviz_plugin/ColorOccupancyGrid
       Enabled: false
@@ -203,7 +203,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: false
+      Enabled: true
       Keep: 1
       Name: Odometry
       Position Tolerance: 0.100000001
@@ -219,7 +219,7 @@ Visualization Manager:
         Value: Arrow
       Topic: /odom
       Unreliable: false
-      Value: false
+      Value: true
     - Angle Tolerance: 0.100000001
       Class: rviz/Odometry
       Covariance:
@@ -304,7 +304,8 @@ Visualization Manager:
       Marker Topic: /visualization_marker
       Name: IRRT*
       Namespaces:
-        {}
+        path: true
+        waypoint_for_coverage: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -358,7 +359,8 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Waypoints
       Namespaces:
-        {}
+        path: true
+        waypoint_for_coverage: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -379,25 +381,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.82343554
+      Distance: 4.48277187
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.27537346
-        Y: 0.245735407
-        Z: 2.18351722
+        X: 0.252990127
+        Y: 0.0702199712
+        Z: 0.729071438
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.674797297
+      Pitch: 0.675340533
       Target Frame: base_footprint
       Value: Orbit (rviz)
-      Yaw: 3.06451178
+      Yaw: 1.59342754
     Saved: ~
 Window Geometry:
   Displays:
@@ -415,5 +417,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 0
+  X: 1366
   Y: 24

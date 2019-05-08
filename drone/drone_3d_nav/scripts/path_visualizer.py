@@ -90,7 +90,7 @@ if __name__ == '__main__':
     msg_truth = rospy.Subscriber('/ground_truth/state', Odometry,
                                  truthCallback)
 
-    rate = rospy.Rate(30)  # 30hz
+    rate = rospy.Rate(100)  # 100hz
 
     try:
         while not rospy.is_shutdown():

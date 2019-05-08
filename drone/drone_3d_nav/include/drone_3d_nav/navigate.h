@@ -44,7 +44,8 @@ private:
 
   float _tolerance;
   float _yaw_tolerance;
-  float _max_speed;
+  float _rot_max_speed;
+  float _trans_max_speed;
   double _dt;
 
   // PID
@@ -110,6 +111,7 @@ private:
   // We do not want the drone to get really high values of speed, either positive or negative. So we need to clamp it in
   // the range [-max_action, +max_action]
   void clamp(float& action, float max_action);
+  bool controlYaw(double current_goal_yaw, double pose_yaw, double dt);
 
 public:
   Navigator();

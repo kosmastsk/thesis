@@ -126,16 +126,6 @@ void Converter::syncedCallback(const drone_gazebo::Float64StampedConstPtr& heigh
                                   (velocity->twist.linear.x * sin(yaw) + velocity->twist.linear.y * cos(yaw)) * delta_t;
   odom_msg.pose.pose.position.z = height->data;
 
-  // Special case when the robot is reaching a goal and not receiving any more goals, the result is nan.
-  if (std::isnan(odom_msg.pose.pose.position.x))
-  {
-    odom_msg.pose.pose.position.x = getPreviousOdom().pose.pose.position.x;
-  }
-  if (std::isnan(odom_msg.pose.pose.position.y))
-  {
-    odom_msg.pose.pose.position.y = getPreviousOdom().pose.pose.position.y;
-  }
-
   // Orientation is provided directly from the imu
   odom_msg.pose.pose.orientation = imu->orientation;
 

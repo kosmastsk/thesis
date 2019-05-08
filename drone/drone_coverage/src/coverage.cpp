@@ -575,44 +575,81 @@ std::vector<octomath::Pose6D> Coverage::revertTo6D(std::vector<Point_xy> xy_poin
                                                    std::vector<std::vector<octomath::Pose6D>> _xyzrpy_points)
 {
   ROS_INFO("Converting back to 6D....\n");
-  bool is_low = 1;
+
   std::vector<octomath::Pose6D> output;
 
-  for (int i = 0; i < xy_points.size(); i++)
-  {
-    // Find the index where the i-th (x,y) point is in the _xyzrpy_points
-    Point_xy xy = _xy_points.at(i);
-    int index;
-    for (int k = 0; k < _xy_points.size(); k++)
-    {
-      // Getting the (x,y) from the 0 place is enough, the rest are the same
-      Point_xy tmp = std::make_pair(_xyzrpy_points.at(k).at(0).x(), _xyzrpy_points.at(k).at(0).y());
-      if (xy == tmp)
-      {
-        index = k;
-        break;
-      }
-    }
+  std::string method;
+  _nh.param<std::string>("/coverage/method", method, "lift");
 
-    int j;
-    if (is_low)
+  if (method == "lift")
+  {
+    bool is_low = 1;
+    for (int i = 0; i < xy_points.size(); i++)
     {
-      for (j = 0; j < _xyzrpy_points.at(index).size(); j++)
+      // Find the index where the i-th (x,y) point is in the _xyzrpy_points
+      Point_xy xy = _xy_points.at(i);
+      int index;
+      for (int k = 0; k < _xy_points.size(); k++)
       {
-        output.push_back(_xyzrpy_points.at(index).at(j));
+        // Getting the (x,y) from the 0 place is enough, the rest are the same
+        Point_xy tmp = std::make_pair(_xyzrpy_points.at(k).at(0).x(), _xyzrpy_points.at(k).at(0).y());
+        if (xy == tmp)
+        {
+          index = k;
+          break;
+        }
       }
-      is_low = 0;
-    }
-    else
-    {
-      for (j = _xyzrpy_points.at(index).size() - 1; j >= 0; j--)
+
+      int j;
+      if (is_low)
       {
-        output.push_back(_xyzrpy_points.at(index).at(j));
+        for (j = 0; j < _xyzrpy_points.at(index).size(); j++)
+        {
+          output.push_back(_xyzrpy_points.at(index).at(j));
+        }
+        is_low = 0;
       }
-      is_low = 1;
+      else
+      {
+        for (j = _xyzrpy_points.at(index).size() - 1; j >= 0; j--)
+        {
+          output.push_back(_xyzrpy_points.at(index).at(j));
+        }
+        is_low = 1;
+      }
     }
   }
-
+  else if (method == "slice")
+  {
+    while (output.size() != _points.size())
+    {
+      for (int i = 0; i < xy_points.size(); i++)
+      {
+        // Find the index where the i-th (x,y) point is in the _xyzrpy_points
+        Point_xy xy = _xy_points.at(i);
+        int index;
+        for (int k = 0; k < _xy_points.size(); k++)
+        {
+          // Getting the (x,y) from the 0 place is enough, the rest are the same
+          if (_xyzrpy_points.at(k).size() != 0)
+          {
+            Point_xy tmp = std::make_pair(_xyzrpy_points.at(k).front().x(), _xyzrpy_points.at(k).front().y());
+            if (xy == tmp)
+            {
+              index = k;
+              break;
+            }
+          }
+        }
+        int j = _xyzrpy_points.at(index).size();
+        if (j > 0)
+        {
+          output.push_back(_xyzrpy_points.at(index).at(0));
+          _xyzrpy_points.at(index).erase(_xyzrpy_points.at(index).begin());
+        }
+      }
+    }
+  }
   return output;
 }
 

@@ -2,28 +2,30 @@
 # the I is always zero, as in the simulation it is a perfect world, where there is no wind or other factor that change the stability of the drone
 # https://robotics.stackexchange.com/questions/9554/quadcopter-pid-algorithm
 # x position
-x_kp: 0.5
+x_kp: 0.7
 x_ki: 0
-x_kd: 0.0001
+x_kd: 0.000001
 
 # y position
-y_kp: 0.5
+y_kp: 0.6
 y_ki: 0
-y_kd: 0.0001
+y_kd: 0.000001
 
 # z position
-z_kp: 2
+z_kp: 1.5
 z_ki: 0
-z_kd: 0.00025
+z_kd: 0.000025
 
 # yaw
-yaw_kp: 0.1
+yaw_kp: 3
 yaw_ki: 0
-yaw_kd: 0.00005
+yaw_kd: 0.005
 
 # Tolerance of the distance from the waypoints, to be accepted
 tolerance: 0.25
-yaw_tolerance: 0.1
+yaw_tolerance: 0.15
 
 # Max speed allowed for the drone to move in x,y,z,yaw (m/s)
-max_speed: 1.5
+max_speed:
+  translational: 1.5 # m/sec
+  rotational: 5 # rad/sec
