@@ -42,10 +42,13 @@ private:
 
   geometry_msgs::Transform _current_goal;
 
-  float _tolerance;
+  float _xy_tolerance;
+  float _z_tolerance;
   float _yaw_tolerance;
+
   float _rot_max_speed;
   float _trans_max_speed;
+
   double _dt;
 
   // PID
@@ -61,18 +64,22 @@ private:
   double _z_ki;
   double _z_kd;
 
-  double _yaw_kp;
-  double _yaw_ki;
-  double _yaw_kd;
+  double _attitude_kp;
+  double _attitude_ki;
+  double _attitude_kd;
 
   float _error_x;
   float _error_y;
   float _error_z;
+  float _error_roll;
+  float _error_pitch;
   float _error_yaw;
 
   float _prev_error_x;
   float _prev_error_y;
   float _prev_error_z;
+  float _prev_error_roll;
+  float _prev_error_pitch;
   float _prev_error_yaw;
 
   float _rise;
@@ -80,21 +87,29 @@ private:
   float _proportional_x;
   float _proportional_y;
   float _proportional_z;
+  float _proportional_roll;
+  float _proportional_pitch;
   float _proportional_yaw;
 
   float _integral_x;
   float _integral_y;
   float _integral_z;
+  float _integral_roll;
+  float _integral_pitch;
   float _integral_yaw;
 
   float _derivative_x;
   float _derivative_y;
   float _derivative_z;
+  float _derivative_roll;
+  float _derivative_pitch;
   float _derivative_yaw;
 
   float _action_x;
   float _action_y;
   float _action_z;
+  float _action_roll;
+  float _action_pitch;
   float _action_yaw;
 
   geometry_msgs::Transform _pose;
@@ -112,6 +127,8 @@ private:
   // the range [-max_action, +max_action]
   void clamp(float& action, float max_action);
   bool controlYaw(double current_goal_yaw, double pose_yaw, double dt);
+  bool controlXY(double current_goal_x, double pose_x, double current_goal_y, double pose_y, double dt,
+                 double pose_yaw);
 
 public:
   Navigator();

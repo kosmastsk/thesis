@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     try:
         while not rospy.is_shutdown():
-            # rospy.spin()
+            rospy.spin()
             rate.sleep()
     except rospy.ROSInterruptException:
         pass
