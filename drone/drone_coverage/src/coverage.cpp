@@ -395,7 +395,6 @@ void Coverage::calculateCircularCoverage()
     double yaw = _points.at(i).yaw();
     // For the best view, specific yaw, calculate the covered surface by the sensor and add it to the octomap
     // Horizontal FOV degrees
-    // TODO
     // Adapt the for limits
     for (double horizontal = yaw - _rfid_hfov / 2; horizontal <= yaw + _rfid_hfov / 2; horizontal += DEGREE)
     {
@@ -410,7 +409,7 @@ void Coverage::calculateCircularCoverage()
                                              wall_point, true, _rfid_range);
 
         // Make the coverage circular, cut the points that are larger than the range==radius
-        if (_points.at(i).trans().distanceXY(wall_point) > _rfid_range)
+        if (_points.at(i).trans().distance(wall_point) > _rfid_range)
           continue;
 
         // Ground elimination
