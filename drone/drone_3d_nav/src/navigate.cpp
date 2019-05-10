@@ -311,11 +311,11 @@ bool Navigator::controlXY(double current_goal_x, double pose_x, double current_g
 
     // converting from world frame to drone frame
     // Rotate with Rodriguez formula
-    _action_x = _action_x * cos(pose_yaw) + _action_y * sin(pose_yaw);
-    _action_y = _action_y * cos(pose_yaw) - _action_x * sin(pose_yaw);
+    double final_action_x = _action_x * cos(pose_yaw) + _action_y * sin(pose_yaw);
+    double final_action_y = _action_y * cos(pose_yaw) - _action_x * sin(pose_yaw);
 
-    _twist.linear.x = _action_x;
-    _twist.linear.y = _action_y;
+    _twist.linear.x = final_action_x;
+    _twist.linear.y = final_action_y;
     _twist.linear.z = 0;
     _twist.angular.x = 0;
     _twist.angular.y = 0;
