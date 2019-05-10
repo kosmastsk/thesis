@@ -2,8 +2,6 @@
 
 <launch>
 
-  <rosparam command="load" file="$(find drone_3d_nav)/params/config.yaml" />
-
   <!-- Launch the gazebo simulator -->
   <!-- Make the world name a parameter to load from terminal -->
   <arg name="world" default="$(find drone_gazebo)/worlds/warehouse.world"/>

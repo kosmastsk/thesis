@@ -8,13 +8,6 @@ Navigator::Navigator()
   _f = boost::bind(&Navigator::dynamicParamCallback, this, _1, _2);
   _server.setCallback(_f);
 
-  _nh.param<double>("/attitude/kp", _attitude_kp, 0.5);
-  _nh.param<double>("/attitude/ki", _attitude_ki, 0);
-  _nh.param<double>("/attitude/kd", _attitude_kd, 0);
-
-  _nh.param<float>("/max_speed/translational", _trans_max_speed, 2);
-  _nh.param<float>("/max_speed/rotational", _rot_max_speed, 2);
-
   _must_exit = false;
   _waypoint_number = 0;
   _waypoints_received = false;
@@ -98,6 +91,13 @@ void Navigator::dynamicParamCallback(drone_3d_nav::pidConfig& config, uint32_t l
   _attitude_kp = config.attitude_kp;
   _attitude_ki = config.attitude_ki;
   _attitude_kd = config.attitude_kd;
+
+  _xy_tolerance = config.xy_tolerance;
+  _z_tolerance = config.z_tolerance;
+  _yaw_tolerance = config.yaw_tolerance;
+
+  _trans_max_speed = config.trans_max_speed;
+  _rot_max_speed = config.rot_max_speed;
 }
 
 void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg)
@@ -119,13 +119,10 @@ void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryC
 
   _current_goal = _waypoints.front();
   _waypoints.pop();  // Remove this element from the queue
+
   _waypoints_received = true;
   _must_exit = false;
   _hovering = false;
-  // If this is not the first time, that waypoints are sent, we need to restore tolerance value
-  _nh.param<float>("/tolerance/xy", _xy_tolerance, 0.2);
-  _nh.param<float>("/tolerance/yaw", _yaw_tolerance, 0.1);
-  _nh.param<float>("/tolerance/z", _z_tolerance, 0.1);
 }
 
 void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -171,8 +168,6 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _integral_roll = _attitude_ki * (_integral_roll + _error_roll * _dt);
   _integral_pitch = _attitude_ki * (_integral_pitch + _error_pitch * _dt);
 
-  // TODO maybe integrate a smoothing
-  // https://github.com/mkhuthir/RoboND-Controls-Lab/blob/master/src/quad_controller/src/quad_controller/pid_controller.py#L97
   _derivative_z = _z_kd * ((_error_z - _prev_error_z) / _dt);
   _derivative_roll = _attitude_kd * ((_error_roll - _prev_error_roll) / _dt);
   _derivative_pitch = _attitude_kd * ((_error_pitch - _prev_error_pitch) / _dt);
@@ -196,9 +191,6 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _twist.angular.x = _action_roll;
   _twist.angular.y = _action_pitch;
   _twist.angular.z = 0;
-
-  ROS_DEBUG("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
-  ROS_DEBUG("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
 
   // Ensure that the drone's position is in accepted range error
   if (fabs(_error_z) <= _z_tolerance)
@@ -241,13 +233,7 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   }
 
   if (_waypoint_number == _number_of_waypoints)
-  {
     _must_exit = true;
-    // Make the tolerance for the last waypoint, more strict
-    float final_xy_tolerance;
-    _nh.param<float>("/tolerance", final_xy_tolerance, 0.15);
-    _xy_tolerance = final_xy_tolerance / 2;  // Make the tolerance for the last waypoint, more strict
-  }
 
   _twist_stamped.twist = _twist;
   _twist_stamped.header.stamp = ros::Time::now();
@@ -255,8 +241,11 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _vel_pub.publish(_twist);
   _stamped_vel_pub.publish(_twist_stamped);
 
-  // Create some delay
-  ros::Duration(0.1).sleep();
+  ROS_DEBUG("Error (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _error_x, _error_y, _error_z, _error_yaw);
+  ROS_DEBUG("Action (X, Y, Z, Yaw) : (%0.2f, %0.2f, %0.2f, %0.2f) \n", _action_x, _action_y, _action_z, _action_yaw);
+
+  // Create some minor delay
+  ros::Duration(0.001).sleep();
 }
 
 bool Navigator::controlYaw(double current_goal_yaw, double pose_yaw, double dt)
