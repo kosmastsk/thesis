@@ -15,6 +15,12 @@ find_package(catkin REQUIRED
   trajectory_msgs
   genmsg
   drone_gazebo
+  dynamic_reconfigure
+)
+
+#add dynamic reconfigure api
+generate_dynamic_reconfigure_options(
+  cfg/pid.cfg
 )
 
 find_package(Boost REQUIRED)
@@ -58,7 +64,8 @@ add_executable(navigate
 target_link_libraries(navigate
   ${catkin_LIBRARIES})
 add_dependencies(navigate
-  ${catkin_EXPORTED_TARGETS})
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg)
 
 add_executable(error_detector
   src/error_detector.cpp)

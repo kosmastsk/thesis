@@ -19,6 +19,9 @@
 
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <drone_3d_nav/pidConfig.h>
+
 namespace navigate
 {
 class Navigator
@@ -39,6 +42,10 @@ private:
   int _number_of_waypoints;
   bool _waypoints_received;
   bool _hovering;
+
+  // Dynamic Parameters
+  dynamic_reconfigure::Server<drone_3d_nav::pidConfig> _server;
+  dynamic_reconfigure::Server<drone_3d_nav::pidConfig>::CallbackType _f;
 
   geometry_msgs::Transform _current_goal;
 
@@ -122,6 +129,7 @@ private:
   // Callbacks
   void waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
   void poseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  void dynamicParamCallback(drone_3d_nav::pidConfig& config, uint32_t level);
 
   // We do not want the drone to get really high values of speed, either positive or negative. So we need to clamp it in
   // the range [-max_action, +max_action]

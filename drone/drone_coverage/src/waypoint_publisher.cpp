@@ -11,7 +11,8 @@ WaypointPublisher::WaypointPublisher()
   _feedback_sub = _nh.subscribe<std_msgs::Bool>("/goal_reached", 1, &WaypointPublisher::feedbackCallback, this);
 
   _goal_pub = _nh.advertise<geometry_msgs::TransformStamped>("/next_goal", 1);
-  _vis_pub = _nh.advertise<visualization_msgs::Marker>("visualization_marker", 500);
+  _vis_pub = _nh.advertise<visualization_msgs::Marker>("visualization_marker", 50);
+  // _vis_array_pub = _nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 1000);
 }
 
 WaypointPublisher::~WaypointPublisher()
@@ -20,6 +21,35 @@ WaypointPublisher::~WaypointPublisher()
 
 void WaypointPublisher::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg)
 {
+  /* ************* VISUALIZATION OF ALL POINTS ******
+  visualization_msgs::MarkerArray markerarray;
+  for (std::size_t idx = 0; idx < msg->points.size(); idx++)
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "/map";
+    marker.header.stamp = ros::Time();
+    marker.ns = "coverage_waypoints";
+    marker.id = idx;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.text = std::to_string(idx);
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = msg->points.at(idx).transforms[0].translation.x;
+    marker.pose.position.y = msg->points.at(idx).transforms[0].translation.y;
+    marker.pose.position.z = msg->points.at(idx).transforms[0].translation.z;
+    marker.pose.orientation.x = msg->points.at(idx).transforms[0].rotation.x;
+    marker.pose.orientation.y = msg->points.at(idx).transforms[0].rotation.y;
+    marker.pose.orientation.z = msg->points.at(idx).transforms[0].rotation.z;
+    marker.pose.orientation.w = msg->points.at(idx).transforms[0].rotation.w;
+    marker.scale.z = 0.2;
+    marker.color.a = 1.0;
+    marker.color.r = 0.5;
+    marker.color.g = 0.5;
+    marker.color.b = 0;
+    markerarray.markers.push_back(marker);
+  }
+  _vis_array_pub.publish(markerarray);
+*/
+
   // Save all the waypoints in a stack
   _number_of_waypoints = msg->points.size();
   // Empty the queue (if not already empty) for new waypoints

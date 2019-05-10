@@ -10,6 +10,7 @@
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <visualization_msgs/Marker.h>
+// #include <visualization_msgs/MarkerArray.h>
 
 namespace drone_coverage
 {
@@ -22,6 +23,7 @@ private:
   ros::Subscriber _feedback_sub;
   ros::Publisher _goal_pub;
   ros::Publisher _vis_pub;
+  // ros::Publisher _vis_array_pub;
 
   bool _goal_reached;
 

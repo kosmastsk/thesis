@@ -5,21 +5,12 @@ namespace navigate
 Navigator::Navigator()
 {
   // Parameters
-  _nh.param<double>("/x/kp", _x_kp, 0.5);
-  _nh.param<double>("/x/ki", _x_ki, 0);
-  _nh.param<double>("/x/kd", _x_kd, 0);
-  _nh.param<double>("/y/kp", _y_kp, 0.5);
-  _nh.param<double>("/y/ki", _y_ki, 0);
-  _nh.param<double>("/y/kd", _y_kd, 0);
-  _nh.param<double>("/z/kp", _z_kp, 0.5);
-  _nh.param<double>("/z/ki", _z_ki, 0);
-  _nh.param<double>("/z/kd", _z_kd, 0);
+  _f = boost::bind(&Navigator::dynamicParamCallback, this, _1, _2);
+  _server.setCallback(_f);
+
   _nh.param<double>("/attitude/kp", _attitude_kp, 0.5);
   _nh.param<double>("/attitude/ki", _attitude_ki, 0);
   _nh.param<double>("/attitude/kd", _attitude_kd, 0);
-
-  // TODO
-  // http://wiki.ros.org/dynamic_reconfigure/Tutorials/HowToWriteYourFirstCfgFile
 
   _nh.param<float>("/max_speed/translational", _trans_max_speed, 2);
   _nh.param<float>("/max_speed/rotational", _rot_max_speed, 2);
@@ -86,6 +77,27 @@ Navigator::Navigator()
 
 Navigator::~Navigator()
 {
+}
+
+void Navigator::dynamicParamCallback(drone_3d_nav::pidConfig& config, uint32_t level)
+{
+  ROS_INFO("Reconfigure Request!\n");
+
+  _x_kp = config.x_kp;
+  _x_ki = config.x_ki;
+  _x_kd = config.x_kd;
+
+  _y_kp = config.y_kp;
+  _y_ki = config.y_ki;
+  _y_kd = config.y_kd;
+
+  _z_kp = config.z_kp;
+  _z_ki = config.z_ki;
+  _z_kd = config.z_kd;
+
+  _attitude_kp = config.attitude_kp;
+  _attitude_ki = config.attitude_ki;
+  _attitude_kd = config.attitude_kd;
 }
 
 void Navigator::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg)

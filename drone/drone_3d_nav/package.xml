@@ -23,6 +23,8 @@
   <depend>tf</depend>
   <depend>sensor_msgs</depend>
   <depend>path_planning</depend>
+  <depend>dynamic_reconfigure</depend>
+
 
 
   <!-- The export tag contains other, unspecified, tags -->
