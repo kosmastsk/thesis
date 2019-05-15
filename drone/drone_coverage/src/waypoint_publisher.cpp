@@ -97,6 +97,32 @@ void WaypointPublisher::feedbackCallback(const std_msgs::BoolConstPtr& msg)
     publish_in_rviz(next_goal);
     _goal_pub.publish(next_goal);
   }
+  else if (_waypoints.empty())  // If no more waypoints exist, go back to the beginning
+  {
+    geometry_msgs::TransformStamped next_goal;
+    next_goal.header.stamp = ros::Time::now();
+    next_goal.header.frame_id = "map";
+
+    // Get initial positions from the Parameter Server
+    double start_position[3];
+    _nh.param<double>("/x_pos", start_position[0], 0);
+    _nh.param<double>("/y_pos", start_position[1], 0);
+    _nh.param<double>("/z_pos", start_position[2], 0);
+
+    next_goal.transform.translation.x = start_position[0];
+    next_goal.transform.translation.y = start_position[1];
+    next_goal.transform.translation.z = start_position[2];
+
+    next_goal.transform.rotation.x = 0;
+    next_goal.transform.rotation.y = 0;
+    next_goal.transform.rotation.z = 0;
+    next_goal.transform.rotation.w = 1;
+
+    ROS_INFO("[Coverage Waypoint publisher] Going back to initial position...\n");
+
+    publish_in_rviz(next_goal);
+    _goal_pub.publish(next_goal);
+  }
 }
 
 void WaypointPublisher::publish_in_rviz(geometry_msgs::TransformStamped next_goal)
