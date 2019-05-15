@@ -60,7 +60,7 @@ double DroneObservationModel::measure(const DroneState& state) const
 
   double weight = 1.0;
 
-  //#pragma omp parallel  for
+#pragma omp parallel for
   for (; pcIter != pcTransformed.end(); pcIter++, rangesIter++)
   {
     // Probability for weight
@@ -100,7 +100,7 @@ double DroneObservationModel::measure(const DroneState& state) const
     // << std::endl;
 
     // Part 2: short reading from unexpected obstacle (e.g., a person)
-    if (z < 0)
+    if (obsRange < _maxRange)
       p += _ZShort * _LambdaShort * exp(-_LambdaShort * obsRange);
     // std::cout << "Part 2 : " << _ZShort * _LambdaShort * exp(-_LambdaShort * obsRange) << std::endl;
 

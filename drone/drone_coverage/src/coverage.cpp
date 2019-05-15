@@ -35,6 +35,8 @@ Coverage::Coverage()
   _nh.param<double>("/uav/footprint_radius", _uav_radius, 0.4);
   _nh.param<double>("/uav/safety_offset", _uav_safety_offset, 0.3);
 
+  _nh.param<double>("/coverage/subsampling_step", _subsampling_step, 1);
+
   // Adjust values
   _uav_safety_offset += _uav_radius;
   _rfid_hfov = (_rfid_hfov / 180.0) * M_PI;
@@ -662,7 +664,7 @@ std::vector<octomath::Pose6D> Coverage::revertTo6D(std::vector<Point_xy> xy_poin
 
 double Coverage::proceedOneStep(double coord)
 {
-  return coord + 0.5 * _rfid_range;
+  return coord + _subsampling_step;
 }
 
 void Coverage::publishCoveredSurface()

@@ -59,6 +59,8 @@ private:
   double _max_bounds[3];
   double _init_pose[3];
 
+  double _subsampling_step;
+
   double _uav_radius;
   double _uav_safety_offset;
 
