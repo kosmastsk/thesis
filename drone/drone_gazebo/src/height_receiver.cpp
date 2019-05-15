@@ -1,6 +1,6 @@
-#include <drone_gazebo/height_estimation.h>
+#include <drone_gazebo/height_receiver.h>
 
-namespace height_estimation
+namespace height_receiver
 {
 Estimator::Estimator()
 {

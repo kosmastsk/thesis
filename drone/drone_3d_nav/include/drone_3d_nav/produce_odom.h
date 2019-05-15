@@ -1,5 +1,5 @@
-#ifndef VELOCITY_TO_3D_ODOM_HEADER
-#define VELOCITY_TO_3D_ODOM_HEADER
+#ifndef PRODUCE_ODOM_HEADER
+#define PRODUCE_ODOM_HEADER
 
 // C++ headers
 #include <iostream>
@@ -27,7 +27,7 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-namespace vel_to_3d_odom
+namespace produce_odom
 {
 class Converter
 {

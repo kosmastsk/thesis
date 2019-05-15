@@ -52,11 +52,11 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(velocity_to_3d_odom
-  src/velocity_to_3d_odom.cpp)
-target_link_libraries(velocity_to_3d_odom
+add_executable(produce_odom
+  src/produce_odom.cpp)
+target_link_libraries(produce_odom
   ${catkin_LIBRARIES})
-add_dependencies(velocity_to_3d_odom
+add_dependencies(produce_odom
   ${catkin_EXPORTED_TARGETS})
 
 add_executable(navigate

@@ -1,8 +1,8 @@
 /* This ROS node receives velocity values and converts them to Odometry for hector quadrotor */
 
-#include "drone_3d_nav/velocity_to_3d_odom.h"
+#include "drone_3d_nav/produce_odom.h"
 
-namespace vel_to_3d_odom
+namespace produce_odom
 {
 bool firstCallFlag = 1;
 /******************************/
@@ -164,9 +164,9 @@ void Converter::publishOdometry()
 /* Main function */
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "velocity_to_3d_odom");
+  ros::init(argc, argv, "produce_odom");
 
-  vel_to_3d_odom::Converter converter(argv);
+  produce_odom::Converter converter(argv);
   ros::spinOnce();
 
   return 0;

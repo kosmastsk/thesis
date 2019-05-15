@@ -56,8 +56,8 @@ include_directories(
 )
 
 add_executable(estimator
-  src/height_estimation_node.cpp
-  src/height_estimation.cpp)
+  src/height_receiver_node.cpp
+  src/height_receiver.cpp)
 target_link_libraries(estimator
   ${catkin_LIBRARIES})
 add_dependencies(estimator

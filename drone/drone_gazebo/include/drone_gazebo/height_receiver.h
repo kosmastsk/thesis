@@ -1,5 +1,5 @@
-#ifndef HEIGHT_ESTIMATION_H
-#define HEIGHT_ESTIMATION_H
+#ifndef HEIGHT_RECEIVER_H
+#define HEIGHT_RECEIVER_H
 
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 
-namespace height_estimation
+namespace height_receiver
 {
 class Estimator
 {
