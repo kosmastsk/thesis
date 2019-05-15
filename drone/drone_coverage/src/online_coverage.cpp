@@ -11,6 +11,7 @@ OnlineCoverage::OnlineCoverage()
   _pose_sub = _nh.subscribe("/amcl_pose", 1000, &OnlineCoverage::poseCallback, this);
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/octomap_covered", 1000);
+  _percentage_pub = _nh.advertise<drone_gazebo::Float64Stamped>("/octomap_covered/percentage", 1000);
 
   _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
 
@@ -18,6 +19,7 @@ OnlineCoverage::OnlineCoverage()
   _nh.param<double>("/rfid/range", _rfid_range, 1);
   _nh.param<double>("/rfid/hfov", _rfid_hfov, 60);
   _nh.param<double>("/rfid/vfov", _rfid_vfov, 30);
+  _nh.param<std::string>("/rfid/shape", _sensor_shape, "circular");
   _nh.param<double>("/rfid/direction/x", _rfid_direction_x, 1);
   _nh.param<double>("/rfid/direction/y", _rfid_direction_y, 0);
   _nh.param<double>("/rfid/direction/z", _rfid_direction_z, 0);
@@ -74,19 +76,13 @@ void OnlineCoverage::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   if (!_octomap_loaded)
     return;
 
-  // Find the covered surface of the waypoints left after post process
-  std::string sensor_shape;
-  _nh.param<std::string>("/rfid/shape", sensor_shape, "orthogonal");
-  if (sensor_shape == "orthogonal")
-  {
-    calculateOrthogonalCoverage(msg->pose);
-  }
-  else
-  {
+  if (_sensor_shape == "circular")
     calculateCircularCoverage(msg->pose);
-  }
+  else
+    calculateOrthogonalCoverage(msg->pose);
 
   publishCoveredSurface();
+  publishPercentage();
 }
 
 void OnlineCoverage::calculateOrthogonalCoverage(const geometry_msgs::Pose pose)
@@ -173,6 +169,22 @@ void OnlineCoverage::publishCoveredSurface()
   msg.resolution = _covered->getResolution();
   if (octomap_msgs::fullMapToMsg(*_covered, msg))
     _covered_pub.publish(msg);
+}
+
+void OnlineCoverage::publishPercentage()
+{
+  _covered->toMaxLikelihood();
+  _covered->prune();
+
+  // Use floats to make the division work later on
+  float octomap_leafs = float(_octomap->getNumLeafNodes());
+  float covered_leafs = float(_covered->getNumLeafNodes());
+
+  drone_gazebo::Float64Stamped msg;
+  msg.header.stamp = ros::Time::now();
+  msg.data = 100 * (covered_leafs / octomap_leafs);
+
+  _percentage_pub.publish(msg);
 }
 
 }  // namespace drone_coverage

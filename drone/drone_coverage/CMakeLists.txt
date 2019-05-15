@@ -90,6 +90,8 @@ target_link_libraries(online_coverage_node
   ${catkin_LIBRARIES}
   online_coverage
 )
+add_dependencies(online_coverage_node
+  ${catkin_EXPORTED_TARGETS} drone_gazebo_generate_messages_cpp)
 
 # Main executable
 add_executable(waypoint_publisher

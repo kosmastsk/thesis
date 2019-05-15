@@ -6,6 +6,8 @@
 
 #include <ros/ros.h>
 
+#include "drone_gazebo/Float64Stamped.h"
+
 #include <octomap_msgs/Octomap.h>
 #include <octomap/octomap.h>
 #include <octomap/ColorOcTree.h>
@@ -28,6 +30,7 @@ private:
   ros::Subscriber _map_sub;
   ros::Subscriber _pose_sub;
   ros::Publisher _covered_pub;
+  ros::Publisher _percentage_pub;
 
   // The pre-loaded octomap and the collection of 3d points
   octomap::OcTree* _octomap;
@@ -37,6 +40,7 @@ private:
   double _rfid_range;
   double _rfid_hfov;
   double _rfid_vfov;
+  std::string _sensor_shape;
 
   double _rfid_direction_x;
   double _rfid_direction_y;
@@ -58,6 +62,7 @@ public:
   void calculateCircularCoverage(const geometry_msgs::Pose);
 
   void publishCoveredSurface();
+  void publishPercentage();
 };
 
 }  // namespace drone_coverage

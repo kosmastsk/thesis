@@ -60,7 +60,6 @@ double DroneObservationModel::measure(const DroneState& state) const
 
   double weight = 1.0;
 
-#pragma omp parallel for
   for (; pcIter != pcTransformed.end(); pcIter++, rangesIter++)
   {
     // Probability for weight
