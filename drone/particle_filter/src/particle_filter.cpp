@@ -339,7 +339,7 @@ bool Particles::initialPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::
 
   _nh.param<double>("/x_pos", x_pos, 0);
   _nh.param<double>("/y_pos", y_pos, 0);
-  _nh.param<double>("/z_pos", z_pos, 0);
+  _nh.param<double>("/z_pos", z_pos, 0.18);
 
   _nh.param<double>("/roll", roll, 0);
   _nh.param<double>("/pitch", pitch, 0);
@@ -500,7 +500,7 @@ void Particles::prepareLaserPointCloud(const sensor_msgs::LaserScanConstPtr& sca
     }
   }
 
-  pc.is_dense = true;
+  pc.is_dense = false;
 
   // Uniform Sampling
   pcl::UniformSampling<pcl::PointXYZ> uniformSampling;

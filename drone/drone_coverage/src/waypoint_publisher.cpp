@@ -107,7 +107,7 @@ void WaypointPublisher::feedbackCallback(const std_msgs::BoolConstPtr& msg)
     double start_position[3];
     _nh.param<double>("/x_pos", start_position[0], 0);
     _nh.param<double>("/y_pos", start_position[1], 0);
-    _nh.param<double>("/z_pos", start_position[2], 0);
+    _nh.param<double>("/z_pos", start_position[2], 0.18);
 
     next_goal.transform.translation.x = start_position[0];
     next_goal.transform.translation.y = start_position[1];

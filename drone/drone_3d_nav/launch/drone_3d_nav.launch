@@ -33,10 +33,7 @@
 
   <!-- Navigator -->
   <node name="navigate" type="navigate" pkg="drone_3d_nav" output="screen" />
-
-  <!-- Create paths from amcl pose and ground_truth state -->
-  <node name="path_visualizer" type="path_visualizer.py" pkg="drone_3d_nav" />
-
+  
   <!-- VISUALIZATION -->
   <!-- Launch Rviz with pre loaded configuration-->
    <node name="rviz" type="rviz" pkg="rviz" args="-d $(find drone_3d_nav)/navigation.rviz" />

@@ -3,9 +3,9 @@
 <launch>
 
  <!-- Gazebo world -->
-  <arg name="world" default="$(find drone_gazebo)/worlds/warehouse.world"/>
+  <arg name="world" default="$(find drone)/../experiments/worlds/corridor.world"/>
   <!-- Octomap file -->
-  <arg name="map" default="$(find drone_gazebo)/maps/warehouse.ot"/>
+  <arg name="map" default="$(find drone)/../experiments/maps/corridor.ot"/>
 
   <!-- Parameters -->
   <rosparam command="load" file="$(find drone_coverage)/params/sensor_config.yaml" />
