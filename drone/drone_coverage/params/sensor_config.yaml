@@ -1,13 +1,17 @@
 #####
 rfid:
-  shape: orthogonal #circular
+  shape: circular #orthogonal
   range: 2 # in metres
   hfov: 60 # degrees
   vfov: 30 # degrees
+  direction: # 	A vector pointing in the direction of the sensor on the drone
+    x: 1
+    y: 0
+    z: 0
 
 uav:
   footprint_radius: 0.4 # in metres
-  safety_offset: 0.3 # in metres
+  safety_offset: 0.30 # in metres
 
 world:
   min_obstacle_height: 0.05 # in metres

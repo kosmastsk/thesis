@@ -18,6 +18,9 @@ OnlineCoverage::OnlineCoverage()
   _nh.param<double>("/rfid/range", _rfid_range, 1);
   _nh.param<double>("/rfid/hfov", _rfid_hfov, 60);
   _nh.param<double>("/rfid/vfov", _rfid_vfov, 30);
+  _nh.param<double>("/rfid/direction/x", _rfid_direction_x, 1);
+  _nh.param<double>("/rfid/direction/y", _rfid_direction_y, 0);
+  _nh.param<double>("/rfid/direction/z", _rfid_direction_z, 0);
 
   // Adjust values
   _rfid_hfov = (_rfid_hfov / 180.0) * M_PI;
@@ -101,7 +104,7 @@ void OnlineCoverage::calculateOrthogonalCoverage(const geometry_msgs::Pose pose)
     for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
     {
       // direction at which we are facing the point
-      octomap::point3d direction(1, 0, 0);
+      octomap::point3d direction(_rfid_direction_x, _rfid_direction_y, _rfid_direction_z);
 
       if (_octomap->castRay(position, direction.rotate_IP(0, vertical, horizontal), wall_point, true, _rfid_range))
       {
@@ -135,7 +138,7 @@ void OnlineCoverage::calculateCircularCoverage(const geometry_msgs::Pose pose)
     for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
     {
       // direction at which we are facing the point
-      octomap::point3d direction(1, 0, 0);
+      octomap::point3d direction(_rfid_direction_x, _rfid_direction_y, _rfid_direction_z);
 
       if (_octomap->castRay(position, direction.rotate_IP(0, vertical, horizontal), wall_point, true, _rfid_range))
       {

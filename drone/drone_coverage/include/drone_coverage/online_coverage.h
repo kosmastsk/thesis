@@ -38,6 +38,10 @@ private:
   double _rfid_hfov;
   double _rfid_vfov;
 
+  double _rfid_direction_x;
+  double _rfid_direction_y;
+  double _rfid_direction_z;
+
   double _min_obstacle_height;
 
   bool _octomap_loaded;

@@ -28,6 +28,9 @@ Coverage::Coverage()
   _nh.param<double>("/rfid/range", _rfid_range, 1);
   _nh.param<double>("/rfid/hfov", _rfid_hfov, 60);
   _nh.param<double>("/rfid/vfov", _rfid_vfov, 30);
+  _nh.param<double>("/rfid/direction/x", _rfid_direction_x, 1);
+  _nh.param<double>("/rfid/direction/y", _rfid_direction_y, 0);
+  _nh.param<double>("/rfid/direction/z", _rfid_direction_z, 0);
   _nh.param<double>("/uav/footprint_radius", _uav_radius, 0.4);
   _nh.param<double>("/uav/safety_offset", _uav_safety_offset, 0.3);
 
@@ -365,7 +368,7 @@ void Coverage::calculateOrthogonalCoverage()
       for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
       {
         // direction at which we are facing the point
-        octomap::point3d direction(1, 0, 0);
+        octomap::point3d direction(_rfid_direction_x, _rfid_direction_y, _rfid_direction_z);
 
         // Get every point on the direction vector that belongs to the FOV
         bool ray_success = _octomap->castRay(_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
@@ -402,7 +405,7 @@ void Coverage::calculateCircularCoverage()
       for (double vertical = -_rfid_vfov / 2; vertical <= _rfid_vfov / 2; vertical += DEGREE)
       {
         // direction at which we are facing the point
-        octomap::point3d direction(1, 0, 0);
+        octomap::point3d direction(_rfid_direction_x, _rfid_direction_y, _rfid_direction_z);
 
         // Get every point on the direction vector that belongs to the FOV
         bool ray_success = _octomap->castRay(_points.at(i).trans(), direction.rotate_IP(0, vertical, horizontal),
@@ -493,7 +496,8 @@ bool Coverage::findBestYaw(octomap::point3d sensor_position, double& best_yaw)
 
   for (double yaw = -M_PI; yaw <= M_PI; yaw += _rfid_hfov / 2)
   {
-    octomap::point3d direction(1, 0, 0);
+    // direction at which we are facing the point
+    octomap::point3d direction(_rfid_direction_x, _rfid_direction_y, _rfid_direction_z);
 
     // Find the normal vector on the wall
     // Get every point on the direction vector
