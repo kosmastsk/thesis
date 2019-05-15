@@ -17,7 +17,8 @@ Coverage::Coverage()
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/covered_surface", 1);
   _vis_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1000);
-  _waypoints_pub = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/coverage/waypoints", 1000);
+  _waypoints_pub_slice = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/coverage/waypoints/slice", 1000);
+  _waypoints_pub_lift = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/coverage/waypoints/lift", 1000);
 
   // Get initial positions from the Parameter Server
   _nh.param<double>("/x_pos", _init_pose[0], 0);
@@ -102,11 +103,16 @@ Coverage::Coverage()
   _xy_points = hillClimbingBase(_nh, _graph, _xy_points, _octomap);
 
   // Go back from Point_xy to Pose6D elements
-  _points = revertTo6D(_xy_points, _xyzrpy_points);
+  std::string method;
+  _nh.param<std::string>("/coverage/method", method, "lift");
+
+  _slice_points = revertTo6D(_xy_points, _xyzrpy_points, "slice");
+  _lift_points = revertTo6D(_xy_points, _xyzrpy_points, "lift");
 
   // Publish sensor positions / waypoints
-  publishWaypoints(_points);
-  visualizeWaypoints(_points);
+  publishWaypoints(_slice_points, "slice");
+  publishWaypoints(_lift_points, "lift");
+  visualizeWaypoints(_slice_points);
 
   double dt = (ros::WallTime::now() - startTime).toSec();
   ROS_INFO_STREAM("Coverage took " << dt << " seconds.");
@@ -575,14 +581,12 @@ double Coverage::findCoverage(const octomap::point3d& wall_point, const octomap:
 }
 
 std::vector<octomath::Pose6D> Coverage::revertTo6D(std::vector<Point_xy> xy_points,
-                                                   std::vector<std::vector<octomath::Pose6D>> _xyzrpy_points)
+                                                   std::vector<std::vector<octomath::Pose6D>> _xyzrpy_points,
+                                                   std::string method)
 {
   ROS_INFO("Converting back to 6D....\n");
 
   std::vector<octomath::Pose6D> output;
-
-  std::string method;
-  _nh.param<std::string>("/coverage/method", method, "lift");
 
   if (method == "lift")
   {
@@ -711,7 +715,7 @@ void Coverage::visualizeWaypoints(std::vector<octomath::Pose6D> points)
   ROS_INFO("Finished!\n");
 }
 
-void Coverage::publishWaypoints(std::vector<octomath::Pose6D> points)
+void Coverage::publishWaypoints(std::vector<octomath::Pose6D> points, std::string method)
 {
   ROS_INFO("Publishing waypoints..\n");
   trajectory_msgs::MultiDOFJointTrajectory msg;
@@ -738,8 +742,10 @@ void Coverage::publishWaypoints(std::vector<octomath::Pose6D> points)
     msg.points[i].transforms[0].rotation.z = points.at(i).rot().z();
     msg.points[i].transforms[0].rotation.w = points.at(i).rot().u();
   }
-
-  _waypoints_pub.publish(msg);
+  if (method == "lift")
+    _waypoints_pub_lift.publish(msg);
+  else
+    _waypoints_pub_slice.publish(msg);
 }
 
 }  // namespace drone_coverage
