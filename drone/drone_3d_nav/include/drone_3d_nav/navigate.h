@@ -134,9 +134,6 @@ private:
   // We do not want the drone to get really high values of speed, either positive or negative. So we need to clamp it in
   // the range [-max_action, +max_action]
   void clamp(float& action, float max_action);
-  bool controlYaw(double current_goal_yaw, double pose_yaw, double dt);
-  bool controlXY(double current_goal_x, double pose_x, double current_goal_y, double pose_y, double dt,
-                 double pose_yaw);
 
 public:
   Navigator();

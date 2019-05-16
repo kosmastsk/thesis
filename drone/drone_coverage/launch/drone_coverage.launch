@@ -10,6 +10,7 @@
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen" args="$(arg octomap)">
     <param name="frame_id" value="map" />
     <param name="occupancy_min_z" value="0.05"/>
+    <param name="occupancy_max_z" value="2"/>
   </node>
 
   <node name="drone_coverage_node" type="drone_coverage" pkg="drone_coverage" output="screen"/>

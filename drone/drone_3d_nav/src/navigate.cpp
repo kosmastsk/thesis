@@ -154,81 +154,98 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
   _dt = ros::Time::now().toSec() - _dt;
 
   // Find errors and PID values to calculate next action
+  _error_x = _current_goal.translation.x - _pose.translation.x;
+  _error_y = _current_goal.translation.y - _pose.translation.y;
   _error_z = _current_goal.translation.z - _pose.translation.z;
-
   // Desired roll and pitch are 0
   _error_roll = 0 - pose_roll;
   _error_pitch = 0 - pose_pitch;
+  _error_yaw = current_goal_yaw - pose_yaw;
 
+  _proportional_x = _x_kp * _error_x;
+  _proportional_y = _y_kp * _error_y;
   _proportional_z = _z_kp * _error_z;
   _proportional_roll = _attitude_kp * _error_roll;
   _proportional_pitch = _attitude_kp * _error_pitch;
+  _proportional_yaw = _attitude_kp * _error_yaw;
 
+  _integral_x = _x_ki * (_integral_x + _error_x * _dt);
+  _integral_y = _y_ki * (_integral_y + _error_y * _dt);
   _integral_z = _z_ki * (_integral_z + _error_z * _dt);
   _integral_roll = _attitude_ki * (_integral_roll + _error_roll * _dt);
   _integral_pitch = _attitude_ki * (_integral_pitch + _error_pitch * _dt);
+  _integral_yaw = _attitude_ki * (_integral_yaw + _error_yaw * _dt);
 
+  _derivative_x = _x_kd * ((_error_x - _prev_error_x) / _dt);
+  _derivative_y = _y_kd * ((_error_y - _prev_error_y) / _dt);
   _derivative_z = _z_kd * ((_error_z - _prev_error_z) / _dt);
   _derivative_roll = _attitude_kd * ((_error_roll - _prev_error_roll) / _dt);
   _derivative_pitch = _attitude_kd * ((_error_pitch - _prev_error_pitch) / _dt);
+  _derivative_yaw = _attitude_kd * (_error_yaw - _prev_error_yaw) / _dt;
 
+  _prev_error_x = _error_x;
+  _prev_error_y = _error_y;
   _prev_error_z = _error_z;
   _prev_error_roll = _error_roll;
   _prev_error_pitch = _error_pitch;
+  _prev_error_yaw = _error_yaw;
 
+  _action_x = _proportional_x + _integral_x + _derivative_x;
+  _action_y = _proportional_y + _integral_y + _derivative_y;
   _action_z = _proportional_z + _integral_z + _derivative_z;
   _action_roll = _proportional_roll + _integral_roll + _derivative_roll;
   _action_pitch = _proportional_pitch + _integral_pitch + _derivative_pitch;
+  _action_yaw = _proportional_yaw + _integral_yaw + _derivative_yaw;
+
+  // converting from world frame to drone frame
+  // Rotate with Rodriguez formula
+  double final_action_x = _action_x * cos(pose_yaw) + _action_y * sin(pose_yaw);
+  double final_action_y = _action_y * cos(pose_yaw) - _action_x * sin(pose_yaw);
 
   // Clamp the velocities
+  clamp(_action_x, _trans_max_speed);
+  clamp(_action_y, _trans_max_speed);
   clamp(_action_z, _trans_max_speed);
   clamp(_action_roll, _rot_max_speed);
   clamp(_action_pitch, _rot_max_speed);
+  clamp(_action_yaw, _rot_max_speed);
 
-  _twist.linear.x = 0;
-  _twist.linear.y = 0;
+  _twist.linear.x = final_action_x;
+  _twist.linear.y = final_action_y;
   _twist.linear.z = _action_z;
   _twist.angular.x = _action_roll;
   _twist.angular.y = _action_pitch;
-  _twist.angular.z = 0;
+  _twist.angular.z = _action_yaw;
 
   // Ensure that the drone's position is in accepted range error
-  if (fabs(_error_z) <= _z_tolerance)
+  if (fabs(_error_x) <= _xy_tolerance && fabs(_error_y) <= _xy_tolerance && fabs(_error_z) <= _z_tolerance &&
+      fabs(_error_yaw) <= _yaw_tolerance)
   {
-    // Since z is ok, we need to tune x and y
-    if (controlXY(_current_goal.translation.x, _pose.translation.x, _current_goal.translation.y, _pose.translation.y,
-                  _dt, pose_yaw))
+    if (_must_exit == true && !_hovering)
     {
-      // Since x,y,z are OK, now we need to tune yaw. Only when its done, procceed
-      if (controlYaw(current_goal_yaw, pose_yaw, _dt))
-      {
-        if (_must_exit == true && !_hovering)
-        {
-          ROS_INFO("[Navigate] Final waypoint reached. Hovering...\n");
-          _hovering = true;
-          _waypoints_received = false;  // Set it to false again, so to wait for new waypoints to serve
-          std_msgs::Bool feedback;
-          feedback.data = true;
-          // Provide feedback for the next waypoint to reach
-          _goal_reached_pub.publish(feedback);
-        }
-        else if (_must_exit == true && _hovering)
-          return;
-        else
-        {
-          ROS_INFO("[Navigate] Error in accepted range. Next waypoint.\n");
-          _current_goal = _waypoints.front();
-          _waypoints.pop();  // Remove the element from the queue
-          _waypoint_number += 1;
-          _rise += 1;
+      ROS_INFO("[Navigate] Final waypoint reached. Hovering...\n");
+      _hovering = true;
+      _waypoints_received = false;  // Set it to false again, so to wait for new waypoints to serve
+      std_msgs::Bool feedback;
+      feedback.data = true;
+      // Provide feedback for the next waypoint to reach
+      _goal_reached_pub.publish(feedback);
+    }
+    else if (_must_exit == true && _hovering)
+      return;
+    else
+    {
+      ROS_INFO("[Navigate] Error in accepted range. Next waypoint.\n");
+      _current_goal = _waypoints.front();
+      _waypoints.pop();  // Remove the element from the queue
+      _waypoint_number += 1;
+      _rise += 1;
 
-          ROS_INFO("[Navigate] Next goal %d\n", _waypoint_number);
-          ROS_INFO("[Navigate] Coordinates (x,y,z, yaw) : (%f, %f, %f, %f)\n", _current_goal.translation.x,
-                   _current_goal.translation.y, _current_goal.translation.z, current_goal_yaw);
-          // Do not publish twist that are related to the waypoint, since we can now proceed to waypoint + 1
-          return;
-        }
-      }
+      ROS_INFO("[Navigate] Next goal %d\n", _waypoint_number);
+      ROS_INFO("[Navigate] Coordinates (x,y,z, yaw) : (%f, %f, %f, %f)\n", _current_goal.translation.x,
+               _current_goal.translation.y, _current_goal.translation.z, current_goal_yaw);
+      // Do not publish twist that are related to the waypoint, since we can now proceed to waypoint + 1
+      return;
     }
   }
 
@@ -246,71 +263,6 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 
   // Create some minor delay
   ros::Duration(0.001).sleep();
-}
-
-bool Navigator::controlYaw(double current_goal_yaw, double pose_yaw, double dt)
-{
-  _error_yaw = current_goal_yaw - pose_yaw;
-  if (fabs(_error_yaw) <= _yaw_tolerance)
-    return true;
-  else
-  {
-    _proportional_yaw = _attitude_kp * _error_yaw;
-    _integral_yaw = _attitude_ki * (_integral_yaw + _error_yaw * dt);
-    _derivative_yaw = _attitude_kd * (_error_yaw - _prev_error_yaw) / dt;
-    _prev_error_yaw = _error_yaw;
-    _action_yaw = _proportional_yaw + _integral_yaw + _derivative_yaw;
-    clamp(_action_yaw, _rot_max_speed);
-    _twist.linear.x = 0;
-    _twist.linear.y = 0;
-    _twist.linear.z = 0;
-    _twist.angular.x = 0;
-    _twist.angular.y = 0;
-    _twist.angular.z = _action_yaw;
-  }
-  return false;
-}
-
-bool Navigator::controlXY(double current_goal_x, double pose_x, double current_goal_y, double pose_y, double dt,
-                          double pose_yaw)
-{
-  _error_x = current_goal_x - pose_x;
-  _error_y = current_goal_y - pose_y;
-  if (fabs(_error_x) <= _xy_tolerance && fabs(_error_y) <= _xy_tolerance)
-    return true;
-  else
-  {
-    _proportional_x = _x_kp * _error_x;
-    _proportional_y = _y_kp * _error_y;
-
-    _integral_x = _x_ki * (_integral_x + _error_x * _dt);
-    _integral_y = _y_ki * (_integral_y + _error_y * _dt);
-
-    _derivative_x = _x_kd * ((_error_x - _prev_error_x) / _dt);
-    _derivative_y = _y_kd * ((_error_y - _prev_error_y) / _dt);
-
-    _prev_error_x = _error_x;
-    _prev_error_y = _error_y;
-
-    _action_x = _proportional_x + _integral_x + _derivative_x;
-    _action_y = _proportional_y + _integral_y + _derivative_y;
-
-    clamp(_action_x, _trans_max_speed);
-    clamp(_action_y, _trans_max_speed);
-
-    // converting from world frame to drone frame
-    // Rotate with Rodriguez formula
-    double final_action_x = _action_x * cos(pose_yaw) + _action_y * sin(pose_yaw);
-    double final_action_y = _action_y * cos(pose_yaw) - _action_x * sin(pose_yaw);
-
-    _twist.linear.x = final_action_x;
-    _twist.linear.y = final_action_y;
-    _twist.linear.z = 0;
-    _twist.angular.x = 0;
-    _twist.angular.y = 0;
-    _twist.angular.z = 0;
-  }
-  return false;
 }
 
 void Navigator::clamp(float& action, float max_action)

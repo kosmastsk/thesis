@@ -67,9 +67,9 @@ add_dependencies(navigate
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg)
 
-add_executable(error_detector
-  src/error_detector.cpp)
-target_link_libraries(error_detector
+add_executable(produce_trajectory
+  src/produce_trajectory.cpp)
+target_link_libraries(produce_trajectory
   ${catkin_LIBRARIES})
-add_dependencies(error_detector
+add_dependencies(produce_trajectory
   ${catkin_EXPORTED_TARGETS})
