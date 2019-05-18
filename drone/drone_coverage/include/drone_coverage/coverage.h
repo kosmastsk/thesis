@@ -114,6 +114,8 @@ public:
   std::vector<octomath::Pose6D> revertTo6D(std::vector<Point_xy> xy_points,
                                            std::vector<std::vector<octomath::Pose6D>> _xyzrpy_points,
                                            std::string method);
+
+  std::vector<octomath::Pose6D> postprocessPath(ros::NodeHandle nh, std::vector<octomath::Pose6D> points);
 };
 
 }  // namespace drone_coverage

@@ -33,8 +33,8 @@ typedef std::pair<double, double> Point_xy;
 
 // Functions
 Graph generateGraph(ros::NodeHandle nh, std::vector<Point_xy> points);
-std::vector<Point_xy> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<Point_xy> points,
-                                       octomap::OcTree* octomap);
+std::vector<Point_xy> calculateOptimalPath(ros::NodeHandle nh, Graph graph, std::vector<Point_xy> points,
+                                           octomap::OcTree* octomap);
 std::vector<Point_xy> reorderPoints(std::vector<Point_xy> points, std::vector<int> order);
 double calculateCost(Graph graph, std::vector<int> order, std::vector<vertex_descriptor> p, std::vector<double> d);
 

@@ -102,7 +102,7 @@ Coverage::Coverage()
   _graph = generateGraph(_nh, _xy_points);
 
   // Apply a hill-climbing algorithm to find the best combination of the waypoints
-  _xy_points = hillClimbingBase(_nh, _graph, _xy_points, _octomap);
+  _xy_points = calculateOptimalPath(_nh, _graph, _xy_points, _octomap);
 
   // Go back from Point_xy to Pose6D elements
   std::string method;
@@ -110,6 +110,8 @@ Coverage::Coverage()
 
   _slice_points = revertTo6D(_xy_points, _xyzrpy_points, "slice");
   _lift_points = revertTo6D(_xy_points, _xyzrpy_points, "lift");
+
+  _slice_points = postprocessPath(_nh, _slice_points);
 
   // Publish sensor positions / waypoints
   publishWaypoints(_slice_points, "slice");
@@ -659,6 +661,48 @@ std::vector<octomath::Pose6D> Coverage::revertTo6D(std::vector<Point_xy> xy_poin
       }
     }
   }
+  return output;
+}
+
+std::vector<octomath::Pose6D> Coverage::postprocessPath(ros::NodeHandle nh, std::vector<octomath::Pose6D> points)
+{
+  ROS_INFO("Post-processing path...\n");
+  std::vector<octomath::Pose6D> output;
+
+  double step_xy;
+  nh.param<double>("/hill_climbing/goal", step_xy, 2);
+
+  bool eliminate = false;
+  for (int i = 0; i < points.size(); i++)
+  {
+    double x = points.at(i).x();
+    double y = points.at(i).y();
+    if (eliminate)
+    {
+      if (i == 0)
+        ;
+      else if (i == points.size() - 1)
+        ;
+      else
+      {
+        double x_previous = points.at(i - 1).x();
+        double y_previous = points.at(i - 1).y();
+        double x_next = points.at(i + 1).x();
+        double y_next = points.at(i + 1).y();
+
+        if ((fabs(x - x_previous) < step_xy && fabs(x - x_next) < step_xy && y == y_previous && y == y_next) ||
+            (fabs(y - y_previous) < step_xy && fabs(y - y_next) < step_xy && x == x_previous && x == x_next))
+        {
+          eliminate = false;
+          continue;
+        }
+      }
+    }
+    else
+      eliminate = true;
+    output.push_back(points.at(i));
+  }
+  ROS_INFO("new size %zu\n", output.size());
   return output;
 }
 

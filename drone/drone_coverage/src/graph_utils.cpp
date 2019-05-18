@@ -46,10 +46,10 @@ Graph generateGraph(ros::NodeHandle nh, std::vector<Point_xy> points)
   return g;
 }
 
-std::vector<Point_xy> hillClimbingBase(ros::NodeHandle nh, Graph graph, std::vector<Point_xy> points,
-                                       octomap::OcTree* octomap)
+std::vector<Point_xy> calculateOptimalPath(ros::NodeHandle nh, Graph graph, std::vector<Point_xy> points,
+                                           octomap::OcTree* octomap)
 {
-  ROS_INFO("Hill climbing is running....\n");
+  ROS_INFO("Calculating the optimal path....\n");
   // Better use int vector, than Pose6D
   std::vector<int> order, new_order, best_order;
   order.resize(points.size());
