@@ -22,4 +22,10 @@
     <origin xyz="0.125 0 -0.17" rpy="0 0 0"/>
     </xacro:generic_camera>
 
+    <!-- LightWare SF11 (120 meter) height sensor -->
+    <xacro:include filename="$(find drone_description)/sensors/lightware_sf11_120m.urdf.xacro" />
+    <xacro:lightware_sf11_120m name="height_sensor" parent="base_link" ros_topic="lidar/height/scan" update_rate="100" ray_count="5" min_angle="-87" max_angle="-93" >
+      <origin xyz="0.0 0.0 0" rpy="0.0 0 0"/>
+    </xacro:lightware_sf11_120m>
+
 </robot>

@@ -2,8 +2,6 @@
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:include filename="$(find drone_description)/sensors/lightware_sf11_120m.urdf.xacro" />
-
   <!-- Main quadrotor link -->
   <xacro:macro name="quadrotor_base_macro">
     <link name="base_link">
@@ -27,11 +25,6 @@
         </geometry>
       </collision>
     </link>
-
-    <!-- LightWare SF11 (120 meter) height sensor -->
-    <xacro:lightware_sf11_120m name="height_sensor" parent="base_link" ros_topic="lidar/height/scan" update_rate="100" ray_count="5" min_angle="-87" max_angle="-93" >
-      <origin xyz="0.0 0.0 -0.065" rpy="0.0 0 0"/>
-    </xacro:lightware_sf11_120m>
 
     <!-- Gazebo Plugins -->
     <xacro:quadrotor_plugins/>
