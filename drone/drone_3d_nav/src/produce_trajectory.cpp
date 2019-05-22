@@ -46,6 +46,28 @@ std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createStraightLine(in
   geometry_msgs::Transform transform;
 
   // Point #1
+  transform.translation.x = 0;
+  transform.translation.y = 0;
+  transform.translation.z = 1.2;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #2
+  transform.translation.x = 4.5;
+  transform.translation.y = 0;
+  transform.translation.z = 1.2;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #3
   transform.translation.x = 9;
   transform.translation.y = 0;
   transform.translation.z = 1.2;
@@ -68,11 +90,22 @@ std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createSpiral(int numb
   point.transforms.resize(1);
   geometry_msgs::Transform transform;
 
+  // Point #3
+  transform.translation.x = 0;
+  transform.translation.y = 0;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
   double max_height = 1.5;
   float angle = 0;
   int a = 1, b = 1;
 
-  for (int i = 0; i < number_of_points; i++)
+  for (int i = 0; i < number_of_points; i += 3)
   {
     angle = 0.05 * i;
     transform.translation.x = (a + b * angle) * cos(angle * M_PI * 2);
@@ -225,7 +258,7 @@ int main(int argc, char** argv)
   std::string type = "spiral";
 
   if (type == "straight_line")
-    msg.points = createStraightLine(1);
+    msg.points = createStraightLine(3);
   else if (type == "spiral")
   {
     msg.points = createSpiral(25);

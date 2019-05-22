@@ -20,13 +20,13 @@ yaw: 0.0
 particles: 300
 
 # Standard deviations for movement model
-/movement/x_std_dev: 0.2
-/movement/y_std_dev: 0.2
-/movement/z_std_dev: 0.15
+/movement/x_std_dev: 0.15
+/movement/y_std_dev: 0.15
+/movement/z_std_dev: 0.05
 
 /movement/roll_std_dev: 0.0
 /movement/pitch_std_dev: 0.0
-/movement/yaw_std_dev: 0.1
+/movement/yaw_std_dev: 0.05
 
 
 # Frames
@@ -35,21 +35,20 @@ worldFrame: "world"
 baseFootprintFrame: "base_footprint"
 baseLinkFrame: "base_link"
 
-
 transform_tolerance_time: 1.0
 
 # Observation parameters / Raycasting
 # Sum of them must be 1
-laser_z_hit: 0.75 # Mixture weight for the z_hit part of the model
-laser_z_short: 0.05 # Mixture weight for the z_short part of the model
-laser_z_rand: 0.1 # Mixture weight for the z_rand part of the model
-laser_z_max: 0.1 # Mixture weight for the z_max part of the model
+laser_z_hit: 0.60 # Mixture weight for the z_hit part of the model
+laser_z_short: 0.10 # Mixture weight for the z_short part of the model
+laser_z_rand: 0.10 # Mixture weight for the z_rand part of the model
+laser_z_max: 0.20 # Mixture weight for the z_max part of the model
 
-laser_sigma_hit: 0.1 # Standard deviation for Gaussian model used in z_hit part of the model
-laser_lambda_short: 0.1 # Exponential decay parameter for z_short part of model
+laser_sigma_hit: 0.02 # Standard deviation for Gaussian model used in z_hit part of the model
+laser_lambda_short: 0.08 # Exponential decay parameter for z_short part of model
 min_range: 0.01
 max_range: 14.0
 
 observation_threshold_trans: 0.2
-observation_threshold_rot: 0.2
+observation_threshold_rot: 0.4
 sensor_sample_distance: 0.2

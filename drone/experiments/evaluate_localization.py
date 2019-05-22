@@ -29,10 +29,11 @@ def quaternionToYaw(x, y, z, w):
 # Mean value
 def calculateMean(dataframe):
     print
+    print
     print '################## mean ##################'
-    print 'Mean error in X: ' + str(dataframe['error_x'].mean()) + ' (metres)'
-    print 'Mean error in Y: ' + str(dataframe['error_y'].mean()) + ' (metres)'
-    print 'Mean error in Z: ' + str(dataframe['error_z'].mean()) + ' (metres)'
+    #print 'Mean error in X: ' + str(dataframe['error_x'].mean()) + ' (metres)'
+    #print 'Mean error in Y: ' + str(dataframe['error_y'].mean()) + ' (metres)'
+    #print 'Mean error in Z: ' + str(dataframe['error_z'].mean()) + ' (metres)'
     print 'Mean error: ' + str(dataframe['rms_error'].mean()) + ' (metres)'
     print 'Mean error in Yaw: ' + str(dataframe['error_yaw'].mean()) + ' (rad)'
 
@@ -40,12 +41,12 @@ def calculateMean(dataframe):
 def calculateMedian(dataframe):
     print
     print '################## median ##################'
-    print 'Median error in X: ' + str(
-        dataframe['error_x'].median()) + ' (metres)'
-    print 'Median error in Y: ' + str(
-        dataframe['error_y'].median()) + ' (metres)'
-    print 'Median error in Z: ' + str(
-        dataframe['error_z'].median()) + ' (metres)'
+    #print 'Median error in X: ' + str(
+    #    dataframe['error_x'].median()) + ' (metres)'
+    #print 'Median error in Y: ' + str(
+    #    dataframe['error_y'].median()) + ' (metres)'
+    #print 'Median error in Z: ' + str(
+    #        dataframe['error_z'].median()) + ' (metres)'
     print 'Median error: ' + str(dataframe['rms_error'].median()) + ' (metres)'
     print 'Median error in Yaw: ' + str(
         dataframe['error_yaw'].median()) + ' (rad)'
@@ -55,9 +56,9 @@ def calculateMedian(dataframe):
 def calculateMin(dataframe):
     print
     print '################## min ##################'
-    print 'Min error in X: ' + str(dataframe['error_x'].min()) + ' (metres)'
-    print 'Min error in Y: ' + str(dataframe['error_y'].min()) + ' (metres)'
-    print 'Min error in Z: ' + str(dataframe['error_z'].min()) + ' (metres)'
+    #    print 'Min error in X: ' + str(dataframe['error_x'].min()) + ' (metres)'
+    #    print 'Min error in Y: ' + str(dataframe['error_y'].min()) + ' (metres)'
+    #    print 'Min error in Z: ' + str(dataframe['error_z'].min()) + ' (metres)'
     print 'Min error: ' + str(dataframe['rms_error'].min()) + ' (metres)'
     print 'Min error in Yaw: ' + str(dataframe['error_yaw'].min()) + ' (rad)'
 
@@ -66,9 +67,9 @@ def calculateMin(dataframe):
 def calculateMax(dataframe):
     print
     print '################## max ##################'
-    print 'Max error in X: ' + str(dataframe['error_x'].max()) + ' (metres)'
-    print 'Max error in Y: ' + str(dataframe['error_y'].max()) + ' (metres)'
-    print 'Max error in Z: ' + str(dataframe['error_z'].max()) + ' (metres)'
+    #    print 'Max error in X: ' + str(dataframe['error_x'].max()) + ' (metres)'
+    #    print 'Max error in Y: ' + str(dataframe['error_y'].max()) + ' (metres)'
+    #    print 'Max error in Z: ' + str(dataframe['error_z'].max()) + ' (metres)'
     print 'Max error: ' + str(dataframe['rms_error'].max()) + ' (metres)'
     print 'Max error in Yaw: ' + str(dataframe['error_yaw'].max()) + ' (rad)'
 
@@ -77,24 +78,26 @@ def calculateMax(dataframe):
 def calculateRMSE(dataframe):
     print
     print '################## RMSE ##################'
-    print 'RMSE in X: ' + str(
-        (dataframe['error_x']**2).mean()**.5) + ' (metres)'
-    print 'RMSE in Y: ' + str(
-        (dataframe['error_y']**2).mean()**.5) + ' (metres)'
-    print 'RMSE in Z: ' + str(
-        (dataframe['error_z']**2).mean()**.5) + ' (metres)'
+    #    print 'RMSE in X: ' + str(
+    #        (dataframe['error_x']**2).mean()**.5) + ' (metres)'
+    #    print 'RMSE in Y: ' + str(
+    #        (dataframe['error_y']**2).mean()**.5) + ' (metres)'
+    #    print 'RMSE in Z: ' + str(
+    #        (dataframe['error_z']**2).mean()**.5) + ' (metres)'
     print 'RMSE: ' + str((dataframe['rms_error']**2).mean()**.5) + ' (metres)'
     print 'RMSE in Yaw: ' + str(
         (dataframe['error_yaw']**2).mean()**.5) + ' (rad)'
+    print
+    print
 
 
 # Sum of Squared Errors
 def calculateSSE(dataframe):
     print
     print '################## SSE ##################'
-    print 'SSE in X: ' + str(np.sum((dataframe['error_x']**2))) + ' (metres)'
-    print 'SSE in Y: ' + str(np.sum((dataframe['error_y']**2))) + ' (metres)'
-    print 'SSE in Z: ' + str(np.sum((dataframe['error_z']**2))) + ' (metres)'
+    #    print 'SSE in X: ' + str(np.sum((dataframe['error_x']**2))) + ' (metres)'
+    #    print 'SSE in Y: ' + str(np.sum((dataframe['error_y']**2))) + ' (metres)'
+    #    print 'SSE in Z: ' + str(np.sum((dataframe['error_z']**2))) + ' (metres)'
     print 'SSE: ' + str(np.sum((dataframe['rms_error']**2))) + ' (metres)'
     print 'SSE in Yaw: ' + str(np.sum((dataframe['error_yaw']**2))) + ' (rad)'
 
@@ -103,9 +106,9 @@ def calculateSSE(dataframe):
 def calculateSTD(dataframe):
     print
     print '################## STD ##################'
-    print 'STD error in X: ' + str(dataframe['error_x'].std()) + ' (metres)'
-    print 'STD error in Y: ' + str(dataframe['error_y'].std()) + ' (metres)'
-    print 'STD error in Z: ' + str(dataframe['error_z'].std()) + ' (metres)'
+    #    print 'STD error in X: ' + str(dataframe['error_x'].std()) + ' (metres)'
+    #    print 'STD error in Y: ' + str(dataframe['error_y'].std()) + ' (metres)'
+    #    print 'STD error in Z: ' + str(dataframe['error_z'].std()) + ' (metres)'
     print 'STD error: ' + str(dataframe['rms_error'].std()) + ' (metres)'
     print 'STD error in Yaw: ' + str(dataframe['error_yaw'].std()) + ' (rad)'
 
@@ -209,6 +212,7 @@ def plot(amcl, truth):
         linestyle='solid',
         label="Ground truth")
     plt.legend()
+    plt.axis([None, None, -1.57, 1.57])
     plt.xlabel('time (seconds)')
     plt.ylabel('yaw')
     plt.title('Orientation')
@@ -273,43 +277,29 @@ def main():
 
     starting_index = 0
     for amcl_index in range(0, len(amcl)):
-        counter = 0
-        accumulated_position_x = 0
-        accumulated_position_y = 0
-        accumulated_position_z = 0
-        accumulated_position_yaw = 0
 
-        # Interpolate the measurements between timestamps
+        # Keeping the message that is closest in timestamp with the amcl message
         for truth_index in range(starting_index, len(truth)):
             if truth['field.header.stamp'][truth_index] <= amcl[
                     'field.header.stamp'][amcl_index]:
                 starting_index = truth_index
-                counter += 1
-                accumulated_position_x += truth['field.pose.pose.position.x'][
-                    truth_index]
-                accumulated_position_y += truth['field.pose.pose.position.y'][
-                    truth_index]
-                accumulated_position_z += truth['field.pose.pose.position.z'][
-                    truth_index]
-                accumulated_position_yaw += truth[
-                    'field.pose.pose.orientation.yaw'][truth_index]
             else:
                 break
 
-        # Mean ground truth value minus AMCL estimation
+        # Ground truth value minus AMCL estimation
         error_df.at[amcl_index,
                     'timestamp'] = amcl['field.header.stamp'][amcl_index]
         error_df.at[amcl_index, 'error_x'] = abs(
-            (accumulated_position_x / counter) -
+            truth['field.pose.pose.position.x'][starting_index] -
             amcl['field.pose.position.x'][amcl_index])
         error_df.at[amcl_index, 'error_y'] = abs(
-            (accumulated_position_y / counter) -
+            truth['field.pose.pose.position.y'][starting_index] -
             amcl['field.pose.position.y'][amcl_index])
         error_df.at[amcl_index, 'error_z'] = abs(
-            (accumulated_position_z / counter) -
+            truth['field.pose.pose.position.z'][starting_index] -
             amcl['field.pose.position.z'][amcl_index])
         error_df.at[amcl_index, 'error_yaw'] = abs(
-            (accumulated_position_yaw / counter) -
+            truth['field.pose.pose.orientation.yaw'][starting_index] -
             amcl['field.pose.orientation.yaw'][amcl_index])
 
     # Calculate the RMS error and save it in a new column
