@@ -259,6 +259,8 @@ void Navigator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 bool Navigator::controlYaw(float current_goal_yaw, float pose_yaw)
 {
   _error_yaw = current_goal_yaw - pose_yaw;
+  while (_error_yaw < 0)
+    _error_yaw += M_PI;
 
   if (fabs(_error_yaw) < _yaw_tolerance)
     return true;
