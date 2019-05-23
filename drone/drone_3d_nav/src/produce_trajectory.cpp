@@ -90,7 +90,7 @@ std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createSpiral(int numb
   point.transforms.resize(1);
   geometry_msgs::Transform transform;
 
-  // Point #3
+  // Point #0
   transform.translation.x = 0;
   transform.translation.y = 0;
   transform.translation.z = 0.5;
@@ -122,12 +122,62 @@ std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createSpiral(int numb
   return points;
 }
 
+std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createSpiralForWarehouse(int number_of_points)
+{
+  std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> points;
+  trajectory_msgs::MultiDOFJointTrajectoryPoint point;
+  point.transforms.resize(1);
+  geometry_msgs::Transform transform;
+
+  transform.translation.x = 1.60;
+  transform.translation.y = 3.75;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  double max_height = 1.5;
+  float angle = 0;
+  int a = 1.5, b = 1.5;
+
+  for (int i = 3; i < number_of_points; i += 3)
+  {
+    angle = 0.05 * i;
+    transform.translation.x = 0.20 + (a + b * angle) * cos(angle * M_PI * 2);
+    // Small hack to move these points in a safer distance from the obstacle
+    transform.translation.y = 3.75 + (a + b * angle) * sin(angle * M_PI * 2);
+    transform.translation.z = 0.5 + float(i) / float(number_of_points) * max_height;
+    transform.rotation.x = 0;
+    transform.rotation.y = 0;
+    transform.rotation.z = 0;
+    transform.rotation.w = 1;
+    point.transforms[0] = transform;
+    points.push_back(point);
+  }
+  visualizeWaypoints(points);
+  return points;
+}
+
 std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createMeander(int number_of_points)
 {
   std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> points;
   trajectory_msgs::MultiDOFJointTrajectoryPoint point;
   point.transforms.resize(1);
   geometry_msgs::Transform transform;
+
+  // Point #0
+  transform.translation.x = 0;
+  transform.translation.y = 0;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
 
   // Point #1
   transform.translation.x = 0;
@@ -244,6 +294,128 @@ std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createMeander(int num
   return points;
 }
 
+std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> createMeanderForWarehouse(int number_of_points)
+{
+  std::vector<trajectory_msgs::MultiDOFJointTrajectoryPoint> points;
+  trajectory_msgs::MultiDOFJointTrajectoryPoint point;
+  point.transforms.resize(1);
+  geometry_msgs::Transform transform;
+
+  // Point #0
+  transform.translation.x = 2;
+  transform.translation.y = -0.5;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0.7071068;
+  transform.rotation.w = 0.7071068;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #1
+  transform.translation.x = 2;
+  transform.translation.y = 5.5;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 1;
+  transform.rotation.w = 0;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #2
+  transform.translation.x = -1.5;
+  transform.translation.y = 5.5;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = -0.7071068;
+  transform.rotation.w = 0.7071068;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #3
+  transform.translation.x = -1.5;
+  transform.translation.y = 1.0;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #4
+  transform.translation.x = 1.6;
+  transform.translation.y = 1.0;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0.7071068;
+  transform.rotation.w = 0.7071068;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #5
+  transform.translation.x = 1.6;
+  transform.translation.y = 4.5;
+  transform.translation.z = 1;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 1;
+  transform.rotation.w = 0;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #6
+  transform.translation.x = -1.0;
+  transform.translation.y = 4.5;
+  transform.translation.z = 1;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = -0.7071068;
+  transform.rotation.w = 0.7071068;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #7
+  transform.translation.x = -1.0;
+  transform.translation.y = 2.0;
+  transform.translation.z = 1;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #8
+  transform.translation.x = 1.3;
+  transform.translation.y = 2.0;
+  transform.translation.z = 1.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0.7071068;
+  transform.rotation.w = 0.7071068;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Point #9
+  transform.translation.x = 1.6;
+  transform.translation.y = 3.3;
+  transform.translation.z = 1.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  point.transforms[0] = transform;
+  points.push_back(point);
+
+  // Ended
+  visualizeWaypoints(points);
+  return points;
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "produce_trajectory");
@@ -255,7 +427,7 @@ int main(int argc, char** argv)
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "map";
 
-  std::string type = "spiral";
+  std::string type = "spiral_warehouse";
 
   if (type == "straight_line")
     msg.points = createStraightLine(3);
@@ -266,6 +438,14 @@ int main(int argc, char** argv)
   else if (type == "meander")
   {
     msg.points = createMeander(10);
+  }
+  else if (type == "spiral_warehouse")
+  {
+    msg.points = createSpiralForWarehouse(25);
+  }
+  else if (type == "meander_warehouse")
+  {
+    msg.points = createMeanderForWarehouse(10);
   }
 
   trajectory_pub.publish(msg);
