@@ -1,0 +1,32 @@
+##### RFID sensor #####
+sensor:
+  rfid:
+    shape: circular #orthogonal
+    # Narrow FOV: 45 x 25 degrees, 1 metres range
+    # Wide FOV : 80 x 40, 2 metres range
+    range: 1.5 # in metres
+    hfov: 45 # degrees
+    vfov: 25 # degrees
+    direction: # 	A vector pointing in the direction of the sensor on the drone
+      x: 1
+      y: 0
+      z: 0
+
+##### UAV #####
+uav:
+  footprint_radius: 0.4 # in metres
+  safety_offset: 0.10 # in metres
+
+##### Environment #####
+world:
+  min_obstacle_height: 0.05 # in metres
+
+##### Coverage method #####
+coverage:
+  method: slice # OR lift # Method for reverting to 6D points again
+  step: 0.75 # sampling step (in metres)
+
+##### Hill Climbing #####
+hill_climbing:
+  iterations: 800
+  restarts: 10

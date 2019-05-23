@@ -36,6 +36,7 @@ private:
   octomap::OcTree* _octomap;
   octomap::ColorOcTree* _covered;
   double _octomap_resolution;
+  float _octomap_volume;
 
   double _rfid_range;
   double _rfid_hfov;
@@ -61,6 +62,8 @@ public:
   void calculateOrthogonalCoverage(const geometry_msgs::Pose);
   void calculateCircularCoverage(const geometry_msgs::Pose);
 
+  float calculateOccupiedVolume(octomap::ColorOcTree* octomap);
+  float calculateOccupiedVolume(octomap::OcTree* octomap);
   void publishCoveredSurface();
   void publishPercentage();
 };

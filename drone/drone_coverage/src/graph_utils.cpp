@@ -20,7 +20,7 @@ Graph generateGraph(ros::NodeHandle nh, std::vector<Point_xy> points)
   std::vector<double> weights;
 
   double rfid_range;
-  nh.param<double>("/rfid/range", rfid_range, 1);
+  nh.param<double>("/sensor/rfid/range", rfid_range, 1);
 
   for (int i = 0; i < points.size(); i++)
   {
@@ -75,7 +75,7 @@ std::vector<Point_xy> calculateOptimalPath(ros::NodeHandle nh, Graph graph, std:
   double desired_distance;
   nh.param<int>("/hill_climbing/iterations", iterations, 25);
   nh.param<int>("/hill_climbing/restarts", restarts, 5);
-  nh.param<double>("/hill_climbing/goal", desired_distance, 2);
+  nh.param<double>("/coverage/step", desired_distance, 1);
 
   // Restarts
   for (int rs = 0; rs < restarts; rs++)
@@ -107,7 +107,7 @@ std::vector<Point_xy> calculateOptimalPath(ros::NodeHandle nh, Graph graph, std:
         octomath::Vector3 view_point(points.at(current_node).first, points.at(current_node).second, 1);
         octomath::Vector3 point_to_test(points.at(current_node + 1).first, points.at(current_node + 1).second, 1);
 
-        if (near_distance < desired_distance && checkIfVisible(view_point, point_to_test, octomap))
+        if (near_distance <= desired_distance && checkIfVisible(view_point, point_to_test, octomap))
         {
           current_node = current_node + 1;
           continue;
@@ -125,7 +125,7 @@ std::vector<Point_xy> calculateOptimalPath(ros::NodeHandle nh, Graph graph, std:
         octomath::Vector3 view_point(points.at(current_node).first, points.at(current_node).second, 1);
         octomath::Vector3 point_to_test(points.at(current_node - 1).first, points.at(current_node - 1).second, 1);
 
-        if (near_distance < desired_distance && checkIfVisible(view_point, point_to_test, octomap))
+        if (near_distance <= desired_distance && checkIfVisible(view_point, point_to_test, octomap))
         {
           current_node = current_node - 1;
           continue;

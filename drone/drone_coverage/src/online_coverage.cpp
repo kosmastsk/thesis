@@ -16,13 +16,13 @@ OnlineCoverage::OnlineCoverage()
   _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
 
   // Get configurations
-  _nh.param<double>("/rfid/range", _rfid_range, 1);
-  _nh.param<double>("/rfid/hfov", _rfid_hfov, 60);
-  _nh.param<double>("/rfid/vfov", _rfid_vfov, 30);
-  _nh.param<std::string>("/rfid/shape", _sensor_shape, "circular");
-  _nh.param<double>("/rfid/direction/x", _rfid_direction_x, 1);
-  _nh.param<double>("/rfid/direction/y", _rfid_direction_y, 0);
-  _nh.param<double>("/rfid/direction/z", _rfid_direction_z, 0);
+  _nh.param<double>("/sensor/rfid/range", _rfid_range, 1);
+  _nh.param<double>("/sensor/rfid/hfov", _rfid_hfov, 60);
+  _nh.param<double>("/sensor/rfid/vfov", _rfid_vfov, 30);
+  _nh.param<std::string>("/sensor/rfid/shape", _sensor_shape, "circular");
+  _nh.param<double>("/sensor/rfid/direction/x", _rfid_direction_x, 1);
+  _nh.param<double>("/sensor/rfid/direction/y", _rfid_direction_y, 0);
+  _nh.param<double>("/sensor/rfid/direction/z", _rfid_direction_z, 0);
 
   // Adjust values
   _rfid_hfov = (_rfid_hfov / 180.0) * M_PI;
@@ -64,6 +64,7 @@ void OnlineCoverage::octomapCallback(const octomap_msgs::OctomapConstPtr& msg)
   }
 
   _octomap_resolution = _octomap->getResolution();
+  _octomap_volume = calculateOccupiedVolume(_octomap);
 
   // Now that we have the resolution we can initialize the new octomap
   _covered = new octomap::ColorOcTree(_octomap_resolution);
@@ -171,18 +172,65 @@ void OnlineCoverage::publishCoveredSurface()
     _covered_pub.publish(msg);
 }
 
+float OnlineCoverage::calculateOccupiedVolume(octomap::ColorOcTree* octomap)
+{
+  float vol_occ = 0;
+  double bbxMinX, bbxMinY, bbxMinZ, bbxMaxX, bbxMaxY, bbxMaxZ;
+  octomap->getMetricMax(bbxMaxX, bbxMaxY, bbxMaxZ);
+  octomap->getMetricMin(bbxMinX, bbxMinY, bbxMinZ);
+
+  octomap::point3d min(bbxMinX, bbxMinY, bbxMinZ);
+  octomap::point3d max(bbxMaxX, bbxMaxY, bbxMaxZ);
+
+  if (octomap)
+  {  // can be NULL
+    for (octomap::ColorOcTree::leaf_bbx_iterator it = octomap->begin_leafs_bbx(min, max),
+                                                 end = octomap->end_leafs_bbx();
+         it != end; ++it)
+    {
+      double side_length = it.getSize();
+      if (octomap->isNodeOccupied(*it))
+        // occupied leaf node
+        vol_occ += side_length * side_length * side_length;
+    }
+  }
+  return vol_occ;
+}
+
+float OnlineCoverage::calculateOccupiedVolume(octomap::OcTree* octomap)
+{
+  float vol_occ = 0;
+  double bbxMinX, bbxMinY, bbxMinZ, bbxMaxX, bbxMaxY, bbxMaxZ;
+  octomap->getMetricMax(bbxMaxX, bbxMaxY, bbxMaxZ);
+  octomap->getMetricMin(bbxMinX, bbxMinY, bbxMinZ);
+
+  octomap::point3d min(bbxMinX, bbxMinY, bbxMinZ);
+  octomap::point3d max(bbxMaxX, bbxMaxY, bbxMaxZ);
+
+  if (octomap)
+  {  // can be NULL
+    for (octomap::OcTree::leaf_bbx_iterator it = octomap->begin_leafs_bbx(min, max), end = octomap->end_leafs_bbx();
+         it != end; ++it)
+    {
+      double side_length = it.getSize();
+      if (octomap->isNodeOccupied(*it))
+        // occupied leaf node
+        vol_occ += side_length * side_length * side_length;
+    }
+  }
+  return vol_occ;
+}
+
 void OnlineCoverage::publishPercentage()
 {
   _covered->toMaxLikelihood();
   _covered->prune();
 
-  // Use floats to make the division work later on
-  float octomap_leafs = float(_octomap->getNumLeafNodes());
-  float covered_leafs = float(_covered->getNumLeafNodes());
+  float covered_volume = calculateOccupiedVolume(_covered);
 
   drone_gazebo::Float64Stamped msg;
   msg.header.stamp = ros::Time::now();
-  msg.data = 100 * (covered_leafs / octomap_leafs);
+  msg.data = 100 * (covered_volume / _octomap_volume);
 
   _percentage_pub.publish(msg);
 }

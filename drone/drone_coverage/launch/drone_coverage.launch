@@ -2,8 +2,7 @@
 
 <launch>
 
-  <rosparam command="load" file="$(find drone_coverage)/params/sensor_config.yaml" />
-  <rosparam command="load" file="$(find drone_coverage)/params/hill_climbing_config.yaml" />
+  <rosparam command="load" file="$(find drone_coverage)/params/config.yaml" />
 
   <!-- Load an octomap in rviz -->
   <arg name="octomap" default="$(find drone)/../experiments/maps/corridor.ot"/>

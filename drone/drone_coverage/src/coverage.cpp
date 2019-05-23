@@ -26,23 +26,25 @@ Coverage::Coverage()
   _nh.param<double>("/z_pos", _init_pose[2], 0);
 
   // Get configurations
-  _nh.param<double>("/rfid/range", _rfid_range, 1);
-  _nh.param<double>("/rfid/hfov", _rfid_hfov, 60);
-  _nh.param<double>("/rfid/vfov", _rfid_vfov, 30);
-  _nh.param<double>("/rfid/direction/x", _rfid_direction_x, 1);
-  _nh.param<double>("/rfid/direction/y", _rfid_direction_y, 0);
-  _nh.param<double>("/rfid/direction/z", _rfid_direction_z, 0);
+  _nh.param<double>("/sensor/rfid/range", _rfid_range, 1);
+  _nh.param<double>("/sensor/rfid/hfov", _rfid_hfov, 60);
+  _nh.param<double>("/sensor/rfid/vfov", _rfid_vfov, 30);
+  _nh.param<double>("/sensor/rfid/direction/x", _rfid_direction_x, 1);
+  _nh.param<double>("/sensor/rfid/direction/y", _rfid_direction_y, 0);
+  _nh.param<double>("/sensor/rfid/direction/z", _rfid_direction_z, 0);
   _nh.param<double>("/uav/footprint_radius", _uav_radius, 0.4);
   _nh.param<double>("/uav/safety_offset", _uav_safety_offset, 0.3);
 
-  _nh.param<double>("/coverage/subsampling_step", _subsampling_step, 1);
+  //  _nh.param<double>("/coverage/subsampling_step", _subsampling_step, 1);
 
   // Adjust values
   _uav_safety_offset += _uav_radius;
+  // Convert to rads
   _rfid_hfov = (_rfid_hfov / 180.0) * M_PI;
   _rfid_vfov = (_rfid_vfov / 180.0) * M_PI;
 
   _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
+  _nh.param<double>("/coverage/step", _sampling_step, 0.5);
 
   while (!_octomap_loaded)
   {
@@ -80,7 +82,7 @@ Coverage::Coverage()
 
   // Find the covered surface of the waypoints left after post process
   std::string sensor_shape;
-  _nh.param<std::string>("/rfid/shape", sensor_shape, "orthogonal");
+  _nh.param<std::string>("/sensor/rfid/shape", sensor_shape, "orthogonal");
   if (sensor_shape == "orthogonal")
   {
     calculateOrthogonalCoverage();
@@ -112,11 +114,12 @@ Coverage::Coverage()
   _lift_points = revertTo6D(_xy_points, _xyzrpy_points, "lift");
 
   _slice_points = postprocessPath(_nh, _slice_points);
+  _lift_points = postprocessPath(_nh, _lift_points);
 
   // Publish sensor positions / waypoints
   publishWaypoints(_slice_points, "slice");
   publishWaypoints(_lift_points, "lift");
-  visualizeWaypoints(_slice_points);
+  visualizeWaypoints(_lift_points);
 
   double dt = (ros::WallTime::now() - startTime).toSec();
   ROS_INFO_STREAM("Coverage took " << dt << " seconds.");
@@ -444,14 +447,38 @@ float Coverage::evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* cove
   covered->toMaxLikelihood();
   covered->prune();
 
-  // Use floats to make the division work later on
-  float octomap_leafs = float(octomap->getNumLeafNodes());
-  float covered_leafs = float(covered->getNumLeafNodes());
-  ROS_INFO("[Number of leafs] total %f : covered %f\n", octomap_leafs, covered_leafs);
+  float octomap_volume = calculateOccupiedVolume(octomap);
+  ROS_INFO("octomap volume %f [m^3]\n", octomap_volume);
+  float covered_volume = calculateOccupiedVolume(covered);
+  ROS_INFO("covered volume %f [m^3]\n", covered_volume);
 
-  float percentage = 100 * (covered_leafs / octomap_leafs);
+  float percentage = 100 * (covered_volume / octomap_volume);
 
   return percentage;
+}
+
+float Coverage::calculateOccupiedVolume(octomap::OcTree* octomap)
+{
+  float vol_occ = 0;
+  double bbxMinX, bbxMinY, bbxMinZ, bbxMaxX, bbxMaxY, bbxMaxZ;
+  octomap->getMetricMax(bbxMaxX, bbxMaxY, bbxMaxZ);
+  octomap->getMetricMin(bbxMinX, bbxMinY, bbxMinZ);
+
+  octomap::point3d min(bbxMinX, bbxMinY, bbxMinZ);
+  octomap::point3d max(bbxMaxX, bbxMaxY, bbxMaxZ);
+
+  if (octomap)
+  {  // can be NULL
+    for (octomap::OcTree::leaf_bbx_iterator it = octomap->begin_leafs_bbx(min, max), end = octomap->end_leafs_bbx();
+         it != end; ++it)
+    {
+      double side_length = it.getSize();
+      if (octomap->isNodeOccupied(*it))
+        // occupied leaf node
+        vol_occ += side_length * side_length * side_length;
+    }
+  }
+  return vol_occ;
 }
 
 void Coverage::findNeighbors(int root)
@@ -669,29 +696,36 @@ std::vector<octomath::Pose6D> Coverage::postprocessPath(ros::NodeHandle nh, std:
   ROS_INFO("Post-processing path...\n");
   std::vector<octomath::Pose6D> output;
 
-  double step_xy;
-  nh.param<double>("/hill_climbing/goal", step_xy, 2);
+  double step_xy = _sampling_step;
+  double step_z = ceil(_rfid_range * tan(_rfid_vfov / 2));
 
   bool eliminate = false;
   for (int i = 0; i < points.size(); i++)
   {
     double x = points.at(i).x();
     double y = points.at(i).y();
+    double z = points.at(i).z();
     if (eliminate)
     {
       if (i == 0)
-        ;
+        ;  // Just add the first point
       else if (i == points.size() - 1)
-        ;
+        ;  // Just add the last point
       else
       {
         double x_previous = points.at(i - 1).x();
         double y_previous = points.at(i - 1).y();
+        double z_previous = points.at(i - 1).z();
         double x_next = points.at(i + 1).x();
         double y_next = points.at(i + 1).y();
+        double z_next = points.at(i + 1).z();
 
-        if ((fabs(x - x_previous) < step_xy && fabs(x - x_next) < step_xy && y == y_previous && y == y_next) ||
-            (fabs(y - y_previous) < step_xy && fabs(y - y_next) < step_xy && x == x_previous && x == x_next))
+        if ((fabs(x - x_previous) <= step_xy && fabs(x - x_next) <= step_xy && y == y_previous && y == y_next &&
+             z == z_previous && z == z_next) ||
+            (fabs(y - y_previous) <= step_xy && fabs(y - y_next) <= step_xy && x == x_previous && x == x_next &&
+             z == z_previous && z == z_next) ||
+            (fabs(z - z_previous) <= step_z && fabs(z - z_next) <= step_z && x == x_previous && x == x_next &&
+             y == y_previous && y == y_next))
         {
           eliminate = false;
           continue;
@@ -708,7 +742,7 @@ std::vector<octomath::Pose6D> Coverage::postprocessPath(ros::NodeHandle nh, std:
 
 double Coverage::proceedOneStep(double coord)
 {
-  return coord + _subsampling_step;
+  return coord + _sampling_step;
 }
 
 void Coverage::publishCoveredSurface()

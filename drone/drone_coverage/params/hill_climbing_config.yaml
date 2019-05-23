@@ -1,5 +1,0 @@
-# This is the default method
-hill_climbing:
-  iterations: 800
-  desired distance: 0.8 # 1.1 # min distance between points is 1
-  restarts: 10

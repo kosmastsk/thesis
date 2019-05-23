@@ -59,7 +59,7 @@ private:
   double _max_bounds[3];
   double _init_pose[3];
 
-  double _subsampling_step;
+  double _sampling_step;
 
   double _uav_radius;
   double _uav_safety_offset;
@@ -99,6 +99,7 @@ public:
   void calculateOrthogonalCoverage();
   void calculateCircularCoverage();
   float evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* covered);
+  float calculateOccupiedVolume(octomap::OcTree* octomap);
 
   void findNeighbors(int root);
   bool safeCheckFrom2D(octomap::point3d sensor_position);

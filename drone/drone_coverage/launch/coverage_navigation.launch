@@ -8,7 +8,7 @@
   <arg name="map" default="$(find drone)/../experiments/maps/corridor.ot"/>
 
   <!-- Parameters -->
-  <rosparam command="load" file="$(find drone_coverage)/params/sensor_config.yaml" />
+  <rosparam command="load" file="$(find drone_coverage)/params/config.yaml" />
 
   <include file="$(find drone_3d_nav)/launch/drone_3d_nav.launch">
     <arg name="map" value="$(arg map)"/>
