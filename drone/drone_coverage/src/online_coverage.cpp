@@ -189,6 +189,8 @@ float OnlineCoverage::calculateOccupiedVolume(octomap::ColorOcTree* octomap)
                                                  end = octomap->end_leafs_bbx();
          it != end; ++it)
     {
+      if (it.getCoordinate().z() < _min_obstacle_height)
+        continue;
       double side_length = it.getSize();
       if (octomap->isNodeOccupied(*it))
         // occupied leaf node
@@ -213,6 +215,8 @@ float OnlineCoverage::calculateOccupiedVolume(octomap::OcTree* octomap)
     for (octomap::OcTree::leaf_bbx_iterator it = octomap->begin_leafs_bbx(min, max), end = octomap->end_leafs_bbx();
          it != end; ++it)
     {
+      if (it.getCoordinate().z() < _min_obstacle_height)
+        continue;
       double side_length = it.getSize();
       if (octomap->isNodeOccupied(*it))
         // occupied leaf node
