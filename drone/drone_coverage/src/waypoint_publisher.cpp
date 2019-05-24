@@ -12,7 +12,10 @@ WaypointPublisher::WaypointPublisher()
 
   _goal_pub = _nh.advertise<geometry_msgs::TransformStamped>("/next_goal", 1);
   _vis_pub = _nh.advertise<visualization_msgs::Marker>("visualization_marker", 50);
-  // _vis_array_pub = _nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 1000);
+
+  _startTime = ros::WallTime::now();
+
+  _vis_array_pub = _nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 1000);
 }
 
 WaypointPublisher::~WaypointPublisher()
@@ -21,7 +24,7 @@ WaypointPublisher::~WaypointPublisher()
 
 void WaypointPublisher::waypointCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg)
 {
-  /* ************* VISUALIZATION OF ALL POINTS ******
+  /* ************* VISUALIZATION OF ALL POINTS ******/
   visualization_msgs::MarkerArray markerarray;
   for (std::size_t idx = 0; idx < msg->points.size(); idx++)
   {
@@ -48,7 +51,6 @@ void WaypointPublisher::waypointCallback(const trajectory_msgs::MultiDOFJointTra
     markerarray.markers.push_back(marker);
   }
   _vis_array_pub.publish(markerarray);
-*/
 
   // Save all the waypoints in a stack
   _number_of_waypoints = msg->points.size();
@@ -99,6 +101,9 @@ void WaypointPublisher::feedbackCallback(const std_msgs::BoolConstPtr& msg)
   }
   else if (_waypoints.empty())  // If no more waypoints exist, go back to the beginning
   {
+    double dt = (ros::WallTime::now() - _startTime).toSec();
+    ROS_INFO_STREAM("[Coverage] Full coverage took " << dt << " seconds.");
+
     geometry_msgs::TransformStamped next_goal;
     next_goal.header.stamp = ros::Time::now();
     next_goal.header.frame_id = "map";

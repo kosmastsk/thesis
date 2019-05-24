@@ -427,7 +427,7 @@ int main(int argc, char** argv)
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "map";
 
-  std::string type = "spiral_warehouse";
+  std::string type = "straight_line";
 
   if (type == "straight_line")
     msg.points = createStraightLine(3);

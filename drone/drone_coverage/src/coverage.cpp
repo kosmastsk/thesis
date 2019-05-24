@@ -444,6 +444,8 @@ void Coverage::calculateCircularCoverage()
 
 float Coverage::evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* covered)
 {
+  octomap->toMaxLikelihood();
+  octomap->prune();
   covered->toMaxLikelihood();
   covered->prune();
 
