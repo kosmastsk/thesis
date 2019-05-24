@@ -31,6 +31,7 @@ private:
   ros::Subscriber _pose_sub;
   ros::Publisher _covered_pub;
   ros::Publisher _percentage_pub;
+  ros::Publisher _volume_pub;
 
   // The pre-loaded octomap and the collection of 3d points
   octomap::OcTree* _octomap;

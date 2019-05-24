@@ -12,6 +12,7 @@ OnlineCoverage::OnlineCoverage()
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/octomap_covered", 1000);
   _percentage_pub = _nh.advertise<drone_gazebo::Float64Stamped>("/octomap_covered/percentage", 1000);
+  _volume_pub = _nh.advertise<drone_gazebo::Float64Stamped>("/octomap_covered/volume", 1000);
 
   _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
 
@@ -230,8 +231,10 @@ void OnlineCoverage::publishPercentage()
 
   drone_gazebo::Float64Stamped msg;
   msg.header.stamp = ros::Time::now();
-  msg.data = 100 * (covered_volume / _octomap_volume);
+  msg.data = covered_volume;
+  _volume_pub.publish(msg);
 
+  msg.data = 100 * (covered_volume / _octomap_volume);
   _percentage_pub.publish(msg);
 }
 
