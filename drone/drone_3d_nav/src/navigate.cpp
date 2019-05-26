@@ -264,8 +264,8 @@ bool Navigator::controlYaw(float current_goal_yaw, float pose_yaw)
     return true;
   else
   {
-    while (fabs(_error_yaw) > M_PI)
-      _error_yaw = _error_yaw - ((_error_yaw > 0) - (_error_yaw < 0)) * M_PI;
+    while (fabs(_error_yaw) >= M_PI)
+      _error_yaw = _error_yaw - ((_error_yaw > 0) - (_error_yaw < 0)) *2* M_PI;
 
     _proportional_yaw = _attitude_kp * _error_yaw;
     _integral_yaw = _attitude_ki * (_integral_yaw + _error_yaw * _dt);

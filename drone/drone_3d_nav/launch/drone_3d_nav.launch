@@ -20,6 +20,7 @@
   <arg name="map" default="$(find drone)/../experiments/maps/warehouse.ot"/>
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen" args="$(arg map)">
     <param name="frame_id" value="map" />
+    <param name="occupancy_min_z" value="0.05" />
   </node>
 
   <!-- Provide odometry from cmd_vel topic -->
@@ -36,6 +37,6 @@
 
   <!-- VISUALIZATION -->
   <!-- Launch Rviz with pre loaded configuration-->
-  <node name="rviz" type="rviz" pkg="rviz" args="-d $(find drone_3d_nav)/navigation.rviz" />  
+  <node name="rviz" type="rviz" pkg="rviz" args="-d $(find drone_3d_nav)/navigation.rviz" /> 
 
 </launch>

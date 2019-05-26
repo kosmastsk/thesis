@@ -64,7 +64,7 @@ Coverage::Coverage()
   // We can start in the beginning of the bounds plus the safety distance of the drone
   _init_pose[0] = _min_bounds[0] + _uav_safety_offset;
   _init_pose[1] = _min_bounds[1] + _uav_safety_offset;
-  _init_pose[2] = _min_bounds[2] + _min_obstacle_height + _rfid_range * tan(_rfid_vfov / 2);
+  _init_pose[2] = _min_bounds[2] + _min_obstacle_height + _rfid_range * tan(_rfid_vfov / 2) / 2;
 
   // Reset some variables that will be filled later
   _covered = new octomap::OcTree(_octomap_resolution);
