@@ -161,8 +161,6 @@ void OnlineCoverage::calculateCircularCoverage(const geometry_msgs::Pose pose)
 
 void OnlineCoverage::publishCoveredSurface()
 {
-  _covered->toMaxLikelihood();
-  _covered->prune();
   octomap_msgs::Octomap msg;
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "map";
@@ -215,12 +213,39 @@ float OnlineCoverage::calculateOccupiedVolume(octomap::OcTree* octomap)
     for (octomap::OcTree::leaf_bbx_iterator it = octomap->begin_leafs_bbx(min, max), end = octomap->end_leafs_bbx();
          it != end; ++it)
     {
-      if (it.getCoordinate().z() < _min_obstacle_height)
+      bool exclude = 0;  // variable to be set if a node should not be included in volume estimation
+
+      if (it.getCoordinate().z() < _min_obstacle_height || it.getCoordinate().z() > _max_obstacle_height)
         continue;
-      double side_length = it.getSize();
+
       if (octomap->isNodeOccupied(*it))
-        // occupied leaf node
-        vol_occ += side_length * side_length * side_length;
+      // occupied leaf node
+      {
+        // i: 0 checking for x-axis neighbors
+        // i: 1 checking for y-axis neighbors
+        // [1] -> [2]] -> [3] ---> if all nodes are occupied it is probably an obstacle
+        // if the [3] is unknown, it is probably noise from the octomap
+        octomap::OcTreeKey key = it.getKey();
+        for (int i = 0; i <= 1; i++)
+        {
+          octomap::OcTreeKey first_neighbor_key = key;
+          first_neighbor_key[i] += 1;
+          octomap::OcTreeNode* first_node = octomap->search(first_neighbor_key);
+          if (first_node != NULL && octomap->isNodeOccupied(first_node))
+          {
+            octomap::OcTreeKey second_neighbor_key = key;
+            second_neighbor_key[i] += 2;
+            octomap::OcTreeNode* second_node = octomap->search(second_neighbor_key);
+            if (second_node == NULL)
+            {
+              exclude = 1;
+              break;
+            }
+          }
+        }
+        if (!exclude)
+          vol_occ += it.getSize() * it.getSize() * it.getSize();
+      }
     }
   }
   return vol_occ;
@@ -228,9 +253,6 @@ float OnlineCoverage::calculateOccupiedVolume(octomap::OcTree* octomap)
 
 void OnlineCoverage::publishPercentage()
 {
-  _covered->toMaxLikelihood();
-  _covered->prune();
-
   float covered_volume = calculateOccupiedVolume(_covered);
 
   drone_gazebo::Float64Stamped msg;

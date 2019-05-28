@@ -44,6 +44,7 @@ Coverage::Coverage()
   _rfid_vfov = (_rfid_vfov / 180.0) * M_PI;
 
   _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
+  _nh.param<double>("/world/max_obstacle_height", _max_obstacle_height, 2.0);
   _nh.param<double>("/coverage/step", _sampling_step, 0.5);
 
   while (!_octomap_loaded)
@@ -388,7 +389,7 @@ void Coverage::calculateOrthogonalCoverage()
                                              wall_point, true, _rfid_range);
 
         // Ground elimination
-        if (wall_point.z() < _min_obstacle_height)
+        if (wall_point.z() < _min_obstacle_height || wall_point.z() > _max_obstacle_height)
           continue;
 
         if (ray_success)
@@ -429,7 +430,7 @@ void Coverage::calculateCircularCoverage()
           continue;
 
         // Ground elimination
-        if (wall_point.z() < _min_obstacle_height)
+        if (wall_point.z() < _min_obstacle_height || wall_point.z() > _max_obstacle_height)
           continue;
 
         if (ray_success)
@@ -444,11 +445,6 @@ void Coverage::calculateCircularCoverage()
 
 float Coverage::evaluateCoverage(octomap::OcTree* octomap, octomap::OcTree* covered)
 {
-  octomap->toMaxLikelihood();
-  octomap->prune();
-  covered->toMaxLikelihood();
-  covered->prune();
-
   float octomap_volume = calculateOccupiedVolume(octomap);
   ROS_INFO("octomap volume %f [m^3]\n", octomap_volume);
   float covered_volume = calculateOccupiedVolume(covered);
@@ -474,12 +470,39 @@ float Coverage::calculateOccupiedVolume(octomap::OcTree* octomap)
     for (octomap::OcTree::leaf_bbx_iterator it = octomap->begin_leafs_bbx(min, max), end = octomap->end_leafs_bbx();
          it != end; ++it)
     {
-      if (it.getCoordinate().z() < _min_obstacle_height)
+      bool exclude = 0;  // variable to be set if a node should not be included in volume estimation
+
+      if (it.getCoordinate().z() < _min_obstacle_height || it.getCoordinate().z() > _max_obstacle_height)
         continue;
-      double side_length = it.getSize();
+
       if (octomap->isNodeOccupied(*it))
-        // occupied leaf node
-        vol_occ += side_length * side_length * side_length;
+      // occupied leaf node
+      {
+        // i: 0 checking for x-axis neighbors
+        // i: 1 checking for y-axis neighbors
+        // [1] -> [2]] -> [3] ---> if all nodes are occupied it is probably an obstacle
+        // if the [3] is unknown, it is probably noise from the octomap
+        octomap::OcTreeKey key = it.getKey();
+        for (int i = 0; i <= 1; i++)
+        {
+          octomap::OcTreeKey first_neighbor_key = key;
+          first_neighbor_key[i] += 1;
+          octomap::OcTreeNode* first_node = octomap->search(first_neighbor_key);
+          if (first_node != NULL && octomap->isNodeOccupied(first_node))
+          {
+            octomap::OcTreeKey second_neighbor_key = key;
+            second_neighbor_key[i] += 2;
+            octomap::OcTreeNode* second_node = octomap->search(second_neighbor_key);
+            if (second_node == NULL)
+            {
+              exclude = 1;
+              break;
+            }
+          }
+        }
+        if (!exclude)
+          vol_occ += it.getSize() * it.getSize() * it.getSize();
+      }
     }
   }
   return vol_occ;

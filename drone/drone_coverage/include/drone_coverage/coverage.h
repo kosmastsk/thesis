@@ -73,6 +73,7 @@ private:
   double _rfid_direction_z;
 
   double _min_obstacle_height;
+  double _max_obstacle_height;
 
   octomap::point3d _sensor_position;
 
