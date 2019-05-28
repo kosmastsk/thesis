@@ -1,12 +1,12 @@
-# python plot.py
+# python evaluate_localization.py
 
 # INSTRUCTIONS
 # You need a rosbag that contains the recording of /amcl_pose and /ground_truth/state topics
 # Convert this rosbag to 2 different csv files using:
-# rostopic echo -b file.bag -p /topic > filename.csv
-# to run the script just run: python amcl_vs_ground_truth.py
+# create_csv /path/to/rosbag/filename (without extension)
+# to run the script just run: python evaluate_localization.py <truth>.csv <amcl>.csv
 # Always adjust the paths to your files and folders
-# Don't forget to run chmod +x amcl_vs_ground_truth.py before
+# Don't forget to run chmod +x evaluate_localization.py before
 
 import sys
 import os
@@ -205,7 +205,7 @@ def plot(amcl, truth):
         linestyle='solid',
         label="Ground truth")
     plt.legend()
-    plt.axis([None, None, -1.57, 1.57])
+    plt.axis([None, None, None, None])
     plt.xlabel('time (seconds)')
     plt.ylabel('yaw')
     plt.title('Orientation')
@@ -339,7 +339,9 @@ def main():
         position.to_csv(f, header=False)
 
     # print orientation.head()
-    with open(path + '/orientation.csv', 'a') as f:
+    with open(
+            path + '/orientation' + '_' + world + '_' + speed + '_' + movement
+            + '.csv', 'a') as f:
         orientation.to_csv(f, header=False)
 
     plot(amcl, truth)
