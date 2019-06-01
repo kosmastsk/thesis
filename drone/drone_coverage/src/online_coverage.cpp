@@ -15,6 +15,7 @@ OnlineCoverage::OnlineCoverage()
   _volume_pub = _nh.advertise<drone_gazebo::Float64Stamped>("/octomap_covered/volume", 1000);
 
   _nh.param<double>("/world/min_obstacle_height", _min_obstacle_height, 0.3);
+  _nh.param<double>("/world/max_obstacle_height", _max_obstacle_height, 2.0);
 
   // Get configurations
   _nh.param<double>("/sensor/rfid/range", _rfid_range, 1);
@@ -107,7 +108,7 @@ void OnlineCoverage::calculateOrthogonalCoverage(const geometry_msgs::Pose pose)
       if (_octomap->castRay(position, direction.rotate_IP(0, vertical, horizontal), wall_point, true, _rfid_range))
       {
         // Ground elimination
-        if (wall_point.z() < _min_obstacle_height)
+        if (wall_point.z() < _min_obstacle_height || wall_point.z() > _max_obstacle_height)
           continue;
 
         if (_covered->insertRay(position, wall_point, _rfid_range))
@@ -141,7 +142,7 @@ void OnlineCoverage::calculateCircularCoverage(const geometry_msgs::Pose pose)
       if (_octomap->castRay(position, direction.rotate_IP(0, vertical, horizontal), wall_point, true, _rfid_range))
       {
         // Ground elimination
-        if (wall_point.z() < _min_obstacle_height)
+        if (wall_point.z() < _min_obstacle_height || wall_point.z() > _max_obstacle_height)
           continue;
 
         // Make the coverage circular, cut the points that are larger than the range==radius
@@ -187,12 +188,12 @@ float OnlineCoverage::calculateOccupiedVolume(octomap::ColorOcTree* octomap)
                                                  end = octomap->end_leafs_bbx();
          it != end; ++it)
     {
-      if (it.getCoordinate().z() < _min_obstacle_height)
+      if (it.getCoordinate().z() < _min_obstacle_height || it.getCoordinate().z() > _max_obstacle_height)
         continue;
-      double side_length = it.getSize();
+
       if (octomap->isNodeOccupied(*it))
         // occupied leaf node
-        vol_occ += side_length * side_length * side_length;
+        vol_occ += it.getSize() * it.getSize() * it.getSize();
     }
   }
   return vol_occ;

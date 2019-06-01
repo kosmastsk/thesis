@@ -60,6 +60,19 @@ void WaypointPublisher::waypointCallback(const trajectory_msgs::MultiDOFJointTra
     _waypoints.pop();
   }
 
+  // First send the drone in a small height
+  geometry_msgs::Transform transform;
+
+  // Point #1
+  transform.translation.x = -1.40;
+  transform.translation.y = -0.75;
+  transform.translation.z = 0.5;
+  transform.rotation.x = 0;
+  transform.rotation.y = 0;
+  transform.rotation.z = 0;
+  transform.rotation.w = 1;
+  _waypoints.push(transform);
+
   ROS_INFO("[Coverage Waypoint publisher] %d coverage waypoints received\n", _number_of_waypoints);
   for (unsigned int i = 0; i < _number_of_waypoints; i++)
   {

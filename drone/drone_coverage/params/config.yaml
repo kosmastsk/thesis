@@ -15,7 +15,7 @@ sensor:
 ##### UAV #####
 uav:
   footprint_radius: 0.4 # in metres
-  safety_offset: 0.10 # in metres
+  safety_offset: 0.15 # in metres
 
 ##### Environment #####
 world:
@@ -25,7 +25,7 @@ world:
 ##### Coverage method #####
 coverage:
   method: slice # OR lift # Method for reverting to 6D points again
-  step: 0.75 # sampling step (in metres)
+  step: 0.80 # sampling step (in metres)
 
 ##### Hill Climbing #####
 hill_climbing:
