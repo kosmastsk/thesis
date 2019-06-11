@@ -1,0 +1,39 @@
+\chapter{Πειράματα - Αποτελέσματα}
+\label{chapter:experiments}
+
+Τα πειράματα χωρίζονται σε δύο φάσεις. Η πρώτη αφορά το σύστημα εντοπισμού θέσης και η δεύτερη το σύστημα πλήρους κάλυψης χώρου από το drone. Για την εκτέλεση των πειραμάτων χρησιμοποιήθηκε υπολογιστής με τα παρακάτω χαρακτηριστικά:
+\begin{table}[H]
+    \begin{center}
+        \small
+        \caption{Χαρακτηριστικά συστήματος που χρησιμοποιήθηκε για την εκτέλεση των πειραμάτων}
+        \label{tab:pc_specs}
+        \begin{tabular}{| c | c | c | c |}
+        \hline
+        \rowcolor{Gray}
+        Επεξεργαστής & Κάρτα Γραφικών & Μνήμη RAM & Λειτουργικό Σύστημα \\
+        Intel® Core™ i7-7500 & Intel® HD Graphics 620 & 8 GB & Ubuntu 16.04 64bit\\
+        \hline
+        \end{tabular}
+    \end{center}
+\end{table}
+
+Οι εκδόσεις των βιβλιοθηκών και εργαλείων που χρησιμοποιήθηκαν είναι:
+\begin{table}[H]
+    \begin{center}
+        \caption{Εκδόσεις βιβλιοθηκών και εργαλείων που χρησιμοποιήθηκαν}
+        \label{tab:tools_versions}
+        \begin{tabular}{| c | c | c | c |}
+        \hline
+        \rowcolor{Gray}
+        ROS & Gazebo & OctoMap & OMPL \\
+        Kinetic & 7.0.0 & 1.8.1 & 1.2.1 \\
+        \hline
+        \end{tabular}
+    \end{center}
+\end{table}
+
+Για την εκτέλεση των πειραμάτων, τα δεδομένα που απαιτούνται για την εξαγωγή αποτελεσμάτων αποθηκεύτηκαν σε αρχεία rosbag\footnote{\href{http://wiki.ros.org/rosbag}{http://wiki.ros.org/rosbag}}. Στη συνέχεια, έγινε εξαγωγή τους σε αρχεία μορφής \emph{.csv} και χρησιμοποιήθηκε κώδικας σε Python για τον υπολογισμό μετρικών και τη δημιουργία διαγραμμάτων.
+
+\input{./chapters/chapter6/section1_localization.tex}
+\newpage
+\input{./chapters/chapter6/section2_coverage.tex}

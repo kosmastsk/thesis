@@ -27,6 +27,9 @@
 % Ελληνικό Hyphenation, αφαιρέστε το αν δεν έχετε εγκατεστημένο το xgreek.
 \usepackage{xgreek}
 
+% Πακέτο για την εισαγωγή συμβόλων του SI
+\usepackage{siunitx}
+
 % Γραμματοσειρά
 %\setmainfont[Mapping=tex-text]{DejaVu Sans}
 %\setmainfont[Mapping=tex-text]{GFS Didot}
@@ -118,7 +121,7 @@
 
 
 
-\usepackage[xetex, colorlinks=true, pdfborder={0 0 0}, urlcolor=cyan, linkcolor=blue, citecolor=red]{hyperref}
+\usepackage[xetex, colorlinks=true, pdfborder={0 0 0}, urlcolor=royalblue(web), linkcolor=blue, citecolor=red]{hyperref}
 \def\chapterautorefname{κεφάλαιο}
 \def\sectionautorefname{υποκεφάλαιο}
 \def\subsectionautorefname{ενότητα}
@@ -127,7 +130,7 @@
 \def\AMSautorefname{εξίσωση}
 \def\tableautorefname{πίνακα}
 \def\figureautorefname{σχήμα}
-\def\algorithmautorefname{αλγόριθμος}
+\def\algorithmautorefname{αλγόριθμο}
 
 
 \usepackage{fancyhdr}
@@ -136,7 +139,7 @@
 \renewcommand{\footrulewidth}{0.4pt}
 \renewcommand{\headsep}{15pt}
 \fancyfoot[LO,RE]{Τσιάκας Κ.}
-\fancyfoot[CO,CE]{\small{Εύρεση θέσης drone σε γνωστό χώρο}}
+    \fancyfoot[CO,CE]{\small{Εντοπισμός θέσης drone σε γνωστό 3D χάρτη με χρήση \\αισθητήρων απόστασης \& πλήρης κάλυψη του χώρου}}
 \fancyfoot[RO, LE] {\thepage}
 
 \usepackage{tikz}
@@ -182,6 +185,8 @@
 
 \renewcommand{\figurename}{Σχήμα}
 
+\algdef{SE}[DOWHILE]{Do}{doWhile}{\algorithmicdo}[1]{\algorithmicwhile\ #1}%
+
 \usepackage{ragged2e}
 \usepackage{csquotes}
 %\usepackage{algorithmicx}
@@ -198,7 +203,7 @@
 \usepackage{color, colortbl}
 %\definecolor{name}{system}{definition}
 \definecolor{Gray}{gray}{0.9}
-\definecolor{LightCyan}{rgb}{0.88,1,1}
+\definecolor{royalblue(web)}{rgb}{0.25, 0.41, 0.88}
 \definecolor{Orange}{rgb}{1,0.5,0}
 
 \usepackage{multirow}

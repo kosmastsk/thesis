@@ -1,0 +1,27 @@
+\chapter{Υλοποιήσεις}
+\label{chapter:implementations}
+
+Ο στόχος της παρούσας διπλωματικής εργασίας είναι η δημιουργία ενός συστήματος που θα είναι ικανό να εντοπίζει την θέση ενός drone σε γνωστό τρισδιάστατο χάρτη και να δημιουργεί κατάλληλα και ασφαλή μονοπάτια ώστε να καλυφθεί κάθε σημείο αυτού. Επομένως, είναι απαραίτητο να έχουμε εκ των προτέρων διαθέσιμο τον εκάστοτε τρισδιάστατο χάρτη του περιβάλλοντος. Προτιμήθηκε η μορφή OctoMap, καθώς περιέχει σημαντικές δυνατότητες που διευκολύνουν την διαδικασία του localization.
+
+Σε όλες τις υλοποιήσεις χρησιμοποιήθηκε το drone που φαίνεται στο \autoref{fig:drone}.
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{./images/chapter5/drone.png}
+    \caption{Το μοντέλο του drone που χρησιμοποιήθηκε} 
+    \label{fig:drone}
+\end{figure}
+
+Το Quadcopter αυτό αποτελείται από τα παρακάτω τμήματα:
+\begin{itemize}
+        \item {Έναν αισθητήρα TeraRanger Tower\footnote{\href{https://www.terabee.com/shop/lidar-tof-multi-directional-arrays/teraranger-tower/}{https://www.terabee.com/shop/lidar-tof-multi-directional-arrays/teraranger-tower/}} που προσφέρει 8 ακτίνες laser περιμετρικά με εμβέλεια 14 μέτρων}
+    \item{Έναν αισθητήρα laser για τον υπολογισμό του ύψους στο οποίο βρίσκεται το drone}
+    \item{Έναν αισθητήρα IMU}
+\end{itemize}
+
+Στο πρώτο μέρος του συγκεκριμένου κεφαλαίου θα περιγραφεί ο αλγόριθμος Monte Carlo Localization, ο οποίος υλοποιήθηκε για τον εντοπισμό της θέσης του drone σε τρισδιάστατο περιβάλλον μορφής OctoMap. Στο δεύτερο μέρος θα αναλυθεί ο τρόπος υπολογισμού των σημείων που οδηγούν στην πλήρη κάλυψη του χώρου και η ένωση αυτών με ευριστικούς αλγορίθμους.
+
+\input{./chapters/chapter5/section1_localization_impl.tex}
+\input{./chapters/chapter5/section2_coverage_impl.tex}
+
+
