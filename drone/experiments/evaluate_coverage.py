@@ -17,14 +17,12 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.pylab as pylab
 
-# Volume of the whole environment that is already known before
-volume = 5.068943
-
 # Initialize
 path = '/home'
 type = 'narrow'
 method = 'slice'
 world = 'corridor'
+volume = 1
 
 
 def plot(percentage):
@@ -81,6 +79,12 @@ def main():
     world = path_list[-4]
 
     path = os.path.dirname(path)
+
+    global volume
+    if world == "corridor":
+        volume = 3.221308
+    elif world == "warehouse":
+        volume = 10.146877
 
     # Convert time stamps to float and then to seconds from nsecs
     coverage['field.header.stamp'] = pd.to_numeric(
