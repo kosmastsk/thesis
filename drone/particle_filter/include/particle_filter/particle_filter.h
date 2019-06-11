@@ -66,6 +66,8 @@ protected:
   int _numParticles;
 
   // Pub - Sub
+  ros::Subscriber _truth_sub;
+
   message_filters::Subscriber<sensor_msgs::LaserScan>* _scanListener;
   tf2_ros::MessageFilter<sensor_msgs::LaserScan>* _scanFilter;
 
@@ -80,6 +82,7 @@ protected:
 
   ros::ServiceServer _globalLocalizationService;
   ros::ServiceServer _initPoseService;
+  ros::ServiceServer _repairPoseService;
 
   // Frames
   std::string _mapFrameID;
@@ -96,6 +99,7 @@ protected:
   // Pose
   geometry_msgs::PoseArray _poseArray;
   geometry_msgs::Pose _lastLocalizedPose;
+  geometry_msgs::PoseWithCovarianceStamped _true_pose;
 
   // Useful variables
   bool _initialized;
@@ -120,8 +124,6 @@ protected:
   int _percentage_of_particles;
 
   // Functions
-  void reset();
-
   void publishPoseEstimate(const ros::Time& t);
   void prepareLaserPointCloud(const sensor_msgs::LaserScanConstPtr& scan, pcl::PointCloud<pcl::PointXYZ>& pc,
                               std::vector<float>& ranges) const;
@@ -130,10 +132,12 @@ protected:
 
   // Callbacks
   void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
+  void truePoseCallback(const nav_msgs::OdometryConstPtr& msg);
   void latestTransformTimerCallback(const ros::TimerEvent& timer_event);
   void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
   bool globalLocalizationCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
   bool initialPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
+  bool repairPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
 
 public:
   Particles();

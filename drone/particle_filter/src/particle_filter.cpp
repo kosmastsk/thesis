@@ -71,10 +71,14 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   _init_pose_pub = _nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/amcl/initial_pose", 10);
 
   // ROS subscriptions last:
+  _truth_sub = _nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 1, &Particles::truePoseCallback, this);
+
   _globalLocalizationService =
       _nh.advertiseService("/global_localization", &Particles::globalLocalizationCallback, this);
 
   _initPoseService = _nh.advertiseService("/initialize_pose", &Particles::initialPoseSrvCallback, this);
+
+  _repairPoseService = _nh.advertiseService("/repair_pose", &Particles::repairPoseSrvCallback, this);
 
   // Timer for sending the latest transform
   _latestTransformTimer =
@@ -100,10 +104,6 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
   ROS_INFO("Particle filter created with %d particles!\n", _pf->numParticles());
-
-  // FIXME it blocks the services and cannot continue
-  // Only calling the service using the terminal works
-  // reset();
 }
 
 /******************************/
@@ -117,38 +117,6 @@ Particles::~Particles()
   delete _initialPoseFilter;
   delete _initialPoseListener;
   ROS_INFO("Particles object destroyed");
-}
-
-/******************************/
-/*           reset            */
-/******************************/
-
-void Particles::reset()
-{
-  bool provide_pose;
-  _nh.param<bool>("/provide_initial_pose", provide_pose, 1);
-
-  std_srvs::Empty::Request req = std_srvs::Empty::Request();
-  std_srvs::Empty::Response res = std_srvs::Empty::Response();
-
-  if (provide_pose)
-  {
-    ROS_INFO("Waiting for /initial_pose service to be advertised\n");
-    // wait until the node is shutdown
-    if (ros::service::waitForService("/initialize_pose", 100))
-    {
-      ros::service::call("/initialize_pose", req, res);
-    }
-  }
-  else
-  {
-    ROS_INFO("Waiting for /global_localization service to be advertised\n");
-    // wait until the node is shutdown
-    if (ros::service::waitForService("/global_localization", 10000))
-    {
-      ros::service::call("/global_localization", req, res);
-    }
-  }
 }
 
 /******************************/
@@ -360,6 +328,25 @@ bool Particles::initialPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::
   _init_pose_pub.publish(init_pose);
 
   return true;
+}
+
+/******************************/
+/*   repairPoseSrvCallback    */
+/******************************/
+
+bool Particles::repairPoseSrvCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+{
+  ROS_INFO("Repairing pose...\n");
+
+  _init_pose_pub.publish(_true_pose);
+
+  return true;
+}
+
+void Particles::truePoseCallback(const nav_msgs::OdometryConstPtr& msg)
+{
+  _true_pose.header = msg->header;
+  _true_pose.pose = msg->pose;
 }
 
 /******************************/
