@@ -34,8 +34,7 @@ private:
   ros::Subscriber _ogm_sub;
   ros::Publisher _covered_pub;
   ros::Publisher _vis_pub;
-  ros::Publisher _waypoints_pub_slice;
-  ros::Publisher _waypoints_pub_lift;
+  ros::Publisher _waypoints_pub;
 
   // The pre-loaded octomap and the collection of 3d points
   octomap::OcTree* _octomap;
@@ -47,9 +46,6 @@ private:
 
   // Keep all points in a vector
   std::vector<octomath::Pose6D> _points;
-
-  std::vector<octomath::Pose6D> _slice_points;
-  std::vector<octomath::Pose6D> _lift_points;
 
   typedef std::pair<double, double> Point_xy;
   std::vector<Point_xy> _xy_points;

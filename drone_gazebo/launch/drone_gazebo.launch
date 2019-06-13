@@ -42,8 +42,7 @@
     <param name="force_tf_refresh" value="False"/>
   </node>
 
-  <!-- Height estimation node -->
-  <!-- Use this to estimate the current height of the UAV -->
-  <node name="estimator" type="estimator" pkg="drone_gazebo" />
+  <!-- Use this to measure the current height of the UAV -->
+  <node name="height_receiver" type="height_receiver" pkg="drone_gazebo" />
 
 </launch>

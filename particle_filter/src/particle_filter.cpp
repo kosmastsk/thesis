@@ -71,8 +71,6 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   _init_pose_pub = _nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/amcl/initial_pose", 10);
 
   // ROS subscriptions last:
-  _truth_sub = _nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 1, &Particles::truePoseCallback, this);
-
   _globalLocalizationService =
       _nh.advertiseService("/global_localization", &Particles::globalLocalizationCallback, this);
 
@@ -83,6 +81,9 @@ Particles::Particles() : _tfBuffer(ros::Duration(10), false)
   // Timer for sending the latest transform
   _latestTransformTimer =
       _nh.createTimer(ros::Duration(_transformTolerance), &Particles::latestTransformTimerCallback, this);
+
+  // subscribe to the ground_truth for repair pose service
+  _truth_sub = _nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 1, &Particles::truePoseCallback, this);
 
   // subscription on laser, tf message filter
   _scanListener = new message_filters::Subscriber<sensor_msgs::LaserScan>(_nh, "/scan", 100);

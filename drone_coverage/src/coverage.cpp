@@ -17,8 +17,7 @@ Coverage::Coverage()
 
   _covered_pub = _nh.advertise<octomap_msgs::Octomap>("/covered_surface", 1);
   _vis_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1000);
-  _waypoints_pub_slice = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/coverage/waypoints/slice", 1000);
-  _waypoints_pub_lift = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/coverage/waypoints/lift", 1000);
+  _waypoints_pub = _nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/coverage/waypoints", 1000);
 
   // Get initial positions from the Parameter Server
   _nh.param<double>("/x_pos", _init_pose[0], 0);
@@ -85,13 +84,9 @@ Coverage::Coverage()
   std::string sensor_shape;
   _nh.param<std::string>("/sensor/rfid/shape", sensor_shape, "orthogonal");
   if (sensor_shape == "orthogonal")
-  {
     calculateOrthogonalCoverage();
-  }
   else
-  {
     calculateCircularCoverage();
-  }
 
   // Find the covered surface of the waypoints left after post process
   ROS_INFO("%f%% of the surface will be covered\n", evaluateCoverage(_octomap, _covered));
@@ -111,16 +106,14 @@ Coverage::Coverage()
   std::string method;
   _nh.param<std::string>("/coverage/method", method, "lift");
 
-  _slice_points = revertTo6D(_xy_points, _xyzrpy_points, "slice");
-  _lift_points = revertTo6D(_xy_points, _xyzrpy_points, "lift");
+  _points = revertTo6D(_xy_points, _xyzrpy_points, method);
 
-  _slice_points = postprocessPath(_nh, _slice_points);
-  _lift_points = postprocessPath(_nh, _lift_points);
+  _points = postprocessPath(_nh, _points);
 
   // Publish sensor positions / waypoints
-  publishWaypoints(_slice_points, "slice");
-  publishWaypoints(_lift_points, "lift");
-  visualizeWaypoints(_lift_points);
+  publishWaypoints(_points, method);
+
+  visualizeWaypoints(_points);
 
   double dt = (ros::WallTime::now() - startTime).toSec();
   ROS_INFO_STREAM("Coverage took " << dt << " seconds.");
@@ -315,8 +308,6 @@ void Coverage::removeNonVisibleWaypoints()
     // How many nodes have been undiscovered
     undiscovered_nodes = std::count(_discovered_nodes.begin(), _discovered_nodes.end(), 0);
 
-    // We are satisfied with the number of nodes discoveres, so continue with the rest of the coverage utilities
-
     // If more than 90% of the nodes are undiscovered, restart the process
     if (undiscovered_nodes > 0.90 * _points.size())
       std::fill(_discovered_nodes.begin(), _discovered_nodes.end(), false);  // Revert the discovered nodes
@@ -328,9 +319,7 @@ void Coverage::removeNonVisibleWaypoints()
   for (int i = 0; i < _points.size(); i++)
   {
     if (_discovered_nodes.at(i) == 1)
-    {
       final_points.push_back(_points.at(i));
-    }
   }
 
   // Make sure the size of the final points is positive, Otherwise something is wrong
@@ -478,10 +467,10 @@ float Coverage::calculateOccupiedVolume(octomap::OcTree* octomap)
       if (octomap->isNodeOccupied(*it))
       // occupied leaf node
       {
-        // i: 0 checking for x-axis neighbors
-        // i: 1 checking for y-axis neighbors
-        // [1] -> [2]] -> [3] ---> if all nodes are occupied it is probably an obstacle
-        // if the [3] is unknown, it is probably noise from the octomap
+        // i == 0: checking for x-axis neighbors
+        // i == 1: checking for y-axis neighbors
+        // [1] -> [2] -> [3] ---> if all nodes are occupied it is probably an obstacle
+        // if the [3] is unknown, [1] or [2] is probably noise from the mapping process
         octomap::OcTreeKey key = it.getKey();
         for (int i = 0; i <= 1; i++)
         {
@@ -849,10 +838,7 @@ void Coverage::publishWaypoints(std::vector<octomath::Pose6D> points, std::strin
     msg.points[i].transforms[0].rotation.z = points.at(i).rot().z();
     msg.points[i].transforms[0].rotation.w = points.at(i).rot().u();
   }
-  if (method == "lift")
-    _waypoints_pub_lift.publish(msg);
-  else
-    _waypoints_pub_slice.publish(msg);
+  _waypoints_pub.publish(msg);
 }
 
 }  // namespace drone_coverage

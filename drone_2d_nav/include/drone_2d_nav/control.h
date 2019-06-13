@@ -11,6 +11,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Float64.h"
+#include "drone_gazebo/Float64Stamped.h"
 
 namespace control
 {
@@ -26,7 +27,7 @@ private:
   float _zLinear;
 
   // Callbacks
-  void heightCallback(const std_msgs::Float64::ConstPtr& msg);
+  void heightCallback(const drone_gazebo::Float64Stamped::ConstPtr& msg);
   void moveBaseCallback(const geometry_msgs::Twist::ConstPtr& msg);
 
 public:

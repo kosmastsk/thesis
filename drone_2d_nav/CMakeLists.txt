@@ -12,9 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   tf
+  drone_gazebo
 )
-
-
 
 ###################################
 ## catkin specific configuration ##
@@ -34,11 +33,20 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(control
-  src/control_node.cpp
-  src/control.cpp)
-target_link_libraries(control ${catkin_LIBRARIES})
-add_dependencies(control ${catkin_EXPORTED_TARGETS})
+# Coverage library
+add_library(control
+  src/control.cpp
+)
+target_link_libraries(control
+  ${catkin_LIBRARIES}
+)
+
+add_executable(control_node
+  src/control_node.cpp)
+target_link_libraries(control_node
+  ${catkin_LIBRARIES}
+  control
+)
 
 add_executable(error_detector
   src/error_detector.cpp)
@@ -51,11 +59,3 @@ add_executable(vel_to_odom
   src/velocity_to_odom.cpp)
 target_link_libraries(vel_to_odom ${catkin_LIBRARIES})
 add_dependencies(vel_to_odom ${catkin_EXPORTED_TARGETS})
-
-#############
-## Install ##
-#############
-
-#############
-## Testing ##
-#############

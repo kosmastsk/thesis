@@ -52,8 +52,8 @@ def plot(percentage):
         'Percentage of area covered : ' + world.capitalize() + ', ' + type +
         ' RFID type, ' + method,
         size=20)
-    plt.savefig(path + '/' + world + '_' + type + '_' + method + '.png')
-    # plt.show()
+    # plt.savefig(path + '/' + world + '_' + type + '_' + method + '.png')
+    plt.show()
 
 
 def main():

@@ -432,21 +432,13 @@ int main(int argc, char** argv)
   if (type == "straight_line")
     msg.points = createStraightLine(3);
   else if (type == "spiral")
-  {
     msg.points = createSpiral(25);
-  }
   else if (type == "meander")
-  {
     msg.points = createMeander(10);
-  }
   else if (type == "spiral_warehouse")
-  {
     msg.points = createSpiralForWarehouse(25);
-  }
   else if (type == "meander_warehouse")
-  {
     msg.points = createMeanderForWarehouse(10);
-  }
 
   trajectory_pub.publish(msg);
 

@@ -29,7 +29,9 @@
  */
 
 // Author: Kevin Watts
-// Taken from: https://github.com/AlessioTonioni/Autonomous-Flight-ROS
+// ---
+// Edited by: Kosmas Tsiakas
+// Original source: https://github.com/AlessioTonioni/Autonomous-Flight-ROS
 
 #include <termios.h>
 #include <signal.h>

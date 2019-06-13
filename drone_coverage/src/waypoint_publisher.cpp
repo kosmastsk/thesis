@@ -61,11 +61,15 @@ void WaypointPublisher::waypointCallback(const trajectory_msgs::MultiDOFJointTra
   }
 
   // First send the drone in a small height
+  // Get initial positions from the Parameter Server
+  double start_position[2];
+  _nh.param<double>("/x_pos", start_position[0], 0);
+  _nh.param<double>("/y_pos", start_position[1], 0);
   geometry_msgs::Transform transform;
 
-  // Point #1
-  transform.translation.x = -1.40;
-  transform.translation.y = -0.75;
+  // Point #0
+  transform.translation.x = start_position[0];
+  transform.translation.y = start_position[1];
   transform.translation.z = 0.5;
   transform.rotation.x = 0;
   transform.rotation.y = 0;

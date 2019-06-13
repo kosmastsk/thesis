@@ -55,12 +55,12 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(estimator
+add_executable(height_receiver
   src/height_receiver_node.cpp
   src/height_receiver.cpp)
-target_link_libraries(estimator
+target_link_libraries(height_receiver
   ${catkin_LIBRARIES})
-add_dependencies(estimator
+add_dependencies(height_receiver
   ${catkin_EXPORTED_TARGETS} drone_gazebo_generate_messages_cpp)
 
 add_executable(message_to_tf

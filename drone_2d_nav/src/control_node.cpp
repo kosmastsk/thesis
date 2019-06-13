@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 
   if (argc != 2)
   {
-    ROS_INFO("\n[USAGE] rosrun drone_gazebo control <desired_height_value>\n");
+    ROS_INFO("\n[USAGE] rosrun drone_gazebo control_node <desired_height_value>\n");
     return 1;
   }
   else

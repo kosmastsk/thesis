@@ -33,7 +33,7 @@
 
   <!-- NODES -->
   <!-- Control drone -->
-  <node pkg="drone_2d_nav" type="control" name="control" args="$(arg height)"/>
+  <node pkg="drone_2d_nav" type="control_node" name="control_node" args="$(arg height)"/>
 
   <!-- Provide odometry from cmd_vel topic -->
   <node name="vel_to_odom" type="vel_to_odom" pkg="drone_2d_nav" output="screen"/>

@@ -2,9 +2,9 @@
 
 # INSTRUCTIONS
 # You need a rosbag that contains the recording of /amcl_pose and /ground_truth/state topics
-# Convert this rosbag to 2 different csv files using:
-# create_csv /path/to/rosbag/filename (without extension)
-# to run the script just run: python evaluate_localization.py <truth>.csv <amcl>.csv
+Convert this rosbag to 2 different csv files using:
+create_csv /path/to/rosbag/filename (without extension)
+to run the script just run: python evaluate_localization.py <truth>.csv <amcl>.csv
 # Always adjust the paths to your files and folders
 # Don't forget to run chmod +x evaluate_localization.py before
 
@@ -216,9 +216,9 @@ def plot(amcl, truth):
         + ' speed, ' + movement + ' movement',
         size=22)
     fig.subplots_adjust(hspace=0.2)
-    plt.savefig(path + '/' + world + '_' + speed + '_' + movement + '_' +
-                attempt + '.png')
-    # plt.show()
+    # plt.savefig(path + '/' + world + '_' + speed + '_' + movement + '_' +
+                # attempt + '.png')
+    plt.show()
 
 
 def calculateMetrics(dataframe):
@@ -332,17 +332,17 @@ def main():
     calculateMetrics(error_df)
 
     # Write the results in a .csv file
-    # print position.head()
-    with open(
-            path + '/position' + '_' + world + '_' + speed + '_' + movement +
-            '.csv', 'a') as f:
-        position.to_csv(f, header=False)
+    print position.head()
+    # with open(
+            # path + '/position' + '_' + world + '_' + speed + '_' + movement +
+            # '.csv', 'a') as f:
+        # position.to_csv(f, header=False)
 
-    # print orientation.head()
-    with open(
-            path + '/orientation' + '_' + world + '_' + speed + '_' + movement
-            + '.csv', 'a') as f:
-        orientation.to_csv(f, header=False)
+    print orientation.head()
+    # with open(
+            # path + '/orientation' + '_' + world + '_' + speed + '_' + movement
+            # + '.csv', 'a') as f:
+        # orientation.to_csv(f, header=False)
 
     plot(amcl, truth)
 

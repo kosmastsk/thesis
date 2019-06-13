@@ -1,7 +1,7 @@
 ##### RFID sensor #####
 sensor:
   rfid:
-    shape: circular #orthogonal
+    shape: circular # OR orthogonal
     # Narrow FOV: 45 x 25 degrees, 1 metres range
     # Wide FOV : 80 x 40, 2 metres range
     range: 1.5 # in metres

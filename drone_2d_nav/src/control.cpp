@@ -53,7 +53,7 @@ Controller::~Controller()
 /*       heightCallback       */
 /******************************/
 
-void Controller::heightCallback(const std_msgs::Float64::ConstPtr& msg)
+void Controller::heightCallback(const drone_gazebo::Float64Stamped::ConstPtr& msg)
 {
   float currentHeight = msg->data;
 
