@@ -1,10 +1,27 @@
+'''
+Copyright (c) 2019 Kosmas Tsiakas
+
+GNU GENERAL PUBLIC LICENSE
+  Version 3, 29 June 2007
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
 # python evaluate_localization.py
 
 # INSTRUCTIONS
 # You need a rosbag that contains the recording of /amcl_pose and /ground_truth/state topics
-Convert this rosbag to 2 different csv files using:
-create_csv /path/to/rosbag/filename (without extension)
-to run the script just run: python evaluate_localization.py <truth>.csv <amcl>.csv
+# To run the script just run: python evaluate_localization.py <truth>.csv <amcl>.csv
 # Always adjust the paths to your files and folders
 # Don't forget to run chmod +x evaluate_localization.py before
 
@@ -217,7 +234,7 @@ def plot(amcl, truth):
         size=22)
     fig.subplots_adjust(hspace=0.2)
     # plt.savefig(path + '/' + world + '_' + speed + '_' + movement + '_' +
-                # attempt + '.png')
+    # attempt + '.png')
     plt.show()
 
 
@@ -334,15 +351,15 @@ def main():
     # Write the results in a .csv file
     print position.head()
     # with open(
-            # path + '/position' + '_' + world + '_' + speed + '_' + movement +
-            # '.csv', 'a') as f:
-        # position.to_csv(f, header=False)
+    # path + '/position' + '_' + world + '_' + speed + '_' + movement +
+    # '.csv', 'a') as f:
+    # position.to_csv(f, header=False)
 
     print orientation.head()
     # with open(
-            # path + '/orientation' + '_' + world + '_' + speed + '_' + movement
-            # + '.csv', 'a') as f:
-        # orientation.to_csv(f, header=False)
+    # path + '/orientation' + '_' + world + '_' + speed + '_' + movement
+    # + '.csv', 'a') as f:
+    # orientation.to_csv(f, header=False)
 
     plot(amcl, truth)
 
