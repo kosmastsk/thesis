@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package contains the basic model description of the drone to be used with Gazebo. It is based on Hector Quadrotor stack and modified according to our needs. It requires the existence of [teraranger_description](https://github.com/Terabee/teraranger_description) package for the use of the Teraranged Tower sensor.
+This package contains the basic model description of the drone to be used with Gazebo. It is based on Hector Quadrotor stack and modified according to our needs. It requires the existence of [teraranger_description](https://github.com/Terabee/teraranger_description) package for the use of the Teraranger Tower sensor.
 
 ### Contents
 

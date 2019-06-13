@@ -2,19 +2,15 @@
 <package format="2">
   <name>drone_coverage</name>
   <version>0.0.0</version>
-  <description>The drone_coverage package</description>
+  <description>This package contains an implementation of 3D coverage using a drone. Firstly, is extracts the targets within the OctoMap, according to a specific configuration of an RFID reader provided. Then, a post-process is applied to remove non-safe positions, calculate optimal orientation and minimize the cost of the total path. Finally, it navigates through the final points using smoothed obstacle-free paths, while simultaneously the drone localizes itself. It is advised to save the targets using a ROS bag file, so that the navigation can be done whenever is desired, just by playing back the ROS bag data.</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="kosmastsk@gmail.com">kosmastsk</maintainer>
+  <maintainer email="kosmastsk@gmail.com">Kosmas Tsiakas</maintainer>
 
+  <license>GPLv3</license>
 
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>BSD</license>
+  <url type="issuetracker">https://github.com/kosmastsk/thesis/issues</url>
 
+  <author email="kosmastsk@gmail.com">Kosmas Tsiakas</author>
 
   <!-- The *depend tags are used to specify dependencies -->
 

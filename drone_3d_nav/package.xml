@@ -2,13 +2,16 @@
 <package format="2">
   <name>drone_3d_nav</name>
   <version>0.0.0</version>
-  <description>The drone_3d_nav package</description>
+  <description>This package contains an implementation of drone 3D navigation in an OctoMap. The navigation is achieved using a PID controller and the path_planning package ensures an obstacle-free path inside the 3D map. By using the velocity commands, the IMU and the laser altimeter measurements, odometry estimation is calculated and is provided to the particle_filter package, which localizes the drone within the 3D map. Also, this package provides the ability to create trajectories for the drone to navigate through.
+</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <maintainer email="kosmastsk@gmail.com">kosmastsk</maintainer>
+  <maintainer email="kosmastsk@gmail.com">Kosmas Tsiakas</maintainer>
 
-  <license>BSD</license>
+  <license>GPLv3</license>
 
+  <url type="issuetracker">https://github.com/kosmastsk/thesis/issues</url>
+
+  <author email="kosmastsk@gmail.com">Kosmas Tsiakas</author>
 
   <!-- The *depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->

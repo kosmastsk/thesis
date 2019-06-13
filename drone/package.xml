@@ -4,9 +4,11 @@
   <version>0.0.0</version>
   <description>The drone package</description>
 
-  <maintainer email="kosmastsk@gmail.com">kosmastsk</maintainer>
+  <maintainer email="kosmastsk@gmail.com">Kosmas Tsiakas</maintainer>
 
-  <license>BSD</license>
+  <license>GPLv3</license>
+
+  <url type="issuetracker">https://github.com/kosmastsk/thesis/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 

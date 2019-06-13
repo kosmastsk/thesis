@@ -1,5 +1,3 @@
-/* This ROS node receives velocity values and converts them to Odometry for hector quadrotor */
-
 #include "drone_2d_nav/velocity_to_odom.h"
 
 namespace vel_to_odom

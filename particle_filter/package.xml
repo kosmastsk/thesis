@@ -2,25 +2,15 @@
 <package format="2">
   <name>particle_filter</name>
   <version>0.1.0</version>
-  <description>The particle_filter package</description>
+  <description>This package contains an implementation of a 3D localization algorithm that is based on a Particle Filter. It consists of a Movement model that is acting according to the odom transforms, an Observation model that is based on the laser measurements, a Map model that contains important OctoMap functionalities and a State Distribution model that is responsible for the distribution of particles around the map.</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <maintainer email="kosmastsk@gmail.com">kosmastsk</maintainer>
+  <maintainer email="kosmastsk@gmail.com">Kosmas Tsiakas</maintainer>
 
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>BSD</license>
+  <license>GPLv3</license>
 
-  <!-- Url tags are optional, but multiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/drone_gazebo</url> -->
+  <url type="issuetracker">https://github.com/kosmastsk/thesis/issues</url>
 
-  <!-- Author tags are optional, multiple are allowed, one per tag -->
-  <!-- Authors do not have to be maintainers, but could be -->
-  <!-- Example: -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+  <author email="kosmastsk@gmail.com">Kosmas Tsiakas</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

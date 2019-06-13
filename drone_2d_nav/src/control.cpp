@@ -1,11 +1,3 @@
-/* control.cpp
-* These methods contain:
-* one subscriber to the height estimation node that calculates the current height and the velocity needed to reach a
-* specific height
-* one subscriber to the move base node that receives the move base velocity commands to reach a goal
-* a publisher that sends the total velocity to the drone cmd_vel topic
-*/
-
 #include "drone_2d_nav/control.h"
 
 namespace control

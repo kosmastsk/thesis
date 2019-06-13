@@ -2,25 +2,15 @@
 <package format="2">
   <name>drone_2d_nav</name>
   <version>0.0.0</version>
-  <description>The drone_2d_nav package</description>
+  <description>This package contains an implementation of drone 2D navigation using an Occupancy Grid Map. It is based on the AMCL algorithm, configured for working with the specific UAV and the move base package. The drone receives a goal using the 2D Navigation Goal in RViz, reaches a specific height and then navigates towards the goal, while avoiding obstacles.</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <maintainer email="kosmastsk@gmail.com">kosmastsk</maintainer>
+  <maintainer email="kosmastsk@gmail.com">Kosmas Tsiakas</maintainer>
 
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>GPLv3</license>
 
-  <!-- Url tags are optional, but multiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/drone_2d_nav</url> -->
+  <url type="issuetracker">https://github.com/kosmastsk/thesis/issues</url>
 
-  <!-- Author tags are optional, multiple are allowed, one per tag -->
-  <!-- Authors do not have to be maintainers, but could be -->
-  <!-- Example: -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+  <author email="kosmastsk@gmail.com">Kosmas Tsiakas</author>
 
   <!-- The *depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
