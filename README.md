@@ -35,7 +35,7 @@ Finally, a series of experiments were carried out to examine the robustness of t
 ## Installation
 To build from source, clone the latest version from this repository into your catkin workspace and build the package.
 ```
-cd ~/catkin_ws
+cd ~/catkin_ws/src
 git clone git@github.com:kosmastsk/thesis.git
 cd ~/catkin_ws
 (sudo) rosdep install drone
