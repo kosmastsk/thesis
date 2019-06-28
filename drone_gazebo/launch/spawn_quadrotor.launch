@@ -35,7 +35,7 @@
 
   <!-- publish state and tf -->
   <node name="message_to_tf" pkg="drone_gazebo" type="message_to_tf" output="screen">
-    <param name="odometry_topic" value="/odom" /> <!-- /ground_truth/state -->
+    <param name="odometry_topic" value="/odom" />
     <param name="publish_roll_pitch" value="true"/>
     <param name="frame_id" value="world" />
     <param name="footprint_frame_id" value="base_footprint" />

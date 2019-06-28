@@ -4,9 +4,9 @@ sensor:
     shape: circular # OR orthogonal
     # Narrow FOV: 45 x 25 degrees, 1 metres range
     # Wide FOV : 80 x 40, 2 metres range
-    range: 1.5 # in metres
-    hfov: 45 # degrees
-    vfov: 25 # degrees
+    range: 2.0 # in metres
+    hfov: 80 # degrees
+    vfov: 40 # degrees
     direction: # 	A vector pointing in the direction of the sensor on the drone
       x: 1
       y: 0
