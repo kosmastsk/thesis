@@ -1,0 +1,2 @@
+# Ignore all LaTex related files in report directory
+report/* linguist-vendored
