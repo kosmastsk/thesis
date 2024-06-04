@@ -43,7 +43,7 @@ catkin build drone
 ```
 
 ## Usage
-Depending on the problem, you may choose one of the available launchers that exists in the packages mentioned above.
+Depending on the problem, you may choose one of the available launchers that exists in the packages mentioned above.  
 **IMPORTANT** : After launching a file, call the following services to initialize the drone in Gazebo and the Particle Filter algorithm:
 ```
   rosservice call /enable_motors "enable: true"  
@@ -53,3 +53,16 @@ Depending on the problem, you may choose one of the available launchers that exi
 ## Bugs & Feature Requests
 
 Please report bugs and request features using the [Issue Tracker](https://github.com/kosmastsk/thesis/issues).
+
+## Cite
+
+    @article{tsiakas2024autonomous,
+      title={Autonomous Full 3D Coverage Using an Aerial Vehicle, Performing Localization, Path Planning, and Navigation Towards Indoors Inventorying for the Logistics Domain},
+      author={Tsiakas, Kosmas and Tsardoulias, Emmanouil and Symeonidis, Andreas L},
+      journal={Robotics},
+      volume={13},
+      number={6},
+      pages={83},
+      year={2024},
+      publisher={Multidisciplinary Digital Publishing Institute}
+    }
